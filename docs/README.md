@@ -100,6 +100,23 @@ Most users should start with the main `README.md` in the parent directory and `d
 
 Please read all the docs corresponding to either end-user (`docs/user/`) or developers (`docs/dev/`), or both. Please :)
 
+## GitHub Wiki
+
+The **GitHub Wiki** for this repo is synced from this `docs/` directory. When you push changes under `docs/**` to `main`, the workflow `.github/workflows/sync-wiki.yml` copies content into the wiki:
+
+| In this repo | Wiki page |
+|--------------|-----------|
+| `docs/README.md` | **Home** |
+| `docs/user/ARCHITECTURE.md` | User-ARCHITECTURE |
+| `docs/user/INSTALLATION.md` | User-INSTALLATION |
+| `docs/user/API.md` | User-API |
+| `docs/user/VISUALIZATION.md` | User-VISUALIZATION |
+| `docs/user/QUICK_REFERENCE.md` | User-QUICK_REFERENCE |
+| `docs/dev/PROJECT_SUMMARY.md` | Dev-PROJECT_SUMMARY |
+| `docs/dev/ENVIRONMENT_SETUP.md` | Dev-ENVIRONMENT_SETUP |
+| `docs/dev/TEST_RESULTS.md` | Dev-TEST_RESULTS |
+| `docs/dev/PERFORMANCE_OPTIMIZATIONS.md` | Dev-PERFORMANCE_OPTIMIZATIONS |
+
 ---
 
 @author: Pedro Gronda Garrigues
