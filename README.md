@@ -48,7 +48,7 @@ ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combin
 pip install -e .
 ```
 
-For environment setup and virtualenv details, see **[INSTALLATION.md](INSTALLATION.md)** and **[docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)**.
+For environment setup and virtualenv details, see **[INSTALLATION.md](INSTALLATION.md)** (end-user) and **[docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)** (developers).
 
 ---
 
@@ -120,11 +120,11 @@ plot_training_summary(results)
 | [**ARCHITECTURE.md**](ARCHITECTURE.md) | Code layout and design |
 | [**VISUALIZATION.md**](VISUALIZATION.md) | Plotting and report generation |
 | [**CHANGELOG.md**](CHANGELOG.md) | Version history |
-| [**docs/README.md**](docs/README.md) | Docs index and overview |
-| [**docs/ENVIRONMENT_SETUP.md**](docs/ENVIRONMENT_SETUP.md) | Detailed environment and tooling |
-| [**docs/PROJECT_SUMMARY.md**](docs/PROJECT_SUMMARY.md) | Project summary and goals |
-| [**docs/PERFORMANCE_OPTIMIZATIONS.md**](docs/PERFORMANCE_OPTIMIZATIONS.md) | Performance notes and benchmarks |
-| [**docs/TEST_RESULTS.md**](docs/TEST_RESULTS.md) | CI, test matrix, and coverage |
+| [**docs/README.md**](docs/README.md) | (Developers) Docs index and overview |
+| [**docs/ENVIRONMENT_SETUP.md**](docs/ENVIRONMENT_SETUP.md) | (Developers) Detailed environment and tooling |
+| [**docs/PROJECT_SUMMARY.md**](docs/PROJECT_SUMMARY.md) | (Developers) Project summary and goals |
+| [**docs/PERFORMANCE_OPTIMIZATIONS.md**](docs/PERFORMANCE_OPTIMIZATIONS.md) | (Developers) Performance notes and benchmarks |
+| [**docs/TEST_RESULTS.md**](docs/TEST_RESULTS.md) | (Developers) CI, test matrix, and coverage |
 
 ---
 
