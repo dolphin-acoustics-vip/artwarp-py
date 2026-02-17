@@ -9,8 +9,9 @@ on:
     paths:
       - "docs/**"
 
+# Wiki lives in a separate repo (.wiki.git); pushing to it requires contents write.
 permissions:
-  contents: read  # GITHUB_TOKEN can push to this repo's wiki
+  contents: write
 
 jobs:
   sync-wiki:
@@ -68,14 +69,17 @@ jobs:
           done
 
       - name: Commit and push wiki
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd wiki
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Sync wiki from docs/ (automated)"
-            git push -u origin HEAD:master 2>/dev/null || git push -u origin HEAD:main 2>/dev/null || true
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No wiki changes to push."
+            exit 0
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git commit -m "Sync wiki from docs/ (automated)"
+          # Push current branch to origin (wiki default is usually master)
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.wiki.git" HEAD
