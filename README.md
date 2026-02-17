@@ -224,3 +224,22 @@ This is a complete rewrite of the original ARTwarp MATLAB software available at:
 https://github.com/dolphin-acoustics-vip/artwarp
 
 **Publishing (PyPI/pip):** [Python packaging tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/) · [Stack Overflow: publishing to PyPI](https://stackoverflow.com/questions/56129825/publishing-modules-to-pip-and-pypi)
+
+The following are steps (specific to @PedroGGBM) to upload the PyPI package:
+
+```bash
+# to generate distribution archives (build/)
+conda activate sig-process # or your corresponding venv (e.g., conda, venv, uv, etc)
+cd <base_directory>
+python -m pip install --upgrade setuptools wheel build # ensure latest version of PyPA's build installed
+python -m build
+
+# to upload distribution archive
+python -m pip install --upgrade twine
+python -m twine upload --repository testpypi dist/* # this is to test it
+python -m pip install --index-url https://test.pypi.org/simple/ --no-deps example-package-YOUR-USERNAME-HERE # to test install on test server for PyPI
+
+### !!! Once registered in PyPI and own official API key
+python -m twine upload dist/* # this is to upload it
+
+```

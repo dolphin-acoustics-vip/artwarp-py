@@ -1,6 +1,74 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "artwarp-py"
+version = "2.0.3"
+description = "High-performance Python implementation of ARTwarp for bioacoustic signal categorization"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "LGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Pedro Gronda Garrigues", email = "pgrondagarrigues@gmail.com"},
+]
+maintainers = [
+    {name = "Pedro Gronda Garrigues"},
+]
+keywords = ["artwarp", "dtw", "bioacoustics", "clustering", "adaptive-resonance-theory", "animal-sounds"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.7.0",
+    "pandas>=1.3.0",
+    "matplotlib>=3.4.0",
+]
+
+[project.optional-dependencies]
+accelerate = ["numba>=0.54.0"]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=3.0.0",
+    "black>=22.0.0",
+    "mypy>=0.950",
+    "flake8>=4.0.0",
+    "isort>=5.10.0",
+]
+all = [
+    "numba>=0.54.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=3.0.0",
+    "black>=22.0.0",
+    "mypy>=0.950",
+    "flake8>=4.0.0",
+    "isort>=5.10.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dolphin-acoustics-vip/artwarp-py"
+Documentation = "https://github.com/dolphin-acoustics-vip/artwarp-py/wiki"
+Repository = "https://github.com/dolphin-acoustics-vip/artwarp-py"
+Changelog = "https://github.com/dolphin-acoustics-vip/artwarp-py/blob/main/CHANGELOG.md"
+
+[project.scripts]
+artwarp-py = "artwarp.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
 
 [tool.black]
 line-length = 100
