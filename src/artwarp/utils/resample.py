@@ -8,6 +8,7 @@ Mirrors ARTwarp_Run_Categorisation.m when resample == 1:
 """
 
 from typing import List, Union
+
 import numpy as np
 from numpy.typing import NDArray
 

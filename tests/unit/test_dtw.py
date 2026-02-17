@@ -11,10 +11,11 @@ TestDynamicTimeWarpPythonPath and TestUnwarpPythonPath force the Python path
 @author: Pedro Gronda Garrigues
 """
 
-import pytest
-import numpy as np
-from numpy.testing import assert_array_equal, assert_allclose
 from unittest.mock import patch
+
+import numpy as np
+import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 
 from artwarp.core.dtw import (
     compute_similarity_matrix,

@@ -7,11 +7,11 @@ Tests for MATLAB compatibility (Load Categorisation, 1-based export, etc.).
 import tempfile
 from pathlib import Path
 
-import pytest
 import numpy as np
+import pytest
 
-from artwarp.io.loaders import load_mat_categorisation
 from artwarp.io.exporters import export_category_assignments, export_reference_contours
+from artwarp.io.loaders import load_mat_categorisation
 from artwarp.utils.resample import resample_contours
 
 
@@ -21,7 +21,7 @@ class TestLoadMatCategorisation:
     def test_load_net_only(self):
         """Load .mat with NET only (no DATA)."""
         try:
-            from scipy.io import savemat, loadmat
+            from scipy.io import loadmat, savemat
         except ImportError:
             pytest.skip("scipy required for .mat I/O")
         weight = np.array([[100.0, 200.0], [150.0, 250.0], [np.nan, np.nan]], dtype=np.float64)

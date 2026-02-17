@@ -10,11 +10,11 @@ Supports:
 """
 
 from pathlib import Path
-from typing import List, Tuple, Dict, Any, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union, overload
+
 import numpy as np
-from numpy.typing import NDArray
 import pandas as pd
-import pickle
+from numpy.typing import NDArray
 
 
 def load_ctr_file(filepath: Path) -> Dict[str, Any]:
@@ -162,6 +162,27 @@ def load_txt_file(
 
     except Exception as e:
         raise ValueError(f"Error loading text file {filepath}: {str(e)}")
+
+
+@overload
+def load_contours(
+    directory: str,
+    file_format: str = "auto",
+    frequency_column: int = 0,
+    pattern: str = "*",
+    *,
+    return_tempres: Literal[True],
+) -> Tuple[List[NDArray[np.float64]], List[str], List[Optional[float]]]: ...
+
+
+@overload
+def load_contours(
+    directory: str,
+    file_format: str = "auto",
+    frequency_column: int = 0,
+    pattern: str = "*",
+    return_tempres: Literal[False] = False,
+) -> Tuple[List[NDArray[np.float64]], List[str]]: ...
 
 
 def load_contours(
@@ -313,7 +334,7 @@ def load_mat_categorisation(filepath: str) -> Dict[str, Any]:
     elif hasattr(net, "shape") and net.size == 1:
         net = net.flat[0]
 
-    def _get_field(obj, name: str, default: Any = None) -> Any:
+    def _get_field(obj: Any, name: str, default: Any = None) -> Any:
         # record array -> access by dtype.names
         if (
             hasattr(obj, "dtype")

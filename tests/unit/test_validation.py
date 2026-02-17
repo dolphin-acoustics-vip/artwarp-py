@@ -7,8 +7,8 @@ to achieve high coverage of artwarp.utils.validation.
 @author: Pedro Gronda Garrigues
 """
 
-import pytest
 import numpy as np
+import pytest
 
 from artwarp.utils.validation import (
     validate_contour,

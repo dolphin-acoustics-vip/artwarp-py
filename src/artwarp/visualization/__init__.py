@@ -14,13 +14,13 @@ All plotting functions use matplotlib and follow scientific visualization best p
 """
 
 from artwarp.visualization.plotting import (
-    plot_training_summary,
-    plot_reference_contours,
-    plot_category_distribution,
-    plot_convergence_history,
-    plot_contours_by_category,
-    plot_match_distribution,
     create_results_report,
+    plot_category_distribution,
+    plot_contours_by_category,
+    plot_convergence_history,
+    plot_match_distribution,
+    plot_reference_contours,
+    plot_training_summary,
 )
 
 __all__ = [

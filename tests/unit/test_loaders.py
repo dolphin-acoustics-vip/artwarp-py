@@ -10,15 +10,15 @@ and load_mat_categorisation to improve coverage.
 import tempfile
 from pathlib import Path
 
-import pytest
 import numpy as np
+import pytest
 
 from artwarp.io.loaders import (
-    load_ctr_file,
-    load_csv_file,
-    load_txt_file,
     load_contours,
+    load_csv_file,
+    load_ctr_file,
     load_mat_categorisation,
+    load_txt_file,
 )
 
 

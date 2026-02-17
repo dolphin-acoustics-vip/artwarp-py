@@ -9,10 +9,11 @@ Supports exporting:
 @author: Pedro Gronda Garrigues
 """
 
-from pathlib import Path
-from typing import Any, Dict
-import pickle
 import csv
+import pickle
+from pathlib import Path
+from typing import Any, Dict, List, Optional, cast
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -20,7 +21,10 @@ from artwarp.core.network import TrainingResults
 
 
 def export_results(
-    results: TrainingResults, filepath: str, include_names: bool = True, contour_names: list = None
+    results: TrainingResults,
+    filepath: str,
+    include_names: bool = True,
+    contour_names: Optional[List[str]] = None,
 ) -> None:
     """
     Export training results to a pickle file.
@@ -148,4 +152,4 @@ def load_results(filepath: str) -> Dict[str, Any]:
         Dictionary containing training results
     """
     with open(filepath, "rb") as f:
-        return pickle.load(f)
+        return cast(Dict[str, Any], pickle.load(f))

@@ -7,24 +7,25 @@ categorization algorithm, combining DTW and ART components.
 @author: Pedro Gronda Garrigues
 """
 
-from typing import Optional, List, Dict, Any
-from dataclasses import dataclass, field
 import sys
 import time
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
 import numpy as np
 from numpy.typing import NDArray
 
 from artwarp.core.art import (
     activate_categories,
     calculate_match,
-    sort_categories_by_activation,
     check_resonance,
+    sort_categories_by_activation,
 )
 from artwarp.core.weights import (
-    initialize_weight_matrix,
     add_new_category,
-    update_weights,
     get_weight_contour,
+    initialize_weight_matrix,
+    update_weights,
 )
 
 
@@ -191,8 +192,8 @@ class ARTwarp:
         iteration_history = []
 
         if self.verbose:
-            print(f"ARTwarp Training")
-            print(f"================")
+            print("ARTwarp Training")
+            print("================")
             print(f"Samples:         {num_samples}")
             print(f"Max contour len: {self.max_features}")
             print(f"Vigilance:       {self.vigilance}")
@@ -295,11 +296,14 @@ class ARTwarp:
 
             if self.verbose:
                 color = _green if num_reclassifications == 0 else _red
+                reclass_str = (
+                    f"reclassified {num_reclassifications:4d} / {num_samples} "
+                    f"({pct_reclass:5.1f}%){_reset}"
+                )
                 print(
                     f"  {color}iter {iteration:3d}{_reset}  │  "
                     f"categories {self.num_categories:3d}  "
-                    f"(+{new_cats_this_round:2d} this round)  │  "
-                    f"reclassified {num_reclassifications:4d} / {num_samples} ({pct_reclass:5.1f}%){_reset}"
+                    f"(+{new_cats_this_round:2d} this round)  │  {reclass_str}"
                 )
             categories_at_iter_start = self.num_categories
 
@@ -362,7 +366,7 @@ class ARTwarp:
             )
 
             # best category
-            best_cat_idx = np.argmax(activations)
+            best_cat_idx = int(np.argmax(activations))
             weight_contour = get_weight_contour(self.weight_matrix, best_cat_idx)
             warp_func = warp_functions[best_cat_idx]
 

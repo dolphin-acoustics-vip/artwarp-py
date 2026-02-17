@@ -14,7 +14,8 @@ warp.m function while providing significant performance improvements.
 @author: Pedro Gronda Garrigues
 """
 
-from typing import Tuple, Optional
+from typing import Any, Tuple
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -27,15 +28,15 @@ except ImportError:
     NUMBA_AVAILABLE = False
 
     # no-op decorator when numba missing
-    def jit(*args, **kwargs):
-        def decorator(func):
+    def jit(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
+        def decorator(func: object) -> object:
             return func
 
         return decorator
 
 
 @jit(nopython=True, cache=True)  # pragma: no cover
-def _dtw_core_numba(M, m, n, wfl):
+def _dtw_core_numba(M: Any, m: int, n: int, wfl: int):  # type: ignore[no-untyped-def]
     """
     Numba-compiled DTW core: fill N, p, k in place, backtrace, return (normalized_sim, warp_func).
     No list allocations; fixed-size loops over step in 0..wfl.
@@ -155,8 +156,6 @@ def compute_similarity_matrix(
         This function is fully vectorized for performance. The original MATLAB
         implementation used a parfor loop, but NumPy broadcasting is faster.
     """
-    m, n = len(u1), len(u2)
-
     # reshape for broadcast => u1 col (m,1), u2 row (1,n)
     u1_col = u1.reshape(-1, 1)
     u2_row = u2.reshape(1, -1)
@@ -256,7 +255,7 @@ def dynamic_time_warp(
             warp_func = np.clip(warp_func, 0, n - 1)  # keep in bounds
             similarity = np.mean([M[i, warp_func[i]] for i in range(m)])
 
-        return similarity, warp_func
+        return float(similarity), warp_func
 
     # point-wise similarity matrix
     M = compute_similarity_matrix(u1, u2)
@@ -443,12 +442,12 @@ def dynamic_time_warp(
     else:
         normalized_similarity = N[m - 1, n - 1] / m
 
-    return normalized_similarity, warp_function
+    return float(normalized_similarity), warp_function
 
 
 @jit(nopython=True, cache=True)  # pragma: no cover
-def _unwarp_numba(warp_function):
-    """Numba-compiled unwarp: no np.where, single pass with forward-fill. Tested via Python fallback when Numba disabled."""
+def _unwarp_numba(warp_function: Any):  # type: ignore[no-untyped-def]
+    """Numba unwarp: single pass forward-fill. Tested via Python fallback when Numba disabled."""
     L = len(warp_function)
     if L == 0:
         return np.empty(0, dtype=np.int32)

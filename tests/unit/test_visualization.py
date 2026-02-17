@@ -7,8 +7,8 @@ correct data representation, and error handling.
 @author: Pedro Gronda Garrigues
 """
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
 
 # try to import matplotlib, skip tests if not available
@@ -17,14 +17,15 @@ try:
 
     matplotlib.use("Agg")  # use non-interactive backend for testing
     import matplotlib.pyplot as plt
+
     from artwarp.visualization import (
-        plot_training_summary,
-        plot_reference_contours,
-        plot_category_distribution,
-        plot_convergence_history,
-        plot_contours_by_category,
-        plot_match_distribution,
         create_results_report,
+        plot_category_distribution,
+        plot_contours_by_category,
+        plot_convergence_history,
+        plot_match_distribution,
+        plot_reference_contours,
+        plot_training_summary,
     )
 
     MATPLOTLIB_AVAILABLE = True

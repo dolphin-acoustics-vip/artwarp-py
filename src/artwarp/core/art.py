@@ -12,7 +12,8 @@ based on similarity and vigilance criteria.
 @author: Pedro Gronda Garrigues
 """
 
-from typing import List, Tuple, Dict
+from typing import List, Tuple
+
 import numpy as np
 from numpy.typing import NDArray
 

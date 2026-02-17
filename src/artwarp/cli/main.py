@@ -13,19 +13,20 @@ Provides commands for:
 import argparse
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import List
+
 import numpy as np
 
 from artwarp import ARTwarp, load_contours
 from artwarp.core.network import TrainingResults
 from artwarp.io.exporters import (
-    export_results,
-    export_reference_contours,
     export_category_assignments,
+    export_reference_contours,
+    export_results,
     load_results,
 )
-from artwarp.visualization import create_results_report
 from artwarp.utils.resample import resample_contours
+from artwarp.visualization import create_results_report
 
 
 def command_train(args: argparse.Namespace) -> None:
@@ -33,19 +34,24 @@ def command_train(args: argparse.Namespace) -> None:
     print(f"Loading contours from: {args.input_dir}")
 
     need_tempres = getattr(args, "resample", False)
+    tempres_floats: List[float] = []
     try:
-        result = load_contours(
-            args.input_dir,
-            file_format=args.format,
-            frequency_column=args.freq_column,
-            return_tempres=need_tempres,
-        )
         if need_tempres:
-            contours, names, tempres_list = result
+            contours, names, tempres_list = load_contours(
+                args.input_dir,
+                file_format=args.format,
+                frequency_column=args.freq_column,
+                return_tempres=True,
+            )
             default_tr = getattr(args, "tempres", 0.01)
-            tempres_list = [t if t is not None else default_tr for t in tempres_list]
+            tempres_floats = [float(t) if t is not None else default_tr for t in tempres_list]
         else:
-            contours, names = result
+            contours, names = load_contours(
+                args.input_dir,
+                file_format=args.format,
+                frequency_column=args.freq_column,
+                return_tempres=False,
+            )
     except Exception as e:
         print(f"Error loading contours: {e}", file=sys.stderr)
         sys.exit(1)
@@ -54,7 +60,7 @@ def command_train(args: argparse.Namespace) -> None:
 
     if getattr(args, "resample", False):
         sample_interval = getattr(args, "sample_interval", 0.02)
-        contours = resample_contours(contours, tempres_list, sample_interval)
+        contours = resample_contours(contours, tempres_floats, sample_interval)
         print(f"Resampled contours to {sample_interval}s interval")
 
     # create network
@@ -194,7 +200,9 @@ def command_plot(args: argparse.Namespace) -> None:
     print(f"Loading contours from: {args.input_dir}")
     try:
         contours, names = load_contours(
-            args.input_dir, file_format=args.format, frequency_column=args.freq_column
+            args.input_dir,
+            file_format=args.format,
+            frequency_column=args.freq_column,
         )
     except Exception as e:
         print(f"Error loading contours: {e}", file=sys.stderr)
@@ -283,7 +291,10 @@ def create_parser() -> argparse.ArgumentParser:
     train_parser.add_argument(
         "--resample",
         action="store_true",
-        help="Resample contours to a uniform temporal resolution before training (like MATLAB resample option)",
+        help=(
+            "Resample contours to a uniform temporal resolution before training "
+            "(like MATLAB resample option)"
+        ),
     )
     train_parser.add_argument(
         "--sample-interval",
@@ -297,7 +308,10 @@ def create_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.01,
         metavar="SEC",
-        help="Default temporal resolution (sec/point) for contours that do not provide it, when --resample (default: 0.01)",
+        help=(
+            "Default temporal resolution (sec/point) for contours that do not provide it, "
+            "when --resample (default: 0.01)"
+        ),
     )
 
     # predict command

@@ -3,9 +3,9 @@
 @author: Pedro Gronda Garrigues
 """
 
-from artwarp.core.network import ARTwarp, TrainingResults
-from artwarp.core.dtw import dynamic_time_warp, unwarp
 from artwarp.core.art import activate_categories, calculate_match
+from artwarp.core.dtw import dynamic_time_warp, unwarp
+from artwarp.core.network import ARTwarp, TrainingResults
 
 __all__ = [
     "ARTwarp",

@@ -7,17 +7,21 @@ to various formats.
 
 @author: Pedro Gronda Garrigues
 
-*Note: This plotting module was largely auto-generated and may have some issues. Please use with caution.*
+*Note: This plotting module was largely auto-generated and may have some issues.
+Please use with caution.*
 """
 
-from typing import Optional, List, Tuple, Dict, Any
 from pathlib import Path
-import numpy as np
-from numpy.typing import NDArray
-import matplotlib.pyplot as plt
+from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
+
 import matplotlib.gridspec as gridspec
-from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+from matplotlib import colormaps
+from matplotlib.transforms import Bbox
+import numpy as np
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from numpy.typing import NDArray
 
 from artwarp.core.network import TrainingResults
 
@@ -209,14 +213,15 @@ def plot_category_distribution(
     # prep data
     categories = sorted(category_sizes.keys())
     sizes = [category_sizes[cat] for cat in categories]
-
+    bar_labels = [str(c) for c in categories]
     if uncategorized > 0:
-        categories.append("Uncategorized")
+        bar_labels.append("Uncategorized")
         sizes.append(uncategorized)
 
     # bar chart
-    colors = plt.cm.Set3(np.linspace(0, 1, len(categories)))
-    bars = ax.bar(range(len(categories)), sizes, color=colors, alpha=0.7, edgecolor="black")
+    cmap = colormaps.get_cmap("Set3")
+    colors = cmap(np.linspace(0, 1, len(bar_labels)))
+    bars = ax.bar(range(len(bar_labels)), sizes, color=colors, alpha=0.7, edgecolor="black")
 
     # value labels on bars
     for i, (bar, size) in enumerate(zip(bars, sizes)):
@@ -232,7 +237,7 @@ def plot_category_distribution(
         )
 
     # labels + title
-    n_cats = len(categories)
+    n_cats = len(bar_labels)
     ax.set_xlabel("Category", fontsize=12, fontweight="bold")
     ax.set_ylabel("Number of Samples", fontsize=12, fontweight="bold")
     ax.set_title("Category Distribution", fontsize=14, fontweight="bold")
@@ -240,10 +245,10 @@ def plot_category_distribution(
     # many categories => smaller font, vertical labels, every k-th to avoid overlap
     if n_cats > 24:
         step = max(1, n_cats // 25)
-        labels = [str(c) if i % step == 0 else "" for i, c in enumerate(categories)]
+        labels = [bar_labels[i] if i % step == 0 else "" for i in range(n_cats)]
         ax.set_xticklabels(labels, fontsize=max(4, 10 - n_cats // 20), rotation=90, ha="center")
     else:
-        ax.set_xticklabels([str(c) for c in categories], rotation=45, ha="right")
+        ax.set_xticklabels(bar_labels, rotation=45, ha="right")
 
     ax.grid(True, axis="y", alpha=0.3, linestyle="--")
     ax.spines["top"].set_visible(False)
@@ -380,7 +385,8 @@ def plot_contours_by_category(
         title_suffix = ""
 
     # plot individual contours
-    colors = plt.cm.viridis(np.linspace(0, 0.7, len(category_indices)))
+    cmap = colormaps.get_cmap("viridis")
+    colors = cmap(np.linspace(0, 0.7, len(category_indices)))
 
     for idx, color in zip(category_indices, colors):
         contour = contours[idx]
@@ -587,13 +593,14 @@ def create_results_report(
     return saved_files
 
 
-### Helper functions for training summary subplots
+# Helper functions for training summary subplots
 
 
 def _plot_reference_contours_axes(ax: Axes, weight_matrix: NDArray[np.float64]) -> None:
     """Plot reference contours on given axes."""
     num_categories = weight_matrix.shape[1]
-    colors = plt.cm.tab10(np.arange(num_categories) % 10)
+    cmap = colormaps.get_cmap("tab10")
+    colors = cmap(np.arange(num_categories) % 10)
     max_legend_cats = 25  # avoid huge legend
 
     for cat_idx in range(num_categories):
@@ -708,7 +715,12 @@ def _plot_category_table_axes(
             stats_data.append(["Mean Match", f"{mean_m:.1f}%"])
             stats_data.append(["Median Match", f"{median_m:.1f}%"])
 
-    table = ax.table(cellText=stats_data, cellLoc="left", loc="center", bbox=[0, 0, 1, 1])
+    table = ax.table(
+        cellText=stats_data,
+        cellLoc="left",
+        loc="center",
+        bbox=Bbox.from_bounds(0, 0, 1, 1),
+    )
     table.auto_set_font_size(False)
     table.set_fontsize(10)
     table.scale(1, 2)
@@ -727,8 +739,8 @@ def _plot_match_by_category_axes(ax: Axes, results: TrainingResults) -> None:
     categories = sorted(category_sizes.keys())
 
     # only categories with at least one finite match (no mean-of-empty)
-    data_by_category = []
-    positions_cats = []
+    data_by_category: List[NDArray[np.float64]] = []
+    positions_cats: List[Tuple[int, Any]] = []
     for i, cat in enumerate(categories):
         mask = results.categories == cat
         cat_matches = results.matches[mask]
@@ -744,7 +756,8 @@ def _plot_match_by_category_axes(ax: Axes, results: TrainingResults) -> None:
         )
 
         # color violins
-        for pc in parts["bodies"]:
+        bodies = list(cast(Iterable[Any], parts["bodies"]))
+        for pc in bodies:
             pc.set_facecolor("#2E86AB")
             pc.set_alpha(0.6)
 
@@ -756,9 +769,10 @@ def _plot_match_by_category_axes(ax: Axes, results: TrainingResults) -> None:
         if n_plot > 24:
             step = max(1, n_plot // 25)
             labels = [
-                str(cat) if i % step == 0 else "" for i, (_i, cat) in enumerate(positions_cats)
+                str(cat) if i % step == 0 else ""
+                for i, (_i, cat) in enumerate(list(positions_cats))
             ]
             ax.set_xticklabels(labels, fontsize=max(4, 10 - n_plot // 20), rotation=90)
         else:
-            ax.set_xticklabels([str(cat) for _i, cat in positions_cats])
+            ax.set_xticklabels([str(cat) for _i, cat in list(positions_cats)])
         ax.grid(True, axis="y", alpha=0.3)

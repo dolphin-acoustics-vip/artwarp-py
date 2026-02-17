@@ -161,16 +161,27 @@ With coverage (CI requires ≥80%): `python -m pytest tests/ --cov=artwarp --cov
 
 If you use this software in your research, please cite:
 
-1. Deecke, V. B. & Janik, V. M. (2006). Automated categorization of bioacoustic
-   signals: Avoiding perceptual pitfalls. Journal of the Acoustical Society of
-   America, 119, 645-653.
-   https://doi.org/10.1121/1.2139067 
+1. This Python implementation: [DOI to be assigned, hopefully soon]
 
-2. This Python implementation: [DOI to be assigned, hopefully soon]
+2. Buck, J. R. & Tyack, P. L. 1993. A quantitative measure of similarity for 
+Tursiops truncatus signature whistles. Journal of the Acoustical Society of 
+America, 94, 2497-2506. https://doi.org/10.1121/1.407385 
+
+3. Deecke, V. B., Ford, J. K. B. & Spong, P. 1999. Quantifying complex patterns 
+of bioacoustic variation: Use of a neural network to compare killer whale 
+(Orcinus orca) dialects. Journal of the Acoustical Society of America, 105, 
+2499-2507. https://doi.org/10.1121/1.426853 
+
+4. Deecke, V. B. & Janik, V. M. 2006. Automated categorization of bioacoustic
+signals: Avoiding perceptual pitfalls. Journal of the Acoustical Society of
+America, 119, 645-653. https://doi.org/10.1121/1.2139067
 
 ## License
 
-GNU Lesser General Public License v3.0 (2007)
+ARTwarp is distributed under the terms of the GNU Lesser General Public
+License, version 3, as published by the Free Software Foundation. For
+details, please refer to the LICENSE file in the root directory of the
+ARTwarp distribution or see https://www.gnu.org/licenses/lgpl.
 
 ## Original MATLAB Implementation
 

@@ -3,18 +3,18 @@
 @author: Pedro Gronda Garrigues
 """
 
+from artwarp.io.exporters import (
+    export_category_assignments,
+    export_reference_contours,
+    export_results,
+    load_results,
+)
 from artwarp.io.loaders import (
     load_contours,
-    load_ctr_file,
     load_csv_file,
-    load_txt_file,
+    load_ctr_file,
     load_mat_categorisation,
-)
-from artwarp.io.exporters import (
-    export_results,
-    export_reference_contours,
-    export_category_assignments,
-    load_results,
+    load_txt_file,
 )
 
 __all__ = [
