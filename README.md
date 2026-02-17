@@ -48,13 +48,13 @@ ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combin
 pip install -e .
 ```
 
-For environment setup and virtualenv details, see **[INSTALLATION.md](INSTALLATION.md)** (end-user) and **[docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)** (developers).
+For environment setup and virtualenv details, see **[user/INSTALLATION.md](docs/user/INSTALLATION.md)** (end-user) and **[dev/ENVIRONMENT_SETUP.md](docs/dev/ENVIRONMENT_SETUP.md)** (developers) within **[docs/](docs/)**.
 
 ---
 
 ## Quick Start
 
-See **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** for a condensed cheat sheet.
+See **[docs/user/QUICK_REFERENCE.md](docs/user/QUICK_REFERENCE.md)** for a condensed cheat sheet.
 
 ### Command line
 
@@ -114,17 +114,17 @@ plot_training_summary(results)
 
 | Document | Description |
 |----------|-------------|
-| [**QUICK_REFERENCE.md**](QUICK_REFERENCE.md) | Short reference for CLI and common tasks |
-| [**INSTALLATION.md**](INSTALLATION.md) | Install and environment setup |
-| [**API.md**](API.md) | Public API (loaders, exporters, options) |
-| [**ARCHITECTURE.md**](ARCHITECTURE.md) | Code layout and design |
-| [**VISUALIZATION.md**](VISUALIZATION.md) | Plotting and report generation |
+| [**docs/user/QUICK_REFERENCE.md**](docs/user/QUICK_REFERENCE.md) | (User Guide) Short reference for CLI and common tasks |
+| [**docs/user/INSTALLATION.md**](docs/user/INSTALLATION.md) | (User Guide) Install and environment setup |
+| [**docs/user/API.md**](docs/user/API.md) | (User Guide) Public API (loaders, exporters, options) |
+| [**docs/user/ARCHITECTURE.md**](docs/user/ARCHITECTURE.md) | (User Guide) Code layout and design |
+| [**docs/user/VISUALIZATION.md**](docs/user/VISUALIZATION.md) | (User Guide) Plotting and report generation |
 | [**CHANGELOG.md**](CHANGELOG.md) | Version history |
-| [**docs/README.md**](docs/README.md) | (Developers) Docs index and overview |
-| [**docs/ENVIRONMENT_SETUP.md**](docs/ENVIRONMENT_SETUP.md) | (Developers) Detailed environment and tooling |
-| [**docs/PROJECT_SUMMARY.md**](docs/PROJECT_SUMMARY.md) | (Developers) Project summary and goals |
-| [**docs/PERFORMANCE_OPTIMIZATIONS.md**](docs/PERFORMANCE_OPTIMIZATIONS.md) | (Developers) Performance notes and benchmarks |
-| [**docs/TEST_RESULTS.md**](docs/TEST_RESULTS.md) | (Developers) CI, test matrix, and coverage |
+| [**docs/README.md**](docs/README.md) | Docs index and overview |
+| [**docs/dev/ENVIRONMENT_SETUP.md**](docs/dev/ENVIRONMENT_SETUP.md) | (Developers) Detailed environment and tooling |
+| [**docs/dev/PROJECT_SUMMARY.md**](docs/dev/PROJECT_SUMMARY.md) | (Developers) Project summary and goals |
+| [**docs/dev/PERFORMANCE_OPTIMIZATIONS.md**](docs/dev/PERFORMANCE_OPTIMIZATIONS.md) | (Developers) Performance notes and benchmarks |
+| [**docs/dev/TEST_RESULTS.md**](docs/dev/TEST_RESULTS.md) | (Developers) CI, test matrix, and coverage |
 
 ---
 
@@ -172,7 +172,7 @@ artwarp/
   `from artwarp.io import load_mat_categorisation`  
   `data = load_mat_categorisation("ARTwarp85FINAL.mat")`  
   → `weight_matrix`, `num_categories`, and optionally `contours` / `categories` / `contour_names`.
-- **Export for MATLAB:** Use `one_based_categories=True` or `one_based_filenames=True` (see [API.md](API.md)).
+- **Export for MATLAB:** Use `one_based_categories=True` or `one_based_filenames=True` (see [API.md](docs/user/API.md)).
 
 ---
 
@@ -190,7 +190,7 @@ With coverage (CI requires ≥80%):
 python -m pytest tests/ --cov=artwarp --cov-report=html --cov-fail-under=80
 ```
 
-**CI:** GitHub Actions runs tests (Python 3.9–3.12), coverage gate, and lint (Black, isort, Flake8, Mypy). See [docs/TEST_RESULTS.md](docs/TEST_RESULTS.md) for details.
+**CI:** GitHub Actions runs tests (Python 3.9–3.12), coverage gate, and lint (Black, isort, Flake8, Mypy). See [docs/dev/TEST_RESULTS.md](docs/dev/TEST_RESULTS.md) for details.
 
 ---
 

@@ -221,12 +221,12 @@ Development dependencies:
 
 After installation:
 
-1. **Quick Start**: See `QUICK_REFERENCE.md` for common usage patterns
-2. **API Documentation**: See `API.md` for complete API reference
-3. **Visualization**: See `VISUALIZATION.md` for plotting guide
+1. **Quick Start**: See `docs/user/QUICK_REFERENCE.md` for common usage patterns
+2. **API Documentation**: See `docs/user/API.md` for complete API reference
+3. **Visualization**: See `docs/user/VISUALIZATION.md` for plotting guide
 4. **Examples**: Check `examples/` directory for complete demos
-5. **Architecture**: See `ARCHITECTURE.md` for design details
-6. **Detailed Docs**: See `docs/` directory for additional documentation (for developers)
+5. **Architecture**: See `docs/user/ARCHITECTURE.md` for design details
+6. **Detailed Docs**: See `docs/dev/` directory for additional documentation (for developers)
 
 ---
 

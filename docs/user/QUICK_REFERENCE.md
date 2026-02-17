@@ -171,12 +171,12 @@ python examples/visualization_example.py
 
 ## Documentation
 
-- **README.md**:               Overview and features
-- **INSTALLATION.md**:         Detailed installation guide
-- **API.md**:                  Complete API reference
-- **VISUALIZATION.md**:        Visualization guide
-- **ARCHITECTURE.md**:         Internal design details
-- **docs/PROJECT_SUMMARY.md**: Project summary (in `docs/` for developers)
+- **docs/README.md**:              Overview and features
+- **docs/user/INSTALLATION.md**:   Detailed installation guide
+- **docs/user/API.md**:            Complete API reference
+- **docs/user/VISUALIZATION.md**:  Visualization guide
+- **docs/user/ARCHITECTURE.md**:   Internal design details
+- **docs/dev/PROJECT_SUMMARY.md**: Project summary (in `docs/dev/` for developers)
 
 ## Performance Tips
 
@@ -225,7 +225,7 @@ categories, matches = network.predict(test_data)
 ## Support
 
 - Issues: GitHub issue tracker
-- Documentation: README and API.md
+- Documentation: README and API.md in this directory (`docs/user/`)
 - Examples: examples/ directory
 - Contact: pgg6@st-andrews.ac.uk      (university email)
            pgrondagarrigues@gmail.com (if email above expired post-graduation)

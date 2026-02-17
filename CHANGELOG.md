@@ -27,7 +27,7 @@ the CHANGELOG every time*
 ### Added
 
 - GitHub Actions CI: pytest matrix (Python 3.9–3.12), coverage gate (80%), Black, Flake8.
-- Documentation: README, INSTALLATION, QUICK_REFERENCE; architecture overview and API reference; docs for environment setup and performance; project summary and test results; simple and visualization examples.
+- Documentation: docs -> README, INSTALLATION, QUICK_REFERENCE; architecture overview and API reference; docs for environment setup and performance; project summary and test results; simple and visualization examples.
 
 ## [2.0.1] - 2026-02-02
 

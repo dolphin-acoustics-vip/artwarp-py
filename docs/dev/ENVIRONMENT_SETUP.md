@@ -296,7 +296,7 @@ OS: Linux 6.18.5-arch1-1
 Python: 3.13.11
 Conda: 25.11.0
 Virtual Environment: venv_artwarp
-Test Results: 79/79 passed (100%) (as of 28/02/2026)
+Test Results: 136/136 passed (100%) (as of 17/02/2026)
 ```
 
 ---
@@ -338,9 +338,9 @@ python -c "import artwarp; print('OK')"
 
 ## Additional Resources
 
-- **Installation Guide**: See `INSTALLATION.md` for detailed instructions
-- **API Documentation**: See `API.md` for complete API reference
-- **Visualization Guide**: See `VISUALIZATION.md` for plotting instructions
+- **Installation Guide**: See `docs/user/INSTALLATION.md` for detailed instructions
+- **API Documentation**: See `docs/user/API.md` for complete API reference
+- **Visualization Guide**: See `docs/user/VISUALIZATION.md` for plotting instructions
 - **Examples**: Check `examples/` directory for usage examples
 - **Tests**: Review `tests/unit/` for test examples
 

@@ -118,10 +118,12 @@ Status: Fully functional
 ### 6. Documentation
 
 #### Guides
-- **README.md**: Overview and quick start
-- **INSTALLATION.md**: Complete installation guide
-- **ARCHITECTURE.md**: Detailed architecture documentation
-- **API.md**: Complete API reference
+- **docs/README.md**: Overview and quick start
+- **docs/user/INSTALLATION.md**: Complete installation guide
+- **docs/user/ARCHITECTURE.md**: Detailed architecture documentation
+- **docs/user/QUICK_REFERENCE.md**: Quick reference for user
+- **docs/user/VISUALIZATION.md**: Get started with plotting 
+- **docs/user/API.md**: Complete API reference
 - **CHANGELOG.md**: Version history
 - **LICENSE**: LGPL v3.0
 
@@ -173,16 +175,18 @@ tests/
 └── __init__.py
 
 ```
-**136 unit tests** in total (see docs/TEST_RESULTS.md for full breakdown).
+**136 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
 
 ### Documentation
 ```
-README.md      
-INSTALLATION.md
-ARCHITECTURE.md
-API.md         
-CHANGELOG.md*  
-LICENSE        
+LICENSE
+README.md
+CHANGELOG.md  
+docs/user/INSTALLATION.md
+docs/user/ARCHITECTURE.md
+docs/user/QUICK_REFERENCE.md
+docs/user/VISUALIZATION.md
+docs/user/API.md                 
 
 ```
 
@@ -241,7 +245,7 @@ examples/
 ### ✓ Code Quality
 - [x] Complete type hints
 - [x] Comprehensive docstrings
-- [x] Unit tests (136 test cases; see docs/TEST_RESULTS.md)
+- [x] Unit tests (136 test cases; see docs/dev/TEST_RESULTS.md)
 - [x] Integration tests
 - [x] Code formatting (Black)
 - [x] Linting configuration
@@ -290,26 +294,23 @@ The implementation includes:
 
 ```
 artwarp-py/
-├── src/artwarp/          # Main package
-│   ├── core/             # Core algorithms
-│   ├── io/               # I/O operations
-│   ├── utils/            # Utilities
+├── src/artwarp/          # main package
+│   ├── core/             # core algorithms
+│   ├── io/               # i/o operations
+│   ├── utils/            # utils
 │   └── cli/              # CLI interface
-├── tests/                # Test suite
-│   └── unit/             # Unit tests
-├── examples/             # Usage examples
-├── docs/                 # Additional documentation
-├── setup.py              # Package configuration
-├── requirements.txt      # Dependencies
-├── pyproject.toml        # Build configuration
-├── .gitignore            # Git ignore patterns
+├── tests/                # test suite
+│   └── unit/             # unit tests
+├── examples/             # usage examples
+├── img/                  # README banner
+├── docs/                 # documentation
+├── setup.py              # package configuration
+├── requirements.txt      # dependencies
+├── pyproject.toml        # build configuration
+├── .gitignore            # git ignore patterns
 ├── LICENSE               # LGPL v3.0
-├── README.md             # Main documentation
-├── INSTALLATION.md       # Installation guide
-├── ARCHITECTURE.md       # Architecture details
-├── API.md                # API reference
-├── CHANGELOG.md          # Version history
-└── PROJECT_SUMMARY.md    # This file
+├── README.md             # main documentation
+└── CHANGELOG.md          # version history
 ```
 
 ## Usage Examples
@@ -368,7 +369,7 @@ artwarp-py export --results results.pkl --output-dir ./exports
 ## Git Repository
 
 The project has been initialized as a git repository:
-- Repository location: `/home/pedroggbm/Documents/vp4038-dolphin-acoustics/artwarp-py`
+- Repository location: `/Documents/artwarp-py` (if using Documents/ dir)
 - All files staged for initial commit
 - Ready for `git commit` (user should configure git user first)
 

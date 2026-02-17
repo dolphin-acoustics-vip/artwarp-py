@@ -1,24 +1,24 @@
 # ARTwarp-py INTERNAL Documentation
 
-This directory contains detailed internal documentation for developers and maintainers.
+This directory contains detailed internal documentation for end-users, developers, and maintainers.
 
 ## Contents
 
 ### Test Documentation
-- **TEST_RESULTS.md** - Complete test report with all X tests documented
+- **docs/dev/TEST_RESULTS.md** - Complete test report with all X tests documented
   - Test execution results
   - Bug fixes applied during testing
   - Performance benchmarks
   - Compatibility matrix
 
 ### Project Documentation
-- **PROJECT_SUMMARY.md** - Rigorous project overview
+- **docs/dev/PROJECT_SUMMARY.md** - Rigorous project overview
   - Complete code statistics
   - Feature comparison with MATLAB
   - Translation details
   - Performance analysis (TODO)
 
-- **PERFORMANCE_OPTIMIZATIONS.md** - Numba-based DTW and unwarp optimizations
+- **docs/dev/PERFORMANCE_OPTIMIZATIONS.md** - Numba-based DTW and unwarp optimizations
   - Why the Python version was slower (no JIT, inner-loop allocation, etc.)
   - What was done: `_dtw_core_numba`, `_unwarp_numba`, integration in `dynamic_time_warp` and `unwarp`
   - How it was implemented (nopython, preallocated arrays, fixed-size loops, no list building)
@@ -26,7 +26,7 @@ This directory contains detailed internal documentation for developers and maint
   - How to get the speedup (install Numba)
 
 ### Environment Setup
-- **ENVIRONMENT_SETUP.md** - Detailed env configuration guide
+- **docs/dev/ENVIRONMENT_SETUP.md** - Detailed env configuration guide
   - Both venv and conda instructions
   - Troubleshooting guide
   - Tested configurations
@@ -34,19 +34,19 @@ This directory contains detailed internal documentation for developers and maint
 
 ## For End Users [!!!]
 
-If you're looking for user-facing documentation, see the main directory:
+If you're looking for user-facing documentation, see the docs/user/ directory:
 
-- **README.md**          - Project overview and quick start
-- **INSTALLATION.md**    - Installation instructions
-- **API.md**             - Complete API reference
-- **VISUALIZATION.md**   - Visualization guide
-- **QUICK_REFERENCE.md** - Quick reference cheat sheet
-- **ARCHITECTURE.md**    - System architecture
-- **CHANGELOG.md**       - Version history
+- **README.md**                    - Project overview and quick start
+- **CHANGELOG.md**                 - Version history
+- **docs/user/INSTALLATION.md**    - Installation instructions
+- **docs/user/API.md**             - Complete API reference
+- **docs/user/VISUALIZATION.md**   - Visualization guide
+- **docs/user/QUICK_REFERENCE.md** - Quick reference cheat sheet
+- **docs/user/ARCHITECTURE.md**    - System architecture
 
 ## For Developers [!!!]
 
-This `docs/` directory contains:
+This `docs/dev/` directory contains:
 
 1. **Testing Information**
    - Test results
@@ -68,20 +68,23 @@ This `docs/` directory contains:
 ```
 artwarp-py/
 ├── README.md                          # main project documentation
-├── INSTALLATION.md                    # setup instructions
-├── API.md                             # API reference
-├── VISUALIZATION.md                   # user visualization guide
-├── QUICK_REFERENCE.md                 # cheat sheet
-├── ARCHITECTURE.md                    # system design
 ├── CHANGELOG.md                       # version history
 ├── docs/                              # internal documentation (this dir)
-│   ├── README.md                      # this file
-│   ├── TEST_RESULTS.md                # test documentation
-│   ├── PROJECT_SUMMARY.md             # complete project summary
-│   ├── PERFORMANCE_OPTIMIZATIONS.md   # optimizations for JIT compiler
-│   └── ENVIRONMENT_SETUP.md           # detailed environment guide
+│   ├── README.md                          # this file
+│   ├── dev/ 
+│   │   ├── ENVIRONMENT_SETUP.md           # detailed environment guide
+│   │   ├── TEST_RESULTS.md                # test documentation
+│   │   ├── PROJECT_SUMMARY.md             # complete project summary
+│   │   └── PERFORMANCE_OPTIMIZATIONS.md   # optimizations for JIT compiler
+│   └── user/
+│       ├── INSTALLATION.md                # setup instructions
+│       ├── API.md                         # API reference
+│       ├── VISUALIZATION.md               # user visualization guide
+│       ├── QUICK_REFERENCE.md             # cheat sheet
+│       └── ARCHITECTURE.md                # system design
 ├── src/                               # source code
 ├── tests/                             # test suite
+├── img/                               # README banner
 └── examples/                          # usage examples
 ```
 
@@ -93,9 +96,9 @@ These documents are primarily for:
 - Users interested in implementation details
 - Researchers evaluating the translation from MATLAB
 
-Most users should start with the main `README.md` and `QUICK_REFERENCE.md` in the parent directory.
+Most users should start with the main `README.md` in the parent directory and `docs/user/QUICK_REFERENCE.md` in the `docs/user` directory.
 
-Please read all the docs corresponding to either end-user or developers (or both). Please.
+Please read all the docs corresponding to either end-user (`docs/user/`) or developers (`docs/dev/`), or both. Please :)
 
 ---
 

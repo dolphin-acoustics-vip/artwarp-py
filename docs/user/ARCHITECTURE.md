@@ -2,7 +2,7 @@
 
 This document describes the internal architecture of ARTwarp-py.
 
-Although it's not necessary for end-users to fully understand this document, it might be a useful entry-point for potential develpers (in which case, view docs/).
+Although it's not necessary for end-users to fully understand this document, it might be a useful entry-point for potential developers (in which case, view docs/).
 
 ## Overview
 
@@ -11,14 +11,15 @@ easy testing, maintenance, and extension.
 
 ```
 artwarp-py/
-├── src/artwarp/          # Main package
-│   ├── core/             # Core algorithm implementations
-│   ├── io/               # Input/output operations
-│   ├── utils/            # Utility functions
-│   └── cli/              # Command-line interface
-├── tests/                # Test suite
-├── examples/             # Usage examples
-└── docs/                 # Documentation
+├── src/artwarp/          # main package
+│   ├── core/             # core algorithm implementations
+│   ├── io/               # input/output operations
+│   ├── utils/            # utility functions
+│   └── cli/              # command-line interface
+├── tests/                # test suite
+├── examples/             # usage examples
+├── img/                  # README banner
+└── docs/                 # documentation
 ```
 
 ## Core Modules
@@ -29,12 +30,12 @@ artwarp-py/
 
 **Key Functions**:
 - `compute_similarity_matrix()`: Vectorized point-wise similarity calculation
-- `dynamic_time_warp()`: Main DTW algorithm with Itakura parallelogram constraints
+- `dynamic_time_warp()`: Main DTW algorithm with Itakura parallelogram constraints; calls the Numba core when available
 - `unwarp()`: Invert warping functions
 
 **Optimization Techniques**:
 - NumPy broadcasting for similarity matrix (eliminates nested loops)
-- Optional Numba JIT compilation for substantial speedup
+- **Numba JIT-compiled core** (`_dtw_core_numba`) for the DP and backtrace—the main reason this implementation runs **faster than MATLAB** (see below)
 - Early termination for length ratio violations
 - Efficient path backtracing
 
@@ -42,6 +43,43 @@ artwarp-py/
 - Implements the same algorithm as original MATLAB repo's `warp.m`
 - Maintains identical constraint logic
 - Uses same similarity formula: `min(f1,f2)/max(f1,f2) * 100`
+
+#### DTW core: Numba JIT kernel (`_dtw_core_numba`)
+
+The hot path that makes ARTwarp-py run **remarkably fast** (faster than MATLAB) is the Numba-JIT-compiled DTW core in `core/dtw.py`: `_dtw_core_numba`. It is the same logic as the Python fallback but compiled to native code.
+
+**Inputs**
+- **M**: an *m*×*n* similarity matrix (e.g. from `compute_similarity_matrix(u1, u2)`), where `M[i,j]` is the point-wise similarity between contour 1 at index *i* and contour 2 at index *j*.
+- **m, n**: lengths of the two contours.
+- **wfl**: warp factor level (e.g. 3), the maximum allowed step in the warping band.
+
+**Outputs**
+- **Normalized similarity**: total similarity along the best path divided by *m* (average similarity, 0–100 scale).
+- **Warp function**: `warp_func[i] = j` means “contour 1 index *i* is aligned to contour 2 index *j*”.
+
+So this function is *DTW with an Itakura-style band, implemented as a fast Numba kernel.*
+
+**Algorithm: DTW with Itakura parallelogram constraints**
+
+DTW aligns two sequences (here, frequency contours) by maximizing cumulative similarity along a path. The path is **globally constrained** to a band (Itakura parallelogram in the (*i*,*j*) plane):
+
+- **Vertical move**: same *j*, next *i* (step 0).
+- **Diagonal move**: advance *i* and *j* (step in {1, …, *wfl*}).
+- **wfl** limits: at most *wfl* consecutive vertical steps, and at most *wfl* as the jump in *j* in one step.
+
+**Dynamic programming**
+- **N[i,j]**: best cumulative similarity to reach cell (*i*, *j*) along an allowed path. Recurrence: `N[i,j] = M[i,j] + max` over predecessors `(i-1, j-step)` with `step ∈ {0,1,…,wfl}` within the band.
+- **p[i,j]**: chosen step stored as `-step`; backtrace from (*i*, *j*) goes to (*i*-1, *j* + *p*[*i*,*j*]).
+- **k[i,j]**: run length of consecutive vertical (step 0) moves; used to enforce “at most *wfl* vertical steps in a row” (when *k* ≥ *wfl*, next step must move in *j*).
+
+**Stages**
+- **Early stage** (small *i*): band shape near the origin is handled with a separate loop (fewer *j* values).
+- **General stage**: for each row *i*, *j* runs only in the band (*j_start* to *j_end* from the Itakura parallelogram).
+
+**Backtrace**  
+From (*m*-1, *n*-1) walk backwards using *p*; `warp_func[i]` is the *j* at row *i* on the optimal path.
+
+**Summary**: Given a similarity matrix **M** and warp factor level **wfl**, the Numba core solves the Itakura-constrained DTW (maximize cumulative similarity in the band) and returns the normalized similarity and the warp function mapping the first contour’s indices to the second’s.
 
 ### 2. ART Neural Network (`core/art.py`)
 
@@ -266,12 +304,9 @@ Opportunities for parallelization (TODO):
 - Batch processing multiple contours
 - Could use `multiprocessing` or `joblib`
 
-### 4. JIT Compilation [KEY]
+### 4. JIT Compilation (DTW core)
 
-Numba can accelerate:
-- DTW inner loops
-- Match calculation
-- Weight interpolation
+The main performance win is **Numba JIT** on the DTW core (`_dtw_core_numba` in `core/dtw.py`): the dynamic-programming fill and backtrace run as compiled native code, which is why ARTwarp-py can run faster than MATLAB. See the [DTW core: Numba JIT kernel](#dtw-core-numba-jit-kernel-_dtw_core_numba) subsection above. Additional Numba (e.g. match calculation, weight interpolation) could be added later.
 
 ### 5. Memory Efficiency
 
@@ -354,7 +389,7 @@ def dynamic_time_warp(
 7. PyPI packaging (for Python PIP download)
 
 ### Optimization Opportunities
-1. Numba-accelerated DTW
+1. Numba on other hot paths (match calculation, weight interpolation)
 2. Sparse weight matrices
 3. Early stopping heuristics
 4. Hierarchical clustering preprocessing
