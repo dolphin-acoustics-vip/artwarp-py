@@ -415,7 +415,7 @@ def dynamic_time_warp(
 The API raises informative exceptions:
 
 ```python
-# invalid parameters
+# invalid params
 ValueError: Vigilance must be in range [1, 99], got 100.0
 
 # empty data
