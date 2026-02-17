@@ -2,7 +2,7 @@
 
 This document describes the internal architecture of ARTwarp-py.
 
-Although it's not necessary for end-users to fully understand this document, it might be a useful entry-point for potential developers (in which case, view docs/).
+Although it's not necessary for end-users to fully understand this document, it might be a useful entry-point for potential developers (in which case, view docs/dev/).
 
 ## Overview
 
@@ -75,6 +75,8 @@ DTW aligns two sequences (here, frequency contours) by maximizing cumulative sim
 **Stages**
 - **Early stage** (small *i*): band shape near the origin is handled with a separate loop (fewer *j* values).
 - **General stage**: for each row *i*, *j* runs only in the band (*j_start* to *j_end* from the Itakura parallelogram).
+
+If this is a bit counter-intuitive, I suggest you go on Neetcode; they have great resources explaining 1D and 2D Dynamic Programming! 
 
 **Backtrace**  
 From (*m*-1, *n*-1) walk backwards using *p*; `warp_func[i]` is the *j* at row *i* on the optimal path.
