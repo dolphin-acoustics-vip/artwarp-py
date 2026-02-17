@@ -1,7 +1,7 @@
 # ARTwarp-py Test Results
 
 **Date**: February, 2026  
-**Version**: 2.0.2  
+**Version**: 2.0.3
 **Environment**: Linux, Python 3.14.2 (miniconda sig-process)  
 **Status**: ALL TESTS PASSING :D
 
