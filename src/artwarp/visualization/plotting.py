@@ -16,11 +16,11 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-from matplotlib import colormaps
-from matplotlib.transforms import Bbox
 import numpy as np
+from matplotlib import colormaps
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from matplotlib.transforms import Bbox
 from numpy.typing import NDArray
 
 from artwarp.core.network import TrainingResults
