@@ -51,7 +51,7 @@ def add_new_category(
         This implements the MATLAB ART_Add_New_Category.m function.
     """
     # new category vector, NaN-padded
-    new_category = np.full(max_features, np.nan, dtype=np.float64)
+    new_category: NDArray[np.float64] = np.full(max_features, np.nan, dtype=np.float64)
     new_category[: len(input_contour)] = input_contour
 
     # add as new column

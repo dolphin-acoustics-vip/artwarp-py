@@ -187,8 +187,8 @@ class ARTwarp:
         self.num_categories = 0
 
         # sample tracking
-        categories = np.full(num_samples, np.nan, dtype=np.float64)
-        matches = np.zeros(num_samples, dtype=np.float64)
+        categories: NDArray[np.float64] = np.full(num_samples, np.nan, dtype=np.float64)
+        matches: NDArray[np.float64] = np.zeros(num_samples, dtype=np.float64)
         iteration_history = []
 
         if self.verbose:
@@ -356,8 +356,8 @@ class ARTwarp:
             raise RuntimeError("Network must be trained before prediction")
 
         num_samples = len(contours)
-        categories = np.full(num_samples, np.nan, dtype=np.float64)
-        matches = np.zeros(num_samples, dtype=np.float64)
+        categories: NDArray[np.float64] = np.full(num_samples, np.nan, dtype=np.float64)
+        matches: NDArray[np.float64] = np.zeros(num_samples, dtype=np.float64)
 
         for idx, contour in enumerate(contours):
             # activate categories

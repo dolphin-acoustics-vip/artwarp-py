@@ -42,9 +42,9 @@ def _dtw_core_numba(M: Any, m: int, n: int, wfl: int):  # type: ignore[no-untype
     No list allocations; fixed-size loops over step in 0..wfl.
     Same logic tested via Python fallback when NUMBA_AVAILABLE=False.
     """
-    N = np.full((m, n), np.nan, dtype=np.float64)
-    p = np.zeros((m, n), dtype=np.int32)
-    k = np.ones((m, n), dtype=np.int32)
+    N: NDArray[np.float64] = np.full((m, n), np.nan, dtype=np.float64)
+    p: NDArray[np.int32] = np.zeros((m, n), dtype=np.int32)
+    k: NDArray[np.int32] = np.ones((m, n), dtype=np.int32)
 
     N[0, 0] = M[0, 0]
     k[0, 0] = 1
@@ -59,15 +59,15 @@ def _dtw_core_numba(M: Any, m: int, n: int, wfl: int):  # type: ignore[no-untype
                 if j >= n:
                     continue
                 condition = (k[i - 1, j] > wfl) if (z == 1) else (k[i - 1, j] >= wfl)
-                best_val = np.nan
-                best_step = -1
+                best_val: float = np.nan
+                best_step: int = -1
                 step_start = 1 if condition else 0
                 for step in range(step_start, wfl + 1):
                     j_prev = j - step
                     if j_prev >= 0:
                         v = N[i - 1, j_prev]
                         if not np.isnan(v) and (np.isnan(best_val) or v > best_val):
-                            best_val = v
+                            best_val = float(v)
                             best_step = step
                 if best_step < 0:
                     continue
@@ -89,7 +89,7 @@ def _dtw_core_numba(M: Any, m: int, n: int, wfl: int):  # type: ignore[no-untype
                 if j_prev >= 0:
                     v = N[i - 1, j_prev]
                     if not np.isnan(v) and (np.isnan(best_val) or v > best_val):
-                        best_val = v
+                        best_val = float(v)
                         best_step = step
             if best_step < 0:
                 continue
@@ -114,7 +114,7 @@ def _dtw_core_numba(M: Any, m: int, n: int, wfl: int):  # type: ignore[no-untype
                 if j_prev >= 0:
                     v = N[i - 1, j_prev]
                     if not np.isnan(v) and (np.isnan(best_val) or v > best_val):
-                        best_val = v
+                        best_val = float(v)
                         best_step = step
             if best_step < 0:
                 continue
@@ -123,12 +123,12 @@ def _dtw_core_numba(M: Any, m: int, n: int, wfl: int):  # type: ignore[no-untype
             k[i, j] = (1 + k[i - 1, j]) if (best_step == 0) else 1
 
     # backtrace
-    warp_func = np.zeros(m, dtype=np.int32)
-    j = n - 1
+    warp_func: NDArray[np.int32] = np.zeros(m, dtype=np.int32)
+    cur_j = n - 1
     for i in range(m - 1, -1, -1):
-        warp_func[i] = j
+        warp_func[i] = cur_j
         if i > 0:
-            j = j + p[i, j]
+            cur_j = int(cur_j + p[i, cur_j])
 
     norm_sim = N[m - 1, n - 1] / m if not np.isnan(N[m - 1, n - 1]) else 0.0
     return norm_sim, warp_func
@@ -261,13 +261,13 @@ def dynamic_time_warp(
     M = compute_similarity_matrix(u1, u2)
 
     # cumulative similarity (NaN init)
-    N = np.full((m, n), np.nan, dtype=np.float64)
+    N: NDArray[np.float64] = np.full((m, n), np.nan, dtype=np.float64)
 
     # path matrix => horizontal step to previous
-    p = np.zeros((m, n), dtype=np.int32)
+    p: NDArray[np.int32] = np.zeros((m, n), dtype=np.int32)
 
     # local expansion factor (consecutive vertical steps)
-    k = np.ones((m, n), dtype=np.int32)
+    k: NDArray[np.int32] = np.ones((m, n), dtype=np.int32)
 
     # possible horizontal steps => [0, -1, ..., -wfl]
     r2 = np.arange(0, -warp_factor_level - 1, -1, dtype=np.int32)
@@ -305,7 +305,7 @@ def dynamic_time_warp(
                         if np.all(np.isnan(prev_values)):
                             continue
                         max_idx = np.nanargmax(prev_values)
-                        y = prev_values[max_idx]
+                        y: float = float(prev_values[max_idx])
                         p[i, j] = r2[max_idx + 1]
                         k[i, j] = 1
                     else:
@@ -321,7 +321,7 @@ def dynamic_time_warp(
                         if np.all(np.isnan(prev_values)):
                             continue
                         max_idx = np.nanargmax(prev_values)
-                        y = prev_values[max_idx]
+                        y = float(prev_values[max_idx])
 
                         if max_idx == 0:  # vertical step
                             k[i, j] = 1 + k[i - 1, j]
@@ -351,7 +351,7 @@ def dynamic_time_warp(
                     if np.all(np.isnan(prev_values)):
                         continue
                     max_idx = np.nanargmax(prev_values)
-                    y = prev_values[max_idx]
+                    y = float(prev_values[max_idx])
                     p[i, j] = r2[max_idx + 1]
                     k[i, j] = 1
                 else:
@@ -365,7 +365,7 @@ def dynamic_time_warp(
                     if np.all(np.isnan(prev_values)):
                         continue
                     max_idx = np.nanargmax(prev_values)
-                    y = prev_values[max_idx]
+                    y = float(prev_values[max_idx])
 
                     if max_idx == 0:  # vertical step
                         k[i, j] = 1 + k[i - 1, j]
@@ -400,7 +400,7 @@ def dynamic_time_warp(
                     if np.all(np.isnan(prev_values)):
                         continue
                     max_idx = np.nanargmax(prev_values)
-                    y = prev_values[max_idx]
+                    y = float(prev_values[max_idx])
                     p[i, j] = r2[max_idx + 1]
                     k[i, j] = 1
                 else:
@@ -414,7 +414,7 @@ def dynamic_time_warp(
                     if np.all(np.isnan(prev_values)):
                         continue
                     max_idx = np.nanargmax(prev_values)
-                    y = prev_values[max_idx]
+                    y = float(prev_values[max_idx])
 
                     if max_idx == 0:  # vertical step
                         k[i, j] = 1 + k[i - 1, j]
@@ -428,13 +428,13 @@ def dynamic_time_warp(
             N[i, j] = M[i, j] + y
 
     # backtrace => warping function
-    warp_function = np.zeros(m, dtype=np.int32)
-    j = n - 1  # from last index
+    warp_function: NDArray[np.int32] = np.zeros(m, dtype=np.int32)
+    cur_j = n - 1  # from last index
 
     for i in range(m - 1, -1, -1):
-        warp_function[i] = j
-        dj = p[i, j]
-        j = j + dj
+        warp_function[i] = cur_j
+        dj = int(p[i, cur_j])
+        cur_j = cur_j + dj
 
     # normalized similarity
     if np.isnan(N[m - 1, n - 1]):
