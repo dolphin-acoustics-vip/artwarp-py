@@ -15,7 +15,7 @@ from numpy.typing import NDArray
 def resample_contours(
     contours: List[NDArray[np.float64]],
     tempres: Union[float, List[float]],
-    sample_interval_sec: float
+    sample_interval_sec: float,
 ) -> List[NDArray[np.float64]]:
     """
     Resample each contour to a new sampling interval (seconds per point).

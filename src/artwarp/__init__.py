@@ -18,7 +18,7 @@ Example:
     >>> contours = load_contours('path/to/directory')
     >>> network = ARTwarp(vigilance=85.0, learning_rate=0.1)
     >>> results = network.fit(contours)
-    >>> 
+    >>>
     >>> # Visualize results
     >>> from artwarp.visualization import plot_training_summary
     >>> plot_training_summary(results)

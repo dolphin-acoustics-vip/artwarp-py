@@ -26,30 +26,30 @@ class TestLoadMatCategorisation:
             pytest.skip("scipy required for .mat I/O")
         weight = np.array([[100.0, 200.0], [150.0, 250.0], [np.nan, np.nan]], dtype=np.float64)
         net = {
-            'weight': weight,
-            'numFeatures': np.array(3),
-            'numCategories': np.array(2),
-            'maxNumCategories': np.array(50),
-            'vigilance': np.array(85.0),
-            'bias': np.array(0.0),
-            'maxNumIterations': np.array(50),
-            'learningRate': np.array(0.1),
+            "weight": weight,
+            "numFeatures": np.array(3),
+            "numCategories": np.array(2),
+            "maxNumCategories": np.array(50),
+            "vigilance": np.array(85.0),
+            "bias": np.array(0.0),
+            "maxNumIterations": np.array(50),
+            "learningRate": np.array(0.1),
         }
-        with tempfile.NamedTemporaryFile(suffix='.mat', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".mat", delete=False) as f:
             path = f.name
         try:
-            savemat(path, {'NET': net})
+            savemat(path, {"NET": net})
             out = load_mat_categorisation(path)
         finally:
             Path(path).unlink(missing_ok=True)
-        assert 'weight_matrix' in out
-        np.testing.assert_array_almost_equal(out['weight_matrix'], weight)
-        assert out['num_categories'] == 2
-        assert out['max_features'] == 3
-        assert out['vigilance'] == 85.0
-        assert out['bias'] == 0.0
-        assert out['learning_rate'] == 0.1
-        assert 'contours' not in out
+        assert "weight_matrix" in out
+        np.testing.assert_array_almost_equal(out["weight_matrix"], weight)
+        assert out["num_categories"] == 2
+        assert out["max_features"] == 3
+        assert out["vigilance"] == 85.0
+        assert out["bias"] == 0.0
+        assert out["learning_rate"] == 0.1
+        assert "contours" not in out
 
     def test_missing_net_raises(self):
         """File without NET raises ValueError."""
@@ -57,10 +57,10 @@ class TestLoadMatCategorisation:
             from scipy.io import savemat
         except ImportError:
             pytest.skip("scipy required")
-        with tempfile.NamedTemporaryFile(suffix='.mat', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".mat", delete=False) as f:
             path = f.name
         try:
-            savemat(path, {'foo': np.array(1)})
+            savemat(path, {"foo": np.array(1)})
             with pytest.raises(ValueError, match="does not contain 'NET'"):
                 load_mat_categorisation(path)
         finally:
@@ -78,36 +78,34 @@ class TestExportOneBased:
         """export_category_assignments with one_based_categories=True."""
         categories = np.array([0.0, 1.0, np.nan, 2.0])
         matches = np.array([95.0, 88.0, 50.0, 92.0])
-        names = ['a', 'b', 'c', 'd']
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as f:
+        names = ["a", "b", "c", "d"]
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
             path = f.name
         try:
-            export_category_assignments(
-                categories, matches, names, path, one_based_categories=True
-            )
+            export_category_assignments(categories, matches, names, path, one_based_categories=True)
             content = Path(path).read_text()
         finally:
             Path(path).unlink(missing_ok=True)
-        assert 'contour_name,category,match' in content
-        assert 'a,1,' in content
-        assert 'b,2,' in content
-        assert 'c,uncategorized,' in content
-        assert 'd,3,' in content
+        assert "contour_name,category,match" in content
+        assert "a,1," in content
+        assert "b,2," in content
+        assert "c,uncategorized," in content
+        assert "d,3," in content
 
     def test_export_category_assignments_zero_based(self):
         """export_category_assignments with one_based_categories=False (default)."""
         categories = np.array([0.0, 1.0])
         matches = np.array([95.0, 88.0])
-        names = ['a', 'b']
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as f:
+        names = ["a", "b"]
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
             path = f.name
         try:
             export_category_assignments(categories, matches, names, path)
             content = Path(path).read_text()
         finally:
             Path(path).unlink(missing_ok=True)
-        assert 'a,0,' in content
-        assert 'b,1,' in content
+        assert "a,0," in content
+        assert "b,1," in content
 
 
 class TestResampleContours:
