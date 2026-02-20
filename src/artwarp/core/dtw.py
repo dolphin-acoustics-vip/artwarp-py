@@ -31,7 +31,8 @@ try:
     print(f"Numba JIT available: {NUMBA_AVAILABLE}")
 except ImportError:
     NUMBA_AVAILABLE = False
-    print(f"Numba JIT available: {NUMBA_AVAILABLE}\n - Ensure Numba is installed for performance boost: `pip install numba`")
+    print(f"Numba JIT available: {NUMBA_AVAILABLE}\n\
+        - Ensure Numba is installed for performance boost: `pip install numba`")
 
     # no-op decorator when numba missing
     def jit(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]

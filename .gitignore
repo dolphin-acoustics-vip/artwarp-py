@@ -93,8 +93,7 @@ category_assignments.*
 reference-contours/
 reference_contours/
 references/
-report/
-report-large/
+report*/
 contours*/
 docs/CORE_MATLAB_VERIFICATION.txt
 VIP-ARTwarp-TRAINING/

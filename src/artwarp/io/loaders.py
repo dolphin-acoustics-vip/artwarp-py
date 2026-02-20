@@ -110,7 +110,7 @@ def load_csv_file(
                 data = pd.read_csv(filepath, header=0, usecols=[data_with_header.columns[idx]])
                 contour = np.array(data.iloc[:, 0].values, dtype=np.float64)
                 return {"contour": contour, "tempres": None, "ctrlength": None}
-        
+
         # fallback -> no header or no "Frequency"/"Hz" column
         data = pd.read_csv(filepath, header=None, skiprows=skip_header)
         if frequency_column >= len(data.columns):

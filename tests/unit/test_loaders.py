@@ -128,17 +128,19 @@ class TestLoadCsvFile:
     """Tests for load_csv_file()."""
 
     def test_load_csv_basic(self):
-        """Load CSV with frequency in column 0."""
+        """Load CSV with frequency in column 0; no drop-last, all rows kept."""
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False, mode="w") as f:
             f.write("header\n100.0\n200.0\n300.0\n")
             path = Path(f.name)
         try:
             data = load_csv_file(path, frequency_column=0, skip_header=1)
             contour = data["contour"]
-            assert len(contour) == 2  # last element dropped (MATLAB compat)
-            np.testing.assert_array_almost_equal(contour, [100.0, 200.0])
+            assert len(contour) == 3
+            np.testing.assert_array_almost_equal(contour, [100.0, 200.0, 300.0])
             assert "tempres" in data
             assert "ctrlength" in data
+            assert data["tempres"] is None
+            assert data["ctrlength"] is None
         finally:
             path.unlink(missing_ok=True)
 
@@ -186,7 +188,7 @@ class TestLoadContours:
     """Tests for load_contours()."""
 
     def test_load_contours_csv_directory(self):
-        """Load contours from directory of CSV files."""
+        """Load contours from directory of CSV files (no drop-last)."""
         with tempfile.TemporaryDirectory() as d:
             dir_path = Path(d)
             (dir_path / "a.csv").write_text("h\n100.0\n200.0\n")
@@ -194,18 +196,19 @@ class TestLoadContours:
             contours, names = load_contours(d, file_format="csv", frequency_column=0)
             assert len(contours) == 2
             assert names == ["a", "b"]
-            assert len(contours[0]) == 1
-            assert len(contours[1]) == 2
+            assert len(contours[0]) == 2
+            assert len(contours[1]) == 3
 
     def test_load_contours_with_return_tempres(self):
-        """load_contours with return_tempres=True returns third element."""
+        """load_contours with return_tempres=True returns third element (tempres list)."""
         with tempfile.TemporaryDirectory() as d:
             (Path(d) / "one.csv").write_text("h\n100.0\n200.0\n")
             contours, names, tempres_list = load_contours(
                 d, file_format="csv", frequency_column=0, return_tempres=True
             )
             assert len(tempres_list) == 1
-            assert tempres_list[0] is not None
+            # CSV loader returns tempres=None when no time column; list entry present
+            assert tempres_list[0] is None
 
     def test_load_contours_directory_not_found_raises(self):
         with pytest.raises(FileNotFoundError, match="Directory not found"):

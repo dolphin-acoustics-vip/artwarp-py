@@ -75,9 +75,10 @@ def cap_contour_lengths(
     contours: List[NDArray[np.float64]], max_length: int
 ) -> List[NDArray[np.float64]]:
     """
-    Downsample any contour longer than max_length to exactly max_length points (linear interpolation).
-    Contours with length <= max_length are unchanged. Use this to avoid huge DTW matrices when
-    contours are very long (e.g. after resampling with a small sample-interval).
+    Downsample any contour longer than max_length to exactly max_length
+    points (linear interpolation). Contours with length <= max_length are
+    unchanged. Use this to avoid huge DTW matrices when contours are very
+    long (e.g. after resampling with a small sample-interval).
     """
     if max_length < 1:
         raise ValueError("max_length must be >= 1")
