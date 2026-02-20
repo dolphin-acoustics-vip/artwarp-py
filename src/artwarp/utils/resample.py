@@ -69,3 +69,29 @@ def resample_contours(
         resampled = np.interp(new_x, old_x, c)
         result.append(resampled.astype(np.float64))
     return result
+
+
+def cap_contour_lengths(
+    contours: List[NDArray[np.float64]], max_length: int
+) -> List[NDArray[np.float64]]:
+    """
+    Downsample any contour longer than max_length to exactly max_length points (linear interpolation).
+    Contours with length <= max_length are unchanged. Use this to avoid huge DTW matrices when
+    contours are very long (e.g. after resampling with a small sample-interval).
+    """
+    if max_length < 1:
+        raise ValueError("max_length must be >= 1")
+    result: List[NDArray[np.float64]] = []
+    for c in contours:
+        n = len(c)
+        if n <= max_length or n == 0:
+            result.append(c)
+            continue
+        if n == 1:
+            result.append(np.array([c[0]], dtype=np.float64))
+            continue
+        new_x = np.linspace(0, n - 1, max_length)
+        old_x = np.arange(n, dtype=np.float64)
+        resampled = np.interp(new_x, old_x, c)
+        result.append(resampled.astype(np.float64))
+    return result

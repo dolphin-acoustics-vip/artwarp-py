@@ -60,20 +60,35 @@ See **[docs/user/QUICK_REFERENCE.md](docs/user/QUICK_REFERENCE.md)** for a conde
 
 Activate your virtual environment first (e.g. `source venv/bin/activate` or, in Fish, `source venv/bin/activate.fish`), then:
 
+Basic commands:
+
 ```bash
 # train on a directory of contour files
 artwarp-py train --input-dir ./contours --output results.pkl \
     --vigilance 85 --learning-rate 0.1 --max-iterations 50
 
-# optionally -> export reference contours and category assignments
+# export reference contours and category assignments
 artwarp-py train --input-dir ./contours --output results.pkl --export-refs --export-categories
+```
 
+Resample with sample interval (seconds) [default = 0.02s]:
+
+
+```bash
 # resample contours to uniform temporal resolution (like MATLAB resample option)
 artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02
+```
 
+Altogether (resampling & exporting reference contours / category assignments):
+
+```bash
 # full command
 artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02 --vigilance 85 --learning-rate 0.1 --max-iterations 50 --export-refs --export-categories
+```
 
+Gener visualizations:
+
+```bash
 # generate visualizations from Pickle (.pkl) file
 artwarp-py plot --results results.pkl --input-dir ./contours --output-dir ./report
 ```
@@ -241,5 +256,4 @@ python -m pip install --index-url https://test.pypi.org/simple/ --no-deps exampl
 
 ### !!! Once registered in PyPI and own official API key
 python -m twine upload dist/* # this is to upload it
-
 ```

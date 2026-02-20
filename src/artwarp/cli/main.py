@@ -25,7 +25,7 @@ from artwarp.io.exporters import (
     export_results,
     load_results,
 )
-from artwarp.utils.resample import resample_contours
+from artwarp.utils.resample import cap_contour_lengths, resample_contours
 from artwarp.visualization import create_results_report
 
 
@@ -62,6 +62,11 @@ def command_train(args: argparse.Namespace) -> None:
         sample_interval = getattr(args, "sample_interval", 0.02)
         contours = resample_contours(contours, tempres_floats, sample_interval)
         print(f"Resampled contours to {sample_interval}s interval")
+
+    max_len = getattr(args, "max_contour_length", None)
+    if max_len is not None:
+        contours = cap_contour_lengths(contours, max_len)
+        print(f"Capped contour lengths to at most {max_len} points")
 
     # create network
     network = ARTwarp(
@@ -311,6 +316,17 @@ def create_parser() -> argparse.ArgumentParser:
         help=(
             "Default temporal resolution (sec/point) for contours that do not provide it, "
             "when --resample (default: 0.01)"
+        ),
+    )
+    train_parser.add_argument(
+        "--max-contour-length",
+        type=int,
+        default=None,
+        metavar="N",
+        help=(
+            "Cap contour length to N points (downsample longer contours). "
+            "Use to avoid huge memory use when contours are very long (e.g. 100k+ points). "
+            "Example: 5000 keeps DTW matrices small."
         ),
     )
 

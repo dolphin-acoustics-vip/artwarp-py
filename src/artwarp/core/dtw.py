@@ -19,13 +19,19 @@ from typing import Any, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
+# Max elements in DTW similarity/cumulative matrices (avoid multi-GB/TiB allocations).
+# ~50e6 float64 ≈ 400 MB for M; N, p, k add more; keep total per-DTW call reasonable.
+DTW_MAX_MATRIX_ELEMENTS = 50_000_000
+
 # optional numba for JIT
 try:
     from numba import jit
 
     NUMBA_AVAILABLE = True
+    print(f"Numba JIT available: {NUMBA_AVAILABLE}")
 except ImportError:
     NUMBA_AVAILABLE = False
+    print(f"Numba JIT available: {NUMBA_AVAILABLE}\n - Ensure Numba is installed for performance boost: `pip install numba`")
 
     # no-op decorator when numba missing
     def jit(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
@@ -214,6 +220,15 @@ def dynamic_time_warp(
     """
     m, n = len(u1), len(u2)
 
+    # guard against huge allocations (e.g. very long contours after resampling)
+    if m * n > DTW_MAX_MATRIX_ELEMENTS:
+        raise ValueError(
+            f"DTW matrix would have {m}×{n} = {m * n:,} elements (>{DTW_MAX_MATRIX_ELEMENTS:,}), "
+            "which would use too much memory. Your contours are likely too long. "
+            "Try increasing --sample-interval (e.g. 0.02 or 0.05) so resampling produces shorter "
+            "contours, or use fewer/longer-interval points in your source data."
+        )
+
     # single-element contours => special case
     if m == 1 and n == 1:
         similarity = compute_similarity_matrix(u1, u2)[0, 0]
@@ -227,6 +242,7 @@ def dynamic_time_warp(
     # fast path => numba JIT DP (no python loop); when available we use it and return
     M = compute_similarity_matrix(u1, u2)
     if NUMBA_AVAILABLE:
+        # TODO: STATE WHETHER NUMBA AVAILABLE in CLI
         norm_sim, warp_func = _dtw_core_numba(M, m, n, warp_factor_level)
         return float(norm_sim), warp_func
 

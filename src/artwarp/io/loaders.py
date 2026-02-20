@@ -74,47 +74,52 @@ def load_ctr_file(filepath: Path) -> Dict[str, Any]:
         raise ValueError(f"Error loading .ctr file {filepath}: {str(e)}")
 
 
+def _csv_frequency_column_index(df: pd.DataFrame) -> Optional[int]:
+    """Return the 0-based index of the first column whose name contains 'frequency' or 'hz'."""
+    for i, name in enumerate(df.columns):
+        s = str(name).strip().lower()
+        if "frequency" in s or "hz" in s:
+            return i
+    return None
+
+
 def load_csv_file(
     filepath: Path, frequency_column: int = 0, skip_header: int = 1
 ) -> Dict[str, Any]:
     """
     Load a .csv file containing frequency contour data.
 
+    If the first row looks like a header, the frequency column is auto-detected as the
+    first column whose name contains "Frequency" or "Hz" (case-insensitive), e.g.
+    "Peak Frequency [Hz]". Otherwise the column index is taken from frequency_column.
+
     Args:
         filepath: Path to .csv file
-        frequency_column: Column index containing frequency values (0-indexed)
-        skip_header: Number of header rows to skip
+        frequency_column: Column index to use when no header or no matching column (0-indexed)
+        skip_header: Number of header rows to skip when not auto-detecting
 
     Returns:
-        Dictionary containing:
-            - 'contour': Frequency contour array
-            - 'tempres': Calculated temporal resolution
-            - 'ctrlength': Contour length in time
+        Dictionary with 'contour', 'tempres' (None), 'ctrlength' (None).
     """
     try:
-        # read csv
+        # Try reading with header to auto-detect frequency column
+        data_with_header = pd.read_csv(filepath, header=0, nrows=0)
+        if len(data_with_header.columns) > 0:
+            idx = _csv_frequency_column_index(data_with_header)
+            if idx is not None:
+                data = pd.read_csv(filepath, header=0, usecols=[data_with_header.columns[idx]])
+                contour = np.array(data.iloc[:, 0].values, dtype=np.float64)
+                return {"contour": contour, "tempres": None, "ctrlength": None}
+        
+        # fallback -> no header or no "Frequency"/"Hz" column
         data = pd.read_csv(filepath, header=None, skiprows=skip_header)
-
         if frequency_column >= len(data.columns):
             raise ValueError(
                 f"Frequency column {frequency_column} not found "
                 f"(file has {len(data.columns)} columns)"
             )
-
-        # frequency contour
-        freq_values = data.iloc[:, frequency_column].values
-        contour = np.array(freq_values, dtype=np.float64)
-
-        # drop last (MATLAB compat)
-        if len(contour) > 1:
-            contour = contour[:-1]
-
-        # temporal resolution (MATLAB style)
-        ctrlength = contour[-1] / 1000.0 if len(contour) > 0 else 0.0
-        tempres = ctrlength / len(contour) if len(contour) > 0 else 0.0
-
-        return {"contour": contour, "tempres": tempres, "ctrlength": ctrlength}
-
+        contour = np.array(data.iloc[:, frequency_column].values, dtype=np.float64)
+        return {"contour": contour, "tempres": None, "ctrlength": None}
     except Exception as e:
         raise ValueError(f"Error loading CSV file {filepath}: {str(e)}")
 
