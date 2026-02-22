@@ -28,6 +28,12 @@ Example:
 
 from artwarp.core.network import ARTwarp
 from artwarp.io.loaders import load_contours
+from artwarp.utils.numba_check import numba_available, report_numba_status
+
+# one-line Numba status when available (API/CLI)
+# when Numba is missing -> only the CLI prints (warning + install prompt)
+if numba_available():
+    report_numba_status()
 
 # visualization kept separate -> no matplotlib required for core
 # from artwarp.visualization import plot_training_summary

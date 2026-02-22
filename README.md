@@ -60,6 +60,14 @@ See **[docs/user/QUICK_REFERENCE.md](docs/user/QUICK_REFERENCE.md)** for a conde
 
 Activate your virtual environment first (e.g. `source venv/bin/activate` or, in Fish, `source venv/bin/activate.fish`), then:
 
+**Interactive launcher (configure all options via prompts):**
+
+```bash
+./run.sh
+```
+
+This opens a menu for **Train**, **Plot**, **Predict**, or **Export**, then prompts for every parameter (paths, vigilance, learning rate, resampling, etc.) with defaults and validation. You can also call the CLI directly through the script: `./run.sh train -i ./contours -o results.pkl`.
+
 Basic commands:
 
 ```bash
@@ -159,7 +167,8 @@ artwarp/
 │   └── plotting.py     # Plotting and reports
 ├── utils/
 │   ├── validation.py   # Input validation
-│   └── resample.py     # Contour resampling (MATLAB-aligned)
+│   ├── resample.py     # Contour resampling (MATLAB-aligned)
+│   └── numba_check.py  # Numba availability + optional install prompt
 └── cli/
     └── main.py         # Command-line interface
 ```

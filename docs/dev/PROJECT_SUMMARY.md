@@ -153,6 +153,7 @@ src/artwarp/
 ├── utils/
 │   ├── validation.py   (Validation)
 │   ├── resample.py     (Resampling)
+│   ├── numba_check.py  (Numba availability)
 │   └── __init__.py   
 ├── cli/
 │   ├── main.py         (CLI interface)
@@ -294,6 +295,7 @@ The implementation includes:
 
 ```
 artwarp-py/
+├── run.sh                # interactive launcher (Train / Plot / Predict / Export)
 ├── src/artwarp/          # main package
 │   ├── core/             # core algorithms
 │   ├── io/               # i/o operations

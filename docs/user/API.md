@@ -305,7 +305,9 @@ resonance = check_resonance(match_value=85.5, vigilance=85.0)
 
 ## Command-Line Interface
 
-Ensure the `artwarp-py` command is on your PATH (activate your virtual environment first, e.g. `source venv/bin/activate` or `source venv/bin/activate.fish` in Fish). Alternatively run: `python -m artwarp.cli.main <command> ...`.
+Ensure the `artwarp-py` command is on your PATH (activate your virtual environment first, e.g. `source venv/bin/activate` or `source venv/bin/activate.fish` in Fish). Alternatively run: `python -m artwarp.cli.main <command> ...`. You can also use the **interactive launcher** `./run.sh` (no arguments) for a menu that prompts for all options.
+
+**Numba status:** When you run the CLI (or `./run.sh`), the launcher reports whether Numba is installed; if not, it shows a warning and, in an interactive terminal, can offer to install it via pip/conda. When you use the Python API (e.g. `import artwarp`), the package prints a one-line Numba status on import (see `artwarp.utils.numba_check.report_numba_status`).
 
 ### train
 

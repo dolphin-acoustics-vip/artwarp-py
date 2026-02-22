@@ -70,9 +70,10 @@ Before optimization, the main bottlenecks were:
 
 ---
 
-## 5. How to Get the Speedup
+## 5. How to Get Speedup
 
 - **Install Numba:** e.g. `pip install numba` or use the `[accelerate]` extra if the project defines it. With Numba available, the first run of `dynamic_time_warp` / `_dtw_core_numba` and `unwarp` / `_unwarp_numba` will trigger JIT compilation; subsequent runs use the cached compiled code.
+- **Numba check:** When you run the CLI (`artwarp-py` or `./run.sh`), the launcher reports whether Numba is installed and, in an interactive terminal, can offer to install it automatically (pip/conda). See `src/artwarp/utils/numba_check.py` (`report_numba_status`, `check_numba`). The Python API prints a one-line Numba status on `import artwarp`.
 - **No API or parameter changes** are required; the same `dynamic_time_warp` and `unwarp` interfaces are used by `art.py` and `weights.py`.
 
 ---
@@ -80,4 +81,5 @@ Before optimization, the main bottlenecks were:
 ## 6. References
 
 - **Core implementation:** `src/artwarp/core/dtw.py` (functions `_dtw_core_numba`, `_unwarp_numba`, and the `NUMBA_AVAILABLE` branch in `dynamic_time_warp` and `unwarp`).
+- **Numba availability and install prompt:** `src/artwarp/utils/numba_check.py` (`numba_available`, `report_numba_status`, `check_numba`); used by the CLI and on package import.
 - **MATLAB alignment:** `docs/CORE_MATLAB_VERIFICATION.md` (confirms the DP and unwarp logic match the MATLAB core).

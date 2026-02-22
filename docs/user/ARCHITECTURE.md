@@ -11,6 +11,7 @@ easy testing, maintenance, and extension.
 
 ```
 artwarp-py/
+├── run.sh                # interactive launcher (menu: Train / Plot / Predict / Export)
 ├── src/artwarp/          # main package
 │   ├── core/             # core algorithm implementations
 │   ├── io/               # input/output operations
@@ -205,6 +206,14 @@ for iteration in range(max_iterations):
 Matches MATLAB ARTwarp "Resample Contours" option: same formula as `interp1(1:length(contour), contour, 1:sampleInterval/tempres:length(contour))`. Use before `fit()` when contours have different sampling rates.
 
 **CLI** (`train` command): `--resample` enables resampling before training. `--sample-interval SEC` (default 0.02) is the target sampling interval in seconds. `--tempres SEC` (default 0.01) is the default temporal resolution (seconds per point) for contours that do not provide it (e.g. some .ctr files). When `--resample` is set, contours are loaded with `return_tempres=True`, missing tempres are filled with `--tempres`, then `resample_contours(contours, tempres_list, sample_interval)` is called; the resampled contours are passed to `ARTwarp(...).fit(contours, names)`. These options are not passed into the ARTwarp constructor.
+
+### 8. Numba check (`utils/numba_check.py`)
+
+**Purpose**: Report whether Numba is installed (for DTW performance optimizations) and, when using the CLI, optionally offer to install it via pip/conda.
+
+**Key functions**: `numba_available()`, `report_numba_status()` (status only), `check_numba(offer_install=True)` (status + optional install prompt). The package calls `report_numba_status()` on import so API users (e.g. in Jupyter) see the Numba status. The CLI calls `check_numba(offer_install=stdin.isatty())` at startup so interactive runs can prompt to install Numba if missing.
+
+**Entry points**: `run.sh` (interactive launcher) and `artwarp-py` / `python -m artwarp.cli.main` (CLI) both trigger the Numba check when run; see **Quick Start** in the main README.
 
 ## Alignment with MATLAB ARTwarp
 

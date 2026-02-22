@@ -23,16 +23,13 @@ from numpy.typing import NDArray
 # ~50e6 float64 ≈ 400 MB for M; N, p, k add more; keep total per-DTW call reasonable.
 DTW_MAX_MATRIX_ELEMENTS = 50_000_000
 
-# optional numba for JIT
+# optional numba for JIT (status and install prompt are in artwarp.utils.numba_check, used by CLI)
 try:
     from numba import jit
 
     NUMBA_AVAILABLE = True
-    print(f"Numba JIT available: {NUMBA_AVAILABLE}")
 except ImportError:
     NUMBA_AVAILABLE = False
-    print(f"Numba JIT available: {NUMBA_AVAILABLE}\n\
-        - Ensure Numba is installed for performance boost: `pip install numba`")
 
     # no-op decorator when numba missing
     def jit(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]

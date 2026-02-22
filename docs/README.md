@@ -69,6 +69,7 @@ This `docs/dev/` directory contains:
 artwarp-py/
 ├── README.md                          # main project documentation
 ├── CHANGELOG.md                       # version history
+├── run.sh                             # interactive launcher (Train / Plot / Predict / Export)
 ├── docs/                              # internal documentation (this dir)
 │   ├── README.md                          # this file
 │   ├── dev/ 

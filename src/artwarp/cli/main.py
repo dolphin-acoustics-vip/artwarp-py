@@ -25,6 +25,7 @@ from artwarp.io.exporters import (
     export_results,
     load_results,
 )
+from artwarp.utils.numba_check import check_numba, numba_available
 from artwarp.utils.resample import cap_contour_lengths, resample_contours
 from artwarp.visualization import create_results_report
 
@@ -408,6 +409,8 @@ def create_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     """Main entry point for CLI."""
+    if not numba_available():
+        check_numba(offer_install=sys.stdin.isatty())
     parser = create_parser()
     args = parser.parse_args()
 

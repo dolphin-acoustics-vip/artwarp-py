@@ -120,6 +120,8 @@ print(f'Test passed! Created {results.num_categories} category(ies)')
 artwarp-py --help
 ```
 
+For an **interactive menu** (prompts for all options), run from the project root: `./run.sh`. When you run the CLI or `./run.sh`, a **Numba status** line is shown; if Numba is not installed, you’ll see a warning and, in an interactive terminal, an option to install it automatically (pip/conda). When you use the Python API (e.g. `import artwarp`), the package prints a one-line Numba status on import.
+
 ## Running Tests
 
 If you installed with dev dependencies, run tests with the **same Python as your venv** so that numpy and other deps are found:
@@ -174,10 +176,12 @@ pip install numpy scipy pandas
 ### Numba Installation Issues
 
 Numba (optional acceleration) may have installation issues on some systems.
-If you encounter problems, ARTwarp-py will work fine without it, just slower:
+If you encounter problems, ARTwarp-py will work fine without it, just slower.
+When you run `artwarp-py` or `./run.sh`, the launcher reports whether Numba is installed and, in an interactive terminal, can offer to install it via pip or conda. You can also install manually:
 
 ```bash
-pip install -e .  # without accelerate extras
+pip install numba
+# or: pip install -e .  # without accelerate extras if you prefer to skip Numba
 ```
 
 ### Permission Errors

@@ -23,7 +23,9 @@ results = ARTwarp(vigilance=85.0).fit(contours)
 
 ## Command Line - One Command
 
-Activate your virtual environment first so `artwarp-py` is on your PATH (e.g. `source venv/bin/activate` or, in Fish, `source venv/bin/activate.fish`). Then:
+Activate your virtual environment first so `artwarp-py` is on your PATH (e.g. `source venv/bin/activate` or, in Fish, `source venv/bin/activate.fish`). You can also use the **interactive launcher** `./run.sh` (no arguments) for a menu that prompts for all options (Train / Plot / Predict / Export). When you run the CLI (or `./run.sh`), a Numba status line is shown; if Numba is not installed, you’ll see a warning and, in an interactive terminal, an option to install it automatically.
+
+Then, for direct commands:
 
 ```bash
 artwarp-py train --input-dir ./contours --output results.pkl --vigilance 85

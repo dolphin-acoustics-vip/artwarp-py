@@ -343,6 +343,7 @@ python -c "import artwarp; print('OK')"
 - **Visualization Guide**: See `docs/user/VISUALIZATION.md` for plotting instructions
 - **Examples**: Check `examples/` directory for usage examples
 - **Tests**: Review `tests/unit/` for test examples
+- **Interactive launcher**: From repo root, `./run.sh` (no args) opens a menu for Train / Plot / Predict / Export
 
 ---
 
