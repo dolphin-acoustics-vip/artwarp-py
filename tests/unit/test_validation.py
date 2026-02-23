@@ -1,11 +1,15 @@
 """
-Unit tests for validation utilities.
+Unit tests for validation and utility modules.
 
-Covers validate_contour, validate_contours, and validate_parameters
-to achieve high coverage of artwarp.utils.validation.
+Covers validate_contour, validate_contours, validate_parameters (artwarp.utils.validation)
+and numba_available, report_numba_status, check_numba (artwarp.utils.numba_check).
 
 @author: Pedro Gronda Garrigues
 """
+
+import io
+import sys
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -159,3 +163,144 @@ class TestValidateParameters:
     def test_warp_factor_level_non_int_raises(self):
         with pytest.raises(ValueError, match="Warp factor level"):
             validate_parameters(85.0, 0.1, 0.0, 50, 50, 3.0)
+
+
+class TestNumbaCheck:
+    """Tests for artwarp.utils.numba_check (numba_available, report_numba_status, check_numba)."""
+
+    def test_numba_available_returns_bool(self):
+        """numba_available() returns a boolean."""
+        from artwarp.utils.numba_check import numba_available
+
+        assert isinstance(numba_available(), bool)
+
+    def test_report_numba_status_numba_available_returns_true(self):
+        """When Numba is available, report_numba_status returns True and prints installed message."""
+        from artwarp.utils.numba_check import report_numba_status
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=True):
+            result = report_numba_status(stream=stream)
+        assert result is True
+        assert "installed" in stream.getvalue() and "performance" in stream.getvalue()
+
+    def test_report_numba_status_numba_not_available_returns_false(self):
+        """When Numba is not available, report_numba_status returns False and prints warning."""
+        from artwarp.utils.numba_check import report_numba_status
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=False):
+            result = report_numba_status(stream=stream)
+        assert result is False
+        assert "not installed" in stream.getvalue()
+        assert "pip install numba" in stream.getvalue()
+
+    def test_check_numba_numba_available_returns_true(self):
+        """When Numba is available, check_numba returns True (no install prompt)."""
+        from artwarp.utils.numba_check import check_numba
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=True):
+            result = check_numba(offer_install=False, stream=stream)
+        assert result is True
+        assert "installed" in stream.getvalue()
+
+    def test_check_numba_numba_not_available_no_install_returns_false(self):
+        """When Numba not available and offer_install=False, check_numba returns False."""
+        from artwarp.utils.numba_check import check_numba
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=False):
+            result = check_numba(offer_install=False, stream=stream)
+        assert result is False
+        assert "not installed" in stream.getvalue()
+
+    def test_check_numba_numba_not_available_offer_install_not_tty_returns_false(self):
+        """When Numba not available and stdin is not a TTY, no prompt; returns False."""
+        from artwarp.utils.numba_check import check_numba
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=False), patch(
+            "sys.stdin.isatty", return_value=False
+        ):
+            result = check_numba(offer_install=True, stream=stream)
+        assert result is False
+        assert "Install Numba now" not in stream.getvalue()
+
+    def test_check_numba_numba_not_available_no_pip_no_conda_returns_false(self):
+        """When Numba not available, TTY, but no pip/conda, prints manual message and returns False."""
+        from artwarp.utils.numba_check import check_numba
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=False), patch(
+            "sys.stdin.isatty", return_value=True
+        ), patch("artwarp.utils.numba_check._pip_available", return_value=False), patch(
+            "artwarp.utils.numba_check._conda_available", return_value=False
+        ):
+            result = check_numba(offer_install=True, stream=stream)
+        assert result is False
+        assert "pip and conda not detected" in stream.getvalue()
+
+    def test_check_numba_numba_not_available_user_declines_install_returns_false(self):
+        """When user declines install (input n), check_numba returns False."""
+        from artwarp.utils.numba_check import check_numba
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=False), patch(
+            "sys.stdin.isatty", return_value=True
+        ), patch("artwarp.utils.numba_check._pip_available", return_value=True), patch(
+            "artwarp.utils.numba_check._conda_available", return_value=False
+        ), patch(
+            "builtins.input", return_value="n"
+        ):
+            result = check_numba(offer_install=True, stream=stream)
+        assert result is False
+
+    def test_check_numba_numba_not_available_user_accepts_install_pip_success(self):
+        """When user accepts install and pip install succeeds, check_numba returns True."""
+        from artwarp.utils.numba_check import check_numba
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=False), patch(
+            "sys.stdin.isatty", return_value=True
+        ), patch("artwarp.utils.numba_check._pip_available", return_value=True), patch(
+            "artwarp.utils.numba_check._conda_available", return_value=False
+        ), patch(
+            "builtins.input", return_value="y"
+        ), patch(
+            "subprocess.run", return_value=MagicMock(returncode=0)
+        ):
+            result = check_numba(offer_install=True, stream=stream)
+        assert result is True
+        assert "Numba installed successfully" in stream.getvalue()
+
+    def test_check_numba_numba_not_available_pip_install_fails_returns_false(self):
+        """When user accepts install but pip install fails, check_numba returns False."""
+        from artwarp.utils.numba_check import check_numba
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=False), patch(
+            "sys.stdin.isatty", return_value=True
+        ), patch("artwarp.utils.numba_check._pip_available", return_value=True), patch(
+            "artwarp.utils.numba_check._conda_available", return_value=False
+        ), patch(
+            "builtins.input", return_value="y"
+        ), patch(
+            "subprocess.run", return_value=MagicMock(returncode=1)
+        ):
+            result = check_numba(offer_install=True, stream=stream)
+        assert result is False
+        assert "Install failed" in stream.getvalue()
+
+    def test_check_numba_eof_during_prompt_returns_false(self):
+        """When EOFError during install prompt (e.g. non-interactive), returns False."""
+        from artwarp.utils.numba_check import check_numba
+
+        stream = io.StringIO()
+        with patch("artwarp.utils.numba_check.numba_available", return_value=False), patch(
+            "sys.stdin.isatty", return_value=True
+        ), patch("artwarp.utils.numba_check._pip_available", return_value=True), patch(
+            "builtins.input", side_effect=EOFError
+        ):
+            result = check_numba(offer_install=True, stream=stream)
+        assert result is False

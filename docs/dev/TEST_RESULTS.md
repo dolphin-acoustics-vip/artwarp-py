@@ -16,16 +16,16 @@ cachedir: .pytest_cache
 rootdir: /home/pedroggbm/Documents/vp4038-dolphin-acoustics/ARTWarp/artwarp-py
 configfile: pyproject.toml
 plugins: cov-7.0.0
-collected 136 items
-===================================================================== 136 passed in 6.39s ======================================================================
+collected 147 items
+===================================================================== 147 passed in 6.57s ======================================================================
 ```
 
 ### Overall Statistics
-- **Total Tests**: 136
-- **Passed**: 136 (100%)
+- **Total Tests**: 147
+- **Passed**: 147 (100%)
 - **Failed**: 0
 - **Skipped**: 0
-- **Duration**: ~6 seconds
+- **Duration**: ~6.5 seconds
 
 ---
 
@@ -62,7 +62,7 @@ collected 136 items
 ---
 
 ### 2. Dynamic Time Warping Tests (`test_dtw.py`)
-**Status**: 28/28 passed
+**Status**: 29/29 passed
 
 #### Similarity Matrix (4 tests)
 - `test_identical_contours` - Identical contour similarity
@@ -70,9 +70,10 @@ collected 136 items
 - `test_similarity_calculation` - Similarity formula correctness
 - `test_vectorization` - Vectorized computation
 
-#### DTW Algorithm (6 tests)
+#### DTW Algorithm (7 tests)
 - `test_identical_contours_perfect_match` - Perfect match scenario
 - `test_length_ratio_constraint` - Length ratio enforcement
+- `test_length_ratio_equals_warp_factor_rejected` - Length ratio at warp factor boundary rejected
 - `test_simple_time_stretch` - Time stretching handling
 - `test_warp_factor_level_effect` - Warp factor flexibility
 - `test_single_element_contours` - Single-element edge case
@@ -176,8 +177,8 @@ collected 136 items
 
 ---
 
-### 6. Validation Tests (`test_validation.py`)
-**Status**: 25/25 passed
+### 6. Validation and Utils Tests (`test_validation.py`)
+**Status**: 36/36 passed
 
 #### Validate Contour (8 tests)
 - `test_valid_contour_passes` - Valid 1D positive numeric array
@@ -198,6 +199,19 @@ collected 136 items
 #### Validate Parameters (13 tests)
 - `test_valid_parameters_pass` - All valid passes
 - Vigilance / learning_rate / bias / max_categories / max_iterations / warp_factor_level boundary and type checks
+
+#### Numba check (`utils/numba_check.py`) (11 tests)
+- `test_numba_available_returns_bool` - numba_available() returns bool
+- `test_report_numba_status_numba_available_returns_true` - report_numba_status when Numba installed
+- `test_report_numba_status_numba_not_available_returns_false` - report_numba_status when Numba missing
+- `test_check_numba_numba_available_returns_true` - check_numba when Numba installed
+- `test_check_numba_numba_not_available_no_install_returns_false` - check_numba, no install offer
+- `test_check_numba_numba_not_available_offer_install_not_tty_returns_false` - non-TTY skips prompt
+- `test_check_numba_numba_not_available_no_pip_no_conda_returns_false` - no pip/conda, manual message
+- `test_check_numba_numba_not_available_user_declines_install_returns_false` - user answers n
+- `test_check_numba_numba_not_available_user_accepts_install_pip_success` - user accepts, pip install succeeds
+- `test_check_numba_numba_not_available_pip_install_fails_returns_false` - pip install fails
+- `test_check_numba_eof_during_prompt_returns_false` - EOF during install prompt
 
 ---
 
@@ -280,6 +294,7 @@ Then open `htmlcov/index.html` in a browser.
 - **Network Training**: High coverage
 - **Visualization**: High coverage
 - **Validation** (`utils/validation.py`): Covered by `test_validation.py` (validate_contour, validate_contours, validate_parameters)
+- **Numba check** (`utils/numba_check.py`): Covered by `test_validation.py` (numba_available, report_numba_status, check_numba; install prompt and pip/conda paths tested via mocks)
 - **Loaders** (`io/loaders.py`): Covered by `test_loaders.py` and `test_matlab_compat.py` (load_ctr_file, load_csv_file, load_txt_file, load_contours, load_mat_categorisation)
 
 ### Edge Cases Tested
@@ -380,7 +395,7 @@ isort==7.0.0
 
 ## Conclusion
 
-**ARTwarp-py v2.0.3 passes all 136 tests with 100% success rate.**
+**ARTwarp-py v2.0.3 passes all 147 tests with 100% success rate.**
 
 ## Author Note
 
@@ -395,7 +410,7 @@ Thank you.
 ---
 
 _Test execution completed: February, 2026_  
-_All tests passed: 136/136 (100%)_  
+_All tests passed: 147/147 (100%)_  
 _Status: READY FOR USE_
 
 ---

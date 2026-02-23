@@ -100,15 +100,15 @@ Status: Fully functional
 ### 5. Testing Infrastructure
 
 #### Unit Tests
-- **test_dtw.py**: DTW algorithm tests (28 tests: core DTW/unwarp + Python-path tests for coverage when Numba disabled)
+- **test_dtw.py**: DTW algorithm tests (29 tests: core DTW/unwarp + Python-path tests for coverage when Numba disabled)
 - **test_art.py**: ART component tests (18 tests)
 - **test_network.py**: Network training and prediction tests (18 tests)
 - **test_visualization.py**: Plotting and report tests (19 tests)
 - **test_matlab_compat.py**: MATLAB file and behavior compatibility tests (9 tests)
 - **test_loaders.py**: Data loaders tests — load_ctr_file, load_csv_file, load_txt_file, load_contours, load_mat_categorisation (22 tests)
-- **test_validation.py**: Validation utilities tests — validate_contour, validate_contours, validate_parameters (25 tests)
+- **test_validation.py**: Validation utilities tests — validate_contour, validate_contours, validate_parameters, numba (36 tests)
 
-**Total**: **136 tests** covering:
+**Total**: **147 tests** covering:
 - Mathematical correctness
 - Edge cases
 - Error handling
@@ -176,7 +176,7 @@ tests/
 └── __init__.py
 
 ```
-**136 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
+**147 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
 
 ### Documentation
 ```
@@ -246,7 +246,7 @@ examples/
 ### ✓ Code Quality
 - [x] Complete type hints
 - [x] Comprehensive docstrings
-- [x] Unit tests (136 test cases; see docs/dev/TEST_RESULTS.md)
+- [x] Unit tests (147 test cases; see docs/dev/TEST_RESULTS.md)
 - [x] Integration tests
 - [x] Code formatting (Black)
 - [x] Linting configuration
@@ -282,7 +282,7 @@ The Python implementation maintains exact mathematical equivalence with the orig
 ## Testing Verification
 
 The implementation includes:
-- **136 unit tests** covering all core functions, I/O loaders, validation, and DTW Python fallback (for coverage)
+- **147 unit tests** covering all core functions, I/O loaders, validation, and DTW Python fallback (for coverage)
 - **test_validation.py** (25 tests): validate_contour, validate_contours, validate_parameters (all branches and error messages)
 - **test_loaders.py** (22 tests): load_ctr_file, load_csv_file, load_txt_file, load_contours (formats, return_tempres, errors), load_mat_categorisation extended cases
 - **test_dtw.py** (28 tests): core DTW/unwarp plus Python-path tests (NUMBA_AVAILABLE=False) for full coverage of dtw.py fallback

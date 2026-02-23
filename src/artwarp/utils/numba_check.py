@@ -9,13 +9,14 @@ performance optimizations) and, if not, can offer to install it via pip or conda
 
 import subprocess
 import sys
-from typing import Optional
+from typing import Optional, TextIO
 
 
 def numba_available() -> bool:
     """Return True if Numba can be imported, False otherwise."""
     try:
         import numba  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -37,16 +38,19 @@ def _pip_available() -> bool:
 def _conda_available() -> bool:
     """Check if conda is available (silently)."""
     try:
-        return subprocess.run(
-            ["conda", "--version"],
-            capture_output=True,
-            timeout=5,
-        ).returncode == 0
+        return (
+            subprocess.run(
+                ["conda", "--version"],
+                capture_output=True,
+                timeout=5,
+            ).returncode
+            == 0
+        )
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
 
 
-def report_numba_status(stream: Optional[object] = None) -> bool:
+def report_numba_status(stream: Optional[TextIO] = None) -> bool:
     """
     Print whether Numba is installed (one line). No install prompt.
     Use this when using the API (e.g. in a Jupyter notebook) so users see the status.
@@ -66,7 +70,7 @@ def report_numba_status(stream: Optional[object] = None) -> bool:
 
 def check_numba(
     offer_install: bool = True,
-    stream: Optional[object] = None,
+    stream: Optional[TextIO] = None,
 ) -> bool:
     """
     Report whether Numba is installed and optionally offer to install it.
@@ -127,7 +131,10 @@ def check_numba(
         try:
             result = subprocess.run(cmd)
             if result.returncode == 0:
-                print("  Numba installed successfully. Restart the CLI for it to take effect.", file=stream)
+                print(
+                    "  Numba installed successfully. Restart the CLI for it to take effect.",
+                    file=stream,
+                )
                 return True
             print("  Install failed. Try manually: pip install numba", file=stream)
         except Exception as e:
@@ -140,7 +147,10 @@ def check_numba(
         try:
             result = subprocess.run(cmd)
             if result.returncode == 0:
-                print("  Numba installed successfully. Restart the CLI for it to take effect.", file=stream)
+                print(
+                    "  Numba installed successfully. Restart the CLI for it to take effect.",
+                    file=stream,
+                )
                 return True
             print("  Install failed. Try manually: conda install numba", file=stream)
         except Exception as e:
