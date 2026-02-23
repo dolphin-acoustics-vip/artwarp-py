@@ -45,7 +45,7 @@ ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combin
 **Requirements:** Python 3.8+, NumPy ≥1.20, SciPy ≥1.7, pandas ≥1.3, matplotlib ≥3.4, and optionally Numba ≥0.54 for JIT.
 
 ```bash
-pip install -e .
+> pip install -e .
 ```
 
 For environment setup and virtualenv details, see **[user/INSTALLATION.md](docs/user/INSTALLATION.md)** (end-user) and **[dev/ENVIRONMENT_SETUP.md](docs/dev/ENVIRONMENT_SETUP.md)** (developers) within **[docs/](docs/)**.
@@ -63,7 +63,7 @@ Activate your virtual environment first (e.g. `source venv/bin/activate` or, in 
 **Interactive launcher (configure all options via prompts):**
 
 ```bash
-./run.sh
+> ./run.sh
 ```
 
 This opens a menu for **Train**, **Plot**, **Predict**, or **Export**, then prompts for every parameter (paths, vigilance, learning rate, resampling, etc.) with defaults and validation. You can also call the CLI directly through the script: `./run.sh train -i ./contours -o results.pkl`.
@@ -72,11 +72,11 @@ Basic commands:
 
 ```bash
 # train on a directory of contour files
-artwarp-py train --input-dir ./contours --output results.pkl \
+> artwarp-py train --input-dir ./contours --output results.pkl \
     --vigilance 85 --learning-rate 0.1 --max-iterations 50
 
 # export reference contours and category assignments
-artwarp-py train --input-dir ./contours --output results.pkl --export-refs --export-categories
+> artwarp-py train --input-dir ./contours --output results.pkl --export-refs --export-categories
 ```
 
 Resample with sample interval (seconds) [default = 0.02s]:
@@ -84,21 +84,21 @@ Resample with sample interval (seconds) [default = 0.02s]:
 
 ```bash
 # resample contours to uniform temporal resolution (like MATLAB resample option)
-artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02
+> artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02
 ```
 
 Altogether (resampling & exporting reference contours / category assignments):
 
 ```bash
 # full command
-artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02 --vigilance 85 --learning-rate 0.1 --max-iterations 50 --export-refs --export-categories
+> artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02 --vigilance 85 --learning-rate 0.1 --max-iterations 50 --export-refs --export-categories
 ```
 
 Gener visualizations:
 
 ```bash
 # generate visualizations from Pickle (.pkl) file
-artwarp-py plot --results results.pkl --input-dir ./contours --output-dir ./report
+> artwarp-py plot --results results.pkl --input-dir ./contours --output-dir ./report
 ```
 
 ### Python API
@@ -205,13 +205,13 @@ artwarp/
 Run the test suite (use the venv’s Python so dependencies are found):
 
 ```bash
-python -m pytest tests/ -v
+> python -m pytest tests/ -v
 ```
 
 With coverage (CI requires ≥80%):
 
 ```bash
-python -m pytest tests/ --cov=artwarp --cov-report=html --cov-fail-under=80
+> python -m pytest tests/ --cov=artwarp --cov-report=html --cov-fail-under=80
 ```
 
 **CI:** GitHub Actions runs tests (Python 3.9–3.12), coverage gate, and lint (Black, isort, Flake8, Mypy). See [docs/dev/TEST_RESULTS.md](docs/dev/TEST_RESULTS.md) for details.
@@ -253,16 +253,16 @@ The following are steps (specific to @PedroGGBM) to upload the PyPI package:
 
 ```bash
 # to generate distribution archives (build/)
-conda activate sig-process # or your corresponding venv (e.g., conda, venv, uv, etc)
-cd <base_directory>
-python -m pip install --upgrade setuptools wheel build # ensure latest version of PyPA's build installed
-python -m build
+> conda activate sig-process # or your corresponding venv (e.g., conda, venv, uv, etc)
+> cd <base_directory>
+> python -m pip install --upgrade setuptools wheel build # ensure latest version of PyPA's build installed
+> python -m build
 
 # to upload distribution archive
-python -m pip install --upgrade twine
-python -m twine upload --repository testpypi dist/* # this is to test it
-python -m pip install --index-url https://test.pypi.org/simple/ --no-deps example-package-YOUR-USERNAME-HERE # to test install on test server for PyPI
+> python -m pip install --upgrade twine
+> python -m twine upload --repository testpypi dist/* # this is to test it
+> python -m pip install --index-url https://test.pypi.org/simple/ --no-deps example-package-YOUR-USERNAME-HERE # to test install on test server for PyPI
 
 ### !!! Once registered in PyPI and own official API key
-python -m twine upload dist/* # this is to upload it
+> python -m twine upload dist/* # this is to upload it
 ```

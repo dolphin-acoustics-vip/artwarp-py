@@ -83,6 +83,28 @@ def _csv_frequency_column_index(df: pd.DataFrame) -> Optional[int]:
     return None
 
 
+def _csv_time_column_index(df: pd.DataFrame) -> Optional[int]:
+    """Return the 0-based index of the first column that looks like time (e.g. 'Time [ms]')."""
+    for i, name in enumerate(df.columns):
+        s = str(name).strip().lower()
+        if "time" in s and ("ms" in s or "sec" in s or "s]" in s):
+            return i
+        if s == "time":
+            return i
+    return None
+
+
+def _tempres_from_time_column(time_values: NDArray[np.float64], unit_ms: bool = True) -> float:
+    """Compute temporal resolution (seconds per point) from a 1D array of timestamps."""
+    n = len(time_values)
+    if n < 2:
+        return 0.0
+    span = abs(float(time_values[-1] - time_values[0]))
+    if unit_ms:
+        span = span / 1000.0  # ms -> seconds
+    return span / (n - 1)
+
+
 def load_csv_file(
     filepath: Path, frequency_column: int = 0, skip_header: int = 1
 ) -> Dict[str, Any]:
@@ -93,23 +115,38 @@ def load_csv_file(
     first column whose name contains "Frequency" or "Hz" (case-insensitive), e.g.
     "Peak Frequency [Hz]". Otherwise the column index is taken from frequency_column.
 
+    When a time column is present (e.g. "Time [ms]"), temporal resolution (tempres)
+    is inferred as (last_time - first_time) / (n_points - 1) in seconds, so that
+    resampling can be used correctly when mixing contours with different resolutions.
+
     Args:
         filepath: Path to .csv file
         frequency_column: Column index to use when no header or no matching column (0-indexed)
         skip_header: Number of header rows to skip when not auto-detecting
 
     Returns:
-        Dictionary with 'contour', 'tempres' (None), 'ctrlength' (None).
+        Dictionary with 'contour', 'tempres' (inferred from time column if present, else None),
+        'ctrlength' (None).
     """
     try:
-        # Try reading with header to auto-detect frequency column
+        # try reading with header to auto-detect frequency and optional time column
         data_with_header = pd.read_csv(filepath, header=0, nrows=0)
         if len(data_with_header.columns) > 0:
-            idx = _csv_frequency_column_index(data_with_header)
-            if idx is not None:
-                data = pd.read_csv(filepath, header=0, usecols=[data_with_header.columns[idx]])
+            freq_idx = _csv_frequency_column_index(data_with_header)
+            time_idx = _csv_time_column_index(data_with_header)
+            if freq_idx is not None:
+                cols_to_use = [data_with_header.columns[freq_idx]]
+                if time_idx is not None:
+                    cols_to_use.append(data_with_header.columns[time_idx])
+                data = pd.read_csv(filepath, header=0, usecols=cols_to_use)
                 contour = np.array(data.iloc[:, 0].values, dtype=np.float64)
-                return {"contour": contour, "tempres": None, "ctrlength": None}
+                tempres: Optional[float] = None
+                if time_idx is not None and len(data.columns) > 1:
+                    time_col = np.array(data.iloc[:, 1].values, dtype=np.float64)
+                    tempres = _tempres_from_time_column(
+                        time_col, unit_ms=("ms" in str(data_with_header.columns[time_idx]).lower())
+                    )
+                return {"contour": contour, "tempres": tempres, "ctrlength": None}
 
         # fallback -> no header or no "Frequency"/"Hz" column
         data = pd.read_csv(filepath, header=None, skiprows=skip_header)
