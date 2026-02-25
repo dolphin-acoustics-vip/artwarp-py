@@ -4,6 +4,10 @@ Resample contours to a new temporal resolution (MATLAB resample option).
 Mirrors ARTwarp_Run_Categorisation.m when resample == 1:
   interp1(1:length(contour), contour, 1:sampleInterval/tempres:length(contour))
 
+Pipeline: step = sample_interval_sec / tempres (index step per output point).
+  step > 1 => fewer output points (downsample); step < 1 => more (upsample).
+  new_length = 1 + round((n - 1) / step). Query positions: linspace(0, n-1, new_length).
+
 @author: Pedro Gronda Garrigues
 """
 
@@ -61,6 +65,12 @@ def resample_contours(
         if n == 1:
             result.append(np.array([c[0]], dtype=np.float64))
             continue
+        if tr <= 0:
+            raise ValueError(
+                f"tempres must be positive for resampling (got {tr}). "
+                "Contours with 0 or 1 time points, or identical timestamps, yield tempres=0; "
+                "the CLI substitutes --tempres for invalid values."
+            )
         # MATLAB: 1:(sampleInterval/tempres):length(contour) => new indices
         step = sample_interval_sec / tr
         new_length = max(1, int(round(1 + (n - 1) / step)))
