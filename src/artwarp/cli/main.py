@@ -13,7 +13,7 @@ Provides commands for:
 import argparse
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
@@ -45,7 +45,15 @@ def command_train(args: argparse.Namespace) -> None:
                 return_tempres=True,
             )
             default_tr = getattr(args, "tempres", 0.01)
-            tempres_floats = [float(t) if t is not None else default_tr for t in tempres_list]
+
+            # use default when tempres is missing or <= 0 (avoids division by zero in resample)
+            def _safe_tempres(t: Optional[float]) -> float:
+                if t is None:
+                    return default_tr
+                v = float(t)
+                return default_tr if v <= 0 else v
+
+            tempres_floats = [_safe_tempres(t) for t in tempres_list]
         else:
             contours, names = load_contours(
                 args.input_dir,
@@ -264,7 +272,8 @@ def create_parser() -> argparse.ArgumentParser:
         "--freq-column",
         type=int,
         default=0,
-        help="Frequency column index for CSV/TXT files (default: 0)",
+        help="Frequency column index for CSV/TXT when no header or no Frequency/Hz column \
+        (default: 0)",
     )
     train_parser.add_argument(
         "--vigilance", type=float, default=85.0, help="Vigilance threshold (1-99, default: 85)"
@@ -350,7 +359,8 @@ def create_parser() -> argparse.ArgumentParser:
         "--freq-column",
         type=int,
         default=0,
-        help="Frequency column index for CSV/TXT files (default: 0)",
+        help="Frequency column index for CSV/TXT when no header or no Frequency/Hz column \
+            (default: 0)",
     )
     predict_parser.add_argument(
         "-q", "--quiet", action="store_true", help="Suppress progress output"
@@ -398,7 +408,8 @@ def create_parser() -> argparse.ArgumentParser:
         "--freq-column",
         type=int,
         default=0,
-        help="Frequency column index for CSV/TXT files (default: 0)",
+        help="Frequency column index for CSV/TXT when no header or no Frequency/Hz column \
+             (default: 0)",
     )
     plot_parser.add_argument(
         "--dpi", type=int, default=300, help="Resolution for saved figures (default: 300)"

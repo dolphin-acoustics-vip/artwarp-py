@@ -129,22 +129,27 @@ def load_csv_file(
         'ctrlength' (None).
     """
     try:
-        # try reading with header to auto-detect frequency and optional time column
+        # auto-detect first -> header with "Frequency" or "Hz" in column name
+        # (frequency_column unused here)
         data_with_header = pd.read_csv(filepath, header=0, nrows=0)
         if len(data_with_header.columns) > 0:
             freq_idx = _csv_frequency_column_index(data_with_header)
             time_idx = _csv_time_column_index(data_with_header)
             if freq_idx is not None:
-                cols_to_use = [data_with_header.columns[freq_idx]]
-                if time_idx is not None:
-                    cols_to_use.append(data_with_header.columns[time_idx])
-                data = pd.read_csv(filepath, header=0, usecols=cols_to_use)
-                contour = np.array(data.iloc[:, 0].values, dtype=np.float64)
+                freq_col_name = data_with_header.columns[freq_idx]
+                time_col_name = data_with_header.columns[time_idx] if time_idx is not None else None
+                cols_to_use = [freq_col_name]
+                if time_col_name is not None:
+                    cols_to_use.append(time_col_name)
+
+                # pandas usecols returns columns in FILE order, not list order -> select by name
+                data = pd.read_csv(filepath, header=0, usecols=cols_to_use)[cols_to_use]
+                contour = np.array(data[freq_col_name].values, dtype=np.float64)
                 tempres: Optional[float] = None
-                if time_idx is not None and len(data.columns) > 1:
-                    time_col = np.array(data.iloc[:, 1].values, dtype=np.float64)
+                if time_col_name is not None and len(data.columns) > 1:
+                    time_col = np.array(data[time_col_name].values, dtype=np.float64)
                     tempres = _tempres_from_time_column(
-                        time_col, unit_ms=("ms" in str(data_with_header.columns[time_idx]).lower())
+                        time_col, unit_ms=("ms" in time_col_name.lower())
                     )
                 return {"contour": contour, "tempres": tempres, "ctrlength": None}
 
