@@ -35,6 +35,7 @@ setup(
         "scipy>=1.7.0",
         "pandas>=1.3.0",
         "matplotlib>=3.4.0",
+        "numba>=0.54.0",
     ],
     extras_require={
         "accelerate": [
