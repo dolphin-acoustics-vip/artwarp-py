@@ -16,16 +16,16 @@ cachedir: .pytest_cache
 rootdir: /home/pedroggbm/Documents/vp4038-dolphin-acoustics/ARTWarp/artwarp-py
 configfile: pyproject.toml
 plugins: cov-7.0.0
-collected 147 items
-===================================================================== 147 passed in 6.57s ======================================================================
+collected 164 items
+===================================================================== 164 passed in 7.72s ======================================================================
 ```
 
 ### Overall Statistics
-- **Total Tests**: 147
-- **Passed**: 147 (100%)
+- **Total Tests**: 164
+- **Passed**: 164 (100%)
 - **Failed**: 0
 - **Skipped**: 0
-- **Duration**: ~6.5 seconds
+- **Duration**: ~7.7 seconds
 
 ---
 
@@ -216,9 +216,9 @@ collected 147 items
 ---
 
 ### 7. Visualization Tests (`test_visualization.py`)
-**Status**: 19/19 passed
+**Status**: 35/35 passed
 
-#### Visualization Functions (14 tests)
+#### Visualization Functions (16 tests)
 - `test_plot_training_summary` - Multi-panel summary plot
 - `test_plot_reference_contours` - Reference contour grid
 - `test_plot_reference_contours_empty` - Empty matrix handling
@@ -228,8 +228,10 @@ collected 147 items
 - `test_plot_contours_by_category` - Per-category plots
 - `test_plot_contours_by_category_empty` - Empty category handling
 - `test_plot_match_distribution` - Match histogram
+- `test_plot_discovery_curve` - Category discovery curve (cumulative categories vs sample order; MATLAB DiscoveryCurves.m equivalent)
+- `test_plot_discovery_curve_no_data` - Discovery curve with no samples
 - `test_plot_match_distribution_no_categories` - No categories case
-- `test_create_results_report` - Comprehensive report
+- `test_create_results_report` - Comprehensive report (includes discovery_curve.png)
 - `test_figure_save_functionality` - File saving
 - `test_custom_figure_sizes` - Size customization
 - `test_dpi_specification` - DPI control
@@ -239,6 +241,23 @@ collected 147 items
 - `test_many_categories` - Many categories handling
 - `test_with_uncategorized_samples` - Uncategorized samples
 - `test_very_many_categories_renders` - Training summary, category distribution, and reference contours with >25 categories (no legend, thinned x-axis labels)
+
+#### Additional Visualizations (15 tests) — algorithm, diagnostics, reporting
+- `test_plot_dtw_alignment` - DTW alignment path and contours
+- `test_plot_art_schematic` - ART decision flow diagram
+- `test_plot_warp_constraint` - Itakura band illustration
+- `test_plot_per_category_match_quality` - Per-category match violin
+- `test_plot_category_similarity_matrix` - Pairwise DTW similarity heatmap
+- `test_plot_category_embedding` - MDS embedding of categories
+- `test_plot_resampling_before_after` - Resampling demo
+- `test_plot_contour_length_distribution` - Length/tempres histograms
+- `test_plot_contour_length_distribution_with_tempres` - With tempres list
+- `test_plot_vigilance_sweep` - Vigilance vs categories
+- `test_plot_run_stability` - Category count distribution over runs
+- `test_create_paper_figure` - Paper-ready multi-panel figure
+- `test_plot_category_dendrogram` - Category dendrogram (scipy)
+- `test_plot_confusion_matrix` - Confusion matrix (ground truth)
+- `test_plot_label_vs_category` - Label vs category stacked bar
 
 ---
 
@@ -395,7 +414,7 @@ isort==7.0.0
 
 ## Conclusion
 
-**ARTwarp-py v2.0.3 passes all 147 tests with 100% success rate.**
+**ARTwarp-py v2.0.3 passes all 164 tests with 100% success rate.**
 
 ## Author Note
 
@@ -410,7 +429,7 @@ Thank you.
 ---
 
 _Test execution completed: February, 2026_  
-_All tests passed: 147/147 (100%)_  
+_All tests passed: 164/164 (100%)_  
 _Status: READY FOR USE_
 
 ---

@@ -246,9 +246,9 @@ Algorithm steps (warp, unwarp, activate, match, update_weights, add_new_category
 | ARTwarp_Assess_Net | — | Not implemented (species misclassification diagnostic) |
 | ARTwarp_Test_Net (assign best, no vigilance) | `predict()` uses vigilance | Can add `assign_best_only` if needed |
 | TempRes3.m (CSV→.ctr) | — | Unnecessary; we load CSV directly |
-| DiscoveryCurves.m, RenameFiles.m, whistplot_RefContours.m | — | Standalone/helper scripts; not core algorithm |
+| DiscoveryCurves.m | visualization/plotting.py `plot_discovery_curve()` | Cumulative categories vs sample order (discovery curve) |
 
-The **core algorithm and I/O** are complete and aligned. The only missing “ARTwarp” behaviors are: optional Assess_Net-style diagnostic, optional Test_Net “assign best category only” mode, and the standalone helper scripts (DiscoveryCurves, RenameFiles, whistplot).
+The **core algorithm and I/O** are complete and aligned. The only missing “ARTwarp” behaviors are: optional Assess_Net-style diagnostic, optional Test_Net “assign best category only” mode, and the standalone helper scripts (RenameFiles, whistplot_RefContours). DiscoveryCurves.m is implemented as `plot_discovery_curve()`.
 
 ## Data Structures
 

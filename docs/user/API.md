@@ -385,7 +385,7 @@ artwarp-py export \
 
 ### plot
 
-Generate a visualization report (training summary, reference contours, convergence, etc.) from saved results. 
+Generate a visualization report (training summary, reference contours, convergence, discovery curve, per-category plots, etc.) from saved results. Also writes extra figures (ART schematic, DTW alignment, category similarity, dendrogram, etc.) into an **additional/** subdirectory inside the output dir.
 
 Requires the same contour directory and format as used for training.
 
