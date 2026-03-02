@@ -26,6 +26,7 @@ from artwarp.core.weights import (
     get_weight_contour,
     initialize_weight_matrix,
     update_weights,
+    delete_category,
 )
 
 
@@ -222,9 +223,18 @@ class ARTwarp:
             sample_order = np.random.permutation(num_samples)
             num_reclassifications = 0
 
+            # CHANGE
+            # calculate the number of contours in each category
+            if iteration > 1:
+                num_per_cat = np.bincount(categories.astype(np.int64))
+
             for sample_idx in sample_order:
                 old_category = categories[sample_idx]
                 current_contour = contours[sample_idx]
+                if iteration > 1:
+                    num_in_old_category = num_per_cat[old_category.astype(np.int64)]       
+                else:
+                    num_in_old_category = 0         
 
                 # activate categories (bottom-up)
                 if self.num_categories > 0:
@@ -237,13 +247,22 @@ class ARTwarp:
                 else:
                     # no categories yet
                     sorted_indices = np.array([], dtype=np.int32)
-
-                # search for resonance
+                
                 resonance = False
                 max_match = 0.0
 
+
+                #CHANGE
+                # if it is the only contour in the category check every other category before choosing its previous category
+                if num_in_old_category == 1:
+                    # moves the first element to the back
+                    sorted_indices = np.roll(sorted_indices, -1)
+                    
+
                 for cat_rank in range(len(sorted_indices)):
+
                     cat_idx = sorted_indices[cat_rank]
+                    #print(cat_idx)
 
                     # weight contour + warp func
                     weight_contour = get_weight_contour(self.weight_matrix, cat_idx)
@@ -299,6 +318,32 @@ class ARTwarp:
             new_cats_this_round = self.num_categories - categories_at_iter_start
             pct_reclass = (num_reclassifications / num_samples * 100) if num_samples else 0
 
+            # CHANGE    
+            #calculate number of categories with 0 and 1 contours
+            num_per_cat = np.bincount(categories.astype(np.int64))
+            # print(f"Number of categories with no contours: {np.count_nonzero(num_per_cat == 0)}")
+            # print(f"Number of catgeories with 1 contour: {np.count_nonzero(num_per_cat == 1)}")
+
+            
+            # delete all categories with no contours
+            num_cat_deleted = 0
+            i = 0
+            # print(num_per_cat)
+            # print(categories)
+            while i < len(num_per_cat):
+                
+                if num_per_cat[i] == 0:
+                    num_cat_deleted += 1
+                    self.weight_matrix = delete_category(i, self.weight_matrix)
+                    
+                    # shift all other cat_idx by 1 so they are still correct
+                    categories = np.where(categories > i, categories-1, categories)
+                    self.num_categories -= 1
+                    num_per_cat = np.delete(num_per_cat, i)
+                else:
+                    # only move forward if a category isn't deleted as we are iterating over an array we are modifying
+                    i += 1
+
             if self.verbose:
                 color = _green if num_reclassifications == 0 else _red
                 reclass_str = (
@@ -309,6 +354,7 @@ class ARTwarp:
                     f"  {color}iter {iteration:3d}{_reset}  │  "
                     f"categories {self.num_categories:3d}  "
                     f"(+{new_cats_this_round:2d} this round)  │  {reclass_str}"
+                    f"  |  deleted {num_cat_deleted:2d} categories this round"
                 )
             categories_at_iter_start = self.num_categories
 
