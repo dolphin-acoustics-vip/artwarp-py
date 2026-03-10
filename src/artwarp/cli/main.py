@@ -213,10 +213,11 @@ def command_plot(args: argparse.Namespace) -> None:
 
     print(f"Loading contours from: {args.input_dir}")
     try:
-        contours, names = load_contours(
+        contours, names, tempres_list = load_contours(
             args.input_dir,
             file_format=args.format,
             frequency_column=args.freq_column,
+            return_tempres=True,
         )
     except Exception as e:
         print(f"Error loading contours: {e}", file=sys.stderr)
@@ -238,7 +239,9 @@ def command_plot(args: argparse.Namespace) -> None:
     print(f"\nGenerating visualization report in: {output_dir}")
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     paths = create_results_report(
-        results, contours, contour_names=names, output_dir=output_dir, dpi=args.dpi
+        results, contours, contour_names=names, output_dir=output_dir, dpi=args.dpi,
+        warp_factor_level=args.warp_factor,
+        tempres_list=tempres_list,
     )
     print(f"Report generated: {len(paths)} figures saved to {output_dir}")
     for name, path in sorted(paths.items()):
@@ -413,6 +416,10 @@ def create_parser() -> argparse.ArgumentParser:
     )
     plot_parser.add_argument(
         "--dpi", type=int, default=300, help="Resolution for saved figures (default: 300)"
+    )
+    plot_parser.add_argument(
+        "--warp-factor", type=int, default=3,
+        help="DTW warp factor used for similarity/alignment plots (default: 3, should match train)",
     )
 
     return parser
