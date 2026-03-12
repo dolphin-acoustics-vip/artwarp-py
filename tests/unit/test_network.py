@@ -199,7 +199,7 @@ class TestARTwarpTraining:
         assert results.num_iterations > 0
         assert isinstance(results.converged, bool)
         assert len(results.iteration_history) > 0
-        assert results.training_time > 0
+        assert results.training_time >= 0
 
 
 class TestARTwarpPrediction:

@@ -7,6 +7,8 @@ correct data representation, and error handling.
 @author: Pedro Gronda Garrigues
 """
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
@@ -19,13 +21,28 @@ try:
     import matplotlib.pyplot as plt
 
     from artwarp.visualization import (
+        create_paper_figure,
         create_results_report,
+        plot_art_schematic,
         plot_category_distribution,
+        plot_category_dendrogram,
+        plot_category_embedding,
+        plot_category_similarity_matrix,
+        plot_confusion_matrix,
+        plot_contour_length_distribution,
         plot_contours_by_category,
         plot_convergence_history,
+        plot_discovery_curve,
+        plot_dtw_alignment,
+        plot_label_vs_category,
         plot_match_distribution,
+        plot_per_category_match_quality,
         plot_reference_contours,
+        plot_resampling_before_after,
+        plot_run_stability,
         plot_training_summary,
+        plot_vigilance_sweep,
+        plot_warp_constraint,
     )
 
     MATPLOTLIB_AVAILABLE = True
@@ -163,6 +180,32 @@ class TestVisualizationFunctions:
         assert len(fig.get_axes()) == 1
         plt.close(fig)
 
+    def test_plot_discovery_curve(self, sample_results):
+        """Test discovery curve plot (cumulative categories vs sample order)."""
+        results, _ = sample_results
+
+        fig = plot_discovery_curve(results, title="Test species", figsize=(10, 6))
+
+        assert fig is not None
+        assert len(fig.get_axes()) == 1
+        plt.close(fig)
+
+    def test_plot_discovery_curve_no_data(self):
+        """Test discovery curve with no samples."""
+        results = TrainingResults(
+            categories=np.array([]),
+            matches=np.array([]),
+            weight_matrix=np.zeros((5, 0)),
+            num_categories=0,
+            num_iterations=0,
+            converged=False,
+            iteration_history=[],
+            training_time=0.0,
+        )
+        fig = plot_discovery_curve(results)
+        assert fig is not None
+        plt.close(fig)
+
     def test_plot_match_distribution_no_categories(self):
         """Test match distribution with no categorized samples."""
         results = TrainingResults(
@@ -200,10 +243,11 @@ class TestVisualizationFunctions:
         assert len(saved_files) > 0
         assert "training_summary" in saved_files
         assert "reference_contours" in saved_files
+        assert "discovery_curve" in saved_files
 
         # verify files exist
         for path in saved_files.values():
-            assert (tmp_path / "test_report" / path.split("/")[-1]).exists()
+            assert Path(path).exists()
 
     def test_figure_save_functionality(self, sample_results, tmp_path):
         """Test that figures can be saved to files."""
@@ -319,3 +363,136 @@ class TestVisualizationEdgeCases:
         fig3 = plot_reference_contours(weight_matrix, figsize=(14, 10))
         assert fig3 is not None
         plt.close(fig3)
+
+
+@pytest.mark.skipif(not MATPLOTLIB_AVAILABLE, reason="matplotlib not available")
+class TestNewVisualizations:
+    """Tests for additional visualizations (algorithm, diagnostics, reporting)."""
+
+    @pytest.fixture
+    def sample_results(self):
+        """Create sample training results for new visualization tests."""
+        contours = [
+            np.array([100.0, 200.0, 300.0]),
+            np.array([110.0, 210.0, 310.0]),
+            np.array([500.0, 600.0, 700.0]),
+        ]
+        network = ARTwarp(vigilance=85.0, random_seed=42, verbose=False)
+        results = network.fit(contours)
+        return results, contours
+
+    def test_plot_dtw_alignment(self):
+        """Test DTW alignment plot between two contours."""
+        u1 = np.array([100.0, 150.0, 200.0, 250.0, 300.0])
+        u2 = np.array([105.0, 160.0, 210.0, 260.0, 310.0])
+        fig = plot_dtw_alignment(u1, u2, warp_factor_level=3, figsize=(8, 6))
+        assert fig is not None
+        assert len(fig.get_axes()) >= 2
+        plt.close(fig)
+
+    def test_plot_art_schematic(self):
+        """Test ART decision schematic (static diagram)."""
+        fig = plot_art_schematic(figsize=(8, 5))
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_warp_constraint(self):
+        """Test Itakura warp constraint illustration."""
+        fig = plot_warp_constraint(warp_factor_level=3, m=15, n=20, figsize=(6, 6))
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_per_category_match_quality(self, sample_results):
+        """Test per-category match quality violin plot."""
+        results, _ = sample_results
+        fig = plot_per_category_match_quality(results, figsize=(8, 5))
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_category_similarity_matrix(self, sample_results):
+        """Test category similarity matrix heatmap."""
+        results, _ = sample_results
+        fig = plot_category_similarity_matrix(results.weight_matrix, warp_factor_level=3)
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_category_embedding(self, sample_results):
+        """Test category MDS embedding."""
+        results, _ = sample_results
+        fig = plot_category_embedding(results.weight_matrix, warp_factor_level=3)
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_resampling_before_after(self):
+        """Test resampling before/after plot."""
+        contour = np.array([100.0, 150.0, 200.0, 250.0, 300.0])
+        fig = plot_resampling_before_after(contour, tempres=0.01, sample_interval_sec=0.02)
+        assert fig is not None
+        assert len(fig.get_axes()) == 2
+        plt.close(fig)
+
+    def test_plot_contour_length_distribution(self):
+        """Test contour length and tempres distribution histograms."""
+        contours = [np.array([1.0, 2.0] * i) for i in range(5, 15)]
+        fig = plot_contour_length_distribution(contours, figsize=(10, 4))
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_contour_length_distribution_with_tempres(self):
+        """Test contour length distribution with tempres list."""
+        contours = [np.array([1.0, 2.0, 3.0]) for _ in range(5)]
+        tempres_list = [0.01, 0.02, 0.01, 0.02, 0.01]
+        fig = plot_contour_length_distribution(contours, tempres_list=tempres_list)
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_vigilance_sweep(self, sample_results):
+        """Test vigilance sweep plot."""
+        results, contours = sample_results
+        sweep = []
+        for v in [80.0, 85.0, 90.0]:
+            net = ARTwarp(vigilance=v, random_seed=42, verbose=False)
+            sweep.append((v, net.fit(contours)))
+        fig = plot_vigilance_sweep(sweep, figsize=(8, 5))
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_run_stability(self):
+        """Test run stability histogram."""
+        num_cats = [3, 4, 3, 4, 3, 4, 3]
+        fig = plot_run_stability(num_cats, figsize=(6, 4))
+        assert fig is not None
+        plt.close(fig)
+
+    def test_create_paper_figure(self, sample_results):
+        """Test paper-ready multi-panel figure."""
+        results, contours = sample_results
+        names = ["a", "b", "c"]
+        fig = create_paper_figure(results, contours, contour_names=names, figsize=(12, 8))
+        assert fig is not None
+        assert len(fig.get_axes()) >= 3
+        plt.close(fig)
+
+    def test_plot_category_dendrogram(self, sample_results):
+        """Test category dendrogram (requires scipy)."""
+        pytest.importorskip("scipy")
+        results, _ = sample_results
+        fig = plot_category_dendrogram(results.weight_matrix, warp_factor_level=3)
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_confusion_matrix(self, sample_results):
+        """Test confusion matrix with ground truth labels."""
+        results, _ = sample_results
+        ground_truth = ["A", "B", "A"]
+        fig = plot_confusion_matrix(ground_truth, results.categories, figsize=(6, 5))
+        assert fig is not None
+        plt.close(fig)
+
+    def test_plot_label_vs_category(self, sample_results):
+        """Test label vs category stacked bar."""
+        results, _ = sample_results
+        ground_truth = ["A", "B", "A"]
+        fig = plot_label_vs_category(ground_truth, results.categories, figsize=(8, 5))
+        assert fig is not None
+        plt.close(fig)
