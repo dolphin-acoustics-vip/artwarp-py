@@ -1308,8 +1308,8 @@ def plot_warp_constraint(
     wfl = warp_factor_level
 
     # shaded feasible region -> use exact same bounds as dtw.py DP loop
-    j_lo_all = np.zeros(m, dtype=int)
-    j_hi_all = np.zeros(m, dtype=int)
+    j_lo_all: NDArray[np.int_] = np.zeros(m, dtype=int)
+    j_hi_all: NDArray[np.int_] = np.zeros(m, dtype=int)
     for i in range(m):
         j_lo_all[i] = max(0, max(round((i + 1) / wfl) - 1, (i - m) * wfl + n))
         j_hi_all[i] = min(n - 1, min(wfl * (i + 1), round((i - m) / wfl + n)) - 1)
