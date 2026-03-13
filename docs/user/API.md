@@ -153,14 +153,14 @@ uncategorized = results.get_uncategorized_count()
 
 ## Data Loading API
 
-### load_mat_categorisation()
+### load_mat_categorization()
 
-Load a MATLAB ARTwarp .mat file (NET and optionally DATA). Matches "Load Categorisation" in MATLAB.
+Load a MATLAB ARTwarp .mat file (NET and optionally DATA). Matches "Load Categorization" in MATLAB.
 
 ```python
-from artwarp.io.loaders import load_mat_categorisation
+from artwarp.io.loaders import load_mat_categorization
 
-data = load_mat_categorisation("ARTwarp85FINAL.mat")
+data = load_mat_categorization("ARTwarp85FINAL.mat")
 # data['weight_matrix'], data['num_categories'], data['vigilance'], ...
 # if DATA was saved: data['contours'], data['categories'] (0-based), data['contour_names']
 ```

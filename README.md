@@ -32,7 +32,7 @@ ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combin
 | Area | Description |
 |------|-------------|
 | **Performance** | Optimized algorithms using NumPy, with optional Numba JIT compilation |
-| **Input formats** | `.ctr` (MATLAB), `.csv`, `.txt`; load MATLAB categorisation (`.mat`) via `load_mat_categorisation()` |
+| **Input formats** | `.ctr` (MATLAB), `.csv`, `.txt`; load MATLAB categorization (`.mat`) via `load_mat_categorization()` |
 | **Visualization** | Publication-worthy plots and reports |
 | **CLI** | Command-line interface for training, plotting, and batch workflows |
 | **Quality** | Type hints, tests, coverage, and documentation |
@@ -193,8 +193,8 @@ artwarp/
 ## MATLAB compatibility
 
 - **Load MATLAB results:**  
-  `from artwarp.io import load_mat_categorisation`  
-  `data = load_mat_categorisation("ARTwarp85FINAL.mat")`  
+  `from artwarp.io import load_mat_categorization`  
+  `data = load_mat_categorization("ARTwarp85FINAL.mat")`  
   → `weight_matrix`, `num_categories`, and optionally `contours` / `categories` / `contour_names`.
 - **Export for MATLAB:** Use `one_based_categories=True` or `one_based_filenames=True` (see [API.md](docs/user/API.md)).
 

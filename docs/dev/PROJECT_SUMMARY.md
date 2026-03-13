@@ -105,7 +105,7 @@ Status: Fully functional
 - **test_network.py**: Network training and prediction tests (18 tests)
 - **test_visualization.py**: Plotting and report tests (35 tests: core plots, discovery curve, DTW/ART schematic, diagnostics, reporting)
 - **test_matlab_compat.py**: MATLAB file and behavior compatibility tests (9 tests)
-- **test_loaders.py**: Data loaders tests — load_ctr_file, load_csv_file, load_txt_file, load_contours, load_mat_categorisation (22 tests)
+- **test_loaders.py**: Data loaders tests — load_ctr_file, load_csv_file, load_txt_file, load_contours, load_mat_categorization (22 tests)
 - **test_validation.py**: Validation utilities tests — validate_contour, validate_contours, validate_parameters, numba (36 tests)
 
 **Total**: **164 tests** covering:
@@ -284,7 +284,7 @@ The Python implementation maintains exact mathematical equivalence with the orig
 The implementation includes:
 - **164 unit tests** covering all core functions, I/O loaders, validation, visualization (including discovery curve and additional algorithm/diagnostics/reporting plots), and DTW Python fallback (for coverage)
 - **test_validation.py** (25 tests): validate_contour, validate_contours, validate_parameters (all branches and error messages)
-- **test_loaders.py** (22 tests): load_ctr_file, load_csv_file, load_txt_file, load_contours (formats, return_tempres, errors), load_mat_categorisation extended cases
+- **test_loaders.py** (22 tests): load_ctr_file, load_csv_file, load_txt_file, load_contours (formats, return_tempres, errors), load_mat_categorization extended cases
 - **test_dtw.py** (28 tests): core DTW/unwarp plus Python-path tests (NUMBA_AVAILABLE=False) for full coverage of dtw.py fallback
 - **Edge case testing** (empty arrays, boundary conditions)
 - **Mathematical correctness tests** (similarity calculations)

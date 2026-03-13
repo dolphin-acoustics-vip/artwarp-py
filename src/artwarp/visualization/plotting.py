@@ -6,9 +6,6 @@ visualization best practices. All functions support customization and export
 to various formats.
 
 @author: Pedro Gronda Garrigues
-
-*Note: This plotting module was largely auto-generated and may have some issues.
-Please use with caution.*
 """
 
 from pathlib import Path
@@ -623,7 +620,7 @@ def create_results_report(
     tempres_list: Optional[List[Optional[float]]] = None,
 ) -> Dict[str, str]:
     """
-    Create a comprehensive visualization report with multiple figures.
+    Create a visualization report with multiple figures.
 
     Generates and saves multiple visualization figures to a directory,
     providing a complete visual analysis of training results. If
@@ -795,7 +792,7 @@ def create_results_report(
 
         if len(contours) > 0 and results.num_categories > 0 and dynamic_time_warp is not None:
             try:
-                # Find a contour/prototype pair whose length ratio is within warp_factor_level
+                # find a contour/prototype pair whose length ratio is within warp_factor_level
                 # so that a valid warping path exists (try up to 50 contours).
                 _dtw_fig: Optional[Figure] = None
                 _max_ratio = float(wfl)
@@ -1035,6 +1032,7 @@ def _plot_match_by_category_axes(ax: Axes, results: TrainingResults) -> None:
         ax.set_ylabel("Match Score (%)", fontweight="bold")
         ax.set_title("Match Score by Category", fontweight="bold")
         ax.set_xticks(range(n_plot))
+
         # many categories => smaller font, rotated, every k-th
         if n_plot > 24:
             step = max(1, n_plot // 25)
@@ -1095,7 +1093,7 @@ def plot_dtw_alignment(
     wfl = warp_factor_level
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=figsize)
 
-    # Left: both contours overlaid on the same time axis
+    # left -> both contours overlaid on the same time axis
     ax1.plot(np.arange(m), u1, color="#2E86AB", linewidth=2, label=f"Reference  (n = {m})")
     ax1.plot(
         np.arange(n),
@@ -1763,7 +1761,7 @@ def plot_run_stability(
     Distribution of category count across multiple independent runs.
 
     Runs with different random seeds or data orderings are expected to produce
-    slightly different numbers of categories. This histogram summarises that
+    slightly different numbers of categories. This histogram summarizes that
     variability, supporting reproducibility claims (somewhat).
     """
     fig, ax = plt.subplots(figsize=figsize)
@@ -1960,3 +1958,5 @@ def plot_label_vs_category(
     if save_path:
         fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
     return fig
+
+# TODO: Colour different reference contour categories (according to naming)

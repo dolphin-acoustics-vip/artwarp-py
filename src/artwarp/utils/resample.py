@@ -1,7 +1,7 @@
 """
 Resample contours to a new temporal resolution (MATLAB resample option).
 
-Mirrors ARTwarp_Run_Categorisation.m when resample == 1:
+Mirrors ARTwarp_Run_Categorization.m when resample == 1:
   interp1(1:length(contour), contour, 1:sampleInterval/tempres:length(contour))
 
 Pipeline: step = sample_interval_sec / tempres (index step per output point).

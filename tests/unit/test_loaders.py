@@ -2,7 +2,7 @@
 Unit tests for data loaders (io/loaders.py).
 
 Covers load_ctr_file, load_csv_file, load_txt_file, load_contours,
-and load_mat_categorisation to improve coverage.
+and load_mat_categorization to improve coverage.
 
 @author: Pedro Gronda Garrigues
 """
@@ -17,7 +17,7 @@ from artwarp.io.loaders import (
     load_contours,
     load_csv_file,
     load_ctr_file,
-    load_mat_categorisation,
+    load_mat_categorization,
     load_txt_file,
 )
 
@@ -242,8 +242,8 @@ class TestLoadContours:
             assert names == ["x"]
 
 
-class TestLoadMatCategorisationExtended:
-    """Additional tests for load_mat_categorisation (DATA branch, 1-d weight, etc.)."""
+class TestLoadMatCategorizationExtended:
+    """Additional tests for load_mat_categorization (DATA branch, 1-d weight, etc.)."""
 
     def test_load_mat_data_empty_returns_net_only(self):
         """When DATA is present but empty (size 0), return same as NET only."""
@@ -266,7 +266,7 @@ class TestLoadMatCategorisationExtended:
             path = f.name
         try:
             savemat(path, {"NET": net, "DATA": np.array([])})
-            out = load_mat_categorisation(path)
+            out = load_mat_categorization(path)
             assert out["num_categories"] == 1
             assert "contours" not in out
         finally:
@@ -293,7 +293,7 @@ class TestLoadMatCategorisationExtended:
             path = f.name
         try:
             savemat(path, {"NET": net})
-            out = load_mat_categorisation(path)
+            out = load_mat_categorization(path)
             assert out["weight_matrix"].ndim == 2
             assert out["weight_matrix"].shape[1] == 1
             np.testing.assert_array_almost_equal(out["weight_matrix"].ravel(), weight_1d)

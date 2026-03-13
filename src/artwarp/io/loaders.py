@@ -326,11 +326,11 @@ def load_contours(
     return contours, names
 
 
-def load_mat_categorisation(filepath: str) -> Dict[str, Any]:
+def load_mat_categorization(filepath: str) -> Dict[str, Any]:
     """
-    Load a MATLAB ARTwarp categorisation file (NET and optionally DATA).
+    Load a MATLAB ARTwarp categorization file (NET and optionally DATA).
 
-    Mirrors the "Load Categorisation" workflow from MATLAB ARTwarp. Use this to
+    Mirrors the "Load Categorization" workflow from MATLAB ARTwarp. Use this to
     load a .mat file saved after training (e.g. ARTwarp85FINAL.mat or
     ARTwarp85it001.mat).
 
@@ -370,7 +370,7 @@ def load_mat_categorisation(filepath: str) -> Dict[str, Any]:
 
     if "NET" not in mat:
         raise ValueError(
-            f"File {filepath} does not contain 'NET' (not an ARTwarp categorisation file)"
+            f"File {filepath} does not contain 'NET' (not an ARTwarp categorization file)"
         )
 
     net = mat["NET"]
