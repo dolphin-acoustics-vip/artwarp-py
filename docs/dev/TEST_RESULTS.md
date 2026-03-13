@@ -133,7 +133,7 @@ collected 164 items
 - `test_load_contours_no_files_raises` - No files found ValueError
 - `test_load_contours_auto_detects_extensions` - file_format='auto'
 
-#### Load MAT Categorisation Extended (2 tests)
+#### Load MAT Categorization Extended (2 tests)
 - `test_load_mat_data_empty_returns_net_only` - DATA present but empty
 - `test_load_mat_weight_1d_reshaped_to_2d` - 1-d weight reshaped to (n, 1)
 
@@ -314,7 +314,7 @@ Then open `htmlcov/index.html` in a browser.
 - **Visualization**: High coverage
 - **Validation** (`utils/validation.py`): Covered by `test_validation.py` (validate_contour, validate_contours, validate_parameters)
 - **Numba check** (`utils/numba_check.py`): Covered by `test_validation.py` (numba_available, report_numba_status, check_numba; install prompt and pip/conda paths tested via mocks)
-- **Loaders** (`io/loaders.py`): Covered by `test_loaders.py` and `test_matlab_compat.py` (load_ctr_file, load_csv_file, load_txt_file, load_contours, load_mat_categorisation)
+- **Loaders** (`io/loaders.py`): Covered by `test_loaders.py` and `test_matlab_compat.py` (load_ctr_file, load_csv_file, load_txt_file, load_contours, load_mat_categorization)
 
 ### Edge Cases Tested
 - Empty inputs

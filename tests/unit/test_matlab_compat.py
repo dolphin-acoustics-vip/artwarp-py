@@ -1,5 +1,5 @@
 """
-Tests for MATLAB compatibility (Load Categorisation, 1-based export, etc.).
+Tests for MATLAB compatibility (Load Categorization, 1-based export, etc.).
 
 @author: Pedro Gronda Garrigues
 """
@@ -11,11 +11,11 @@ import numpy as np
 import pytest
 
 from artwarp.io.exporters import export_category_assignments, export_reference_contours
-from artwarp.io.loaders import load_mat_categorisation
+from artwarp.io.loaders import load_mat_categorization
 from artwarp.utils.resample import resample_contours
 
 
-class TestLoadMatCategorisation:
+class TestLoadMatCategorization:
     """Tests for loading MATLAB ARTwarp .mat files."""
 
     def test_load_net_only(self):
@@ -39,7 +39,7 @@ class TestLoadMatCategorisation:
             path = f.name
         try:
             savemat(path, {"NET": net})
-            out = load_mat_categorisation(path)
+            out = load_mat_categorization(path)
         finally:
             Path(path).unlink(missing_ok=True)
         assert "weight_matrix" in out
@@ -62,13 +62,13 @@ class TestLoadMatCategorisation:
         try:
             savemat(path, {"foo": np.array(1)})
             with pytest.raises(ValueError, match="does not contain 'NET'"):
-                load_mat_categorisation(path)
+                load_mat_categorization(path)
         finally:
             Path(path).unlink(missing_ok=True)
 
     def test_file_not_found_raises(self):
         with pytest.raises(FileNotFoundError, match="not found"):
-            load_mat_categorisation("/nonexistent/ARTwarp85FINAL.mat")
+            load_mat_categorization("/nonexistent/ARTwarp85FINAL.mat")
 
 
 class TestExportOneBased:

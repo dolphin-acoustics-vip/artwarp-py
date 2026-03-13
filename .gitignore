@@ -96,5 +96,9 @@ references/
 report*/
 contours*/
 
+# ARTwarp-py examples
+examples/artwarp_demo_report/*
+examples/artwarp_demo_output/*
+
 # Manim experimentation
 manim/*

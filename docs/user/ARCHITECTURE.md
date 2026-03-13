@@ -225,7 +225,7 @@ This implementation is a rewrite of [artwarp](https://github.com/dolphin-acousti
 | **Reference contour export** | SaveRefContours.m: `refContour_1.csv`, `%7.1f` per line | `export_reference_contours(..., prefix="refContour")` (default), same numeric format |
 | **Valid weight positions** | `find(weight > 0)` for activation, match, update | `(weight > 0) & np.isfinite(weight)` in art.py and weights.py |
 | **DTW length ratio** | Reject when `max(m,n)/(min(m,n)-1) >= warpFactorLevel` | Same; check runs first (before short-contour branch) |
-| **Load saved run** | "Load Categorisation" (.mat with NET, DATA) | `load_mat_categorisation(filepath)` in `artwarp.io.loaders` |
+| **Load saved run** | "Load Categorization" (.mat with NET, DATA) | `load_mat_categorization(filepath)` in `artwarp.io.loaders` |
 | **Resample option** | GUI: resample to sampleInterval (ms) using tempres | `resample_contours(contours, tempres, sample_interval_sec)` in `artwarp.utils`; CLI: `--resample --sample-interval 0.02 --tempres 0.01` |
 | **.ctr / .csv / .txt** | Load_Data, Load_CSV_Data, Load_TabDelim_Data | `load_contours(..., file_format='ctr'|'csv'|'txt')`, same contour and tempres; optional `return_tempres=True` for resampling |
 
@@ -237,10 +237,10 @@ Algorithm steps (warp, unwarp, activate, match, update_weights, add_new_category
 |--------|--------|--------|
 | warp.m, unwarp.m | core/dtw.py | Same algorithm, length ratio and constraints aligned |
 | ARTwarp_Calculate_Match, _Activate_Categories, _Add_New_Category, _Update_Weights | core/art.py, core/weights.py | Same logic; valid = weight > 0 |
-| ARTwarp_Run_Categorisation | core/network.py `fit()` | Same loop, convergence, resample option via `resample_contours()` |
+| ARTwarp_Run_Categorization | core/network.py `fit()` | Same loop, convergence, resample option via `resample_contours()` |
 | Load_Data, Load_CSV_Data, Load_TabDelim_Data | io/loaders.py `load_contours()` | .ctr, .csv, .txt; same contour/tempres handling |
 | SaveRefContours.m | io/exporters.py `export_reference_contours()` | refContour_1.csv, %7.1f |
-| Load Categorisation (.mat) | io/loaders.py `load_mat_categorisation()` | NET + optional DATA |
+| Load Categorization (.mat) | io/loaders.py `load_mat_categorization()` | NET + optional DATA |
 | Resample option (GUI) | utils/resample.py `resample_contours()`; CLI `train --resample` | Same formula; CLI uses `--sample-interval`, `--tempres` |
 | Get_Parameters, Create_Figure, Plot_Net, Plot_Net2 | CLI + API + visualization/ | No GUI; params via constructor/CLI; plots via `plot_*` |
 | ARTwarp_Assess_Net | — | Not implemented (species misclassification diagnostic) |
