@@ -1849,9 +1849,9 @@ def plot_category_dendrogram(
         Z, ax=ax, labels=[str(i) for i in range(num_cats)], color_threshold=0.7 * max(Z[:, 2])
     )
     ax.set_title(
-      "Category Prototype Dendrogram\n(Hierarchical Clustering on DTW Distance — average linkage)",
-      fontsize=11,
-      fontweight="bold",
+        "Category Prototype Dendrogram\n(Hierarchical Clustering DTW Distance — average linkage)",
+        fontsize=11,
+        fontweight="bold",
     )
     ax.set_xlabel("Category", fontsize=11, fontweight="bold")
     ax.set_ylabel("DTW Distance", fontsize=11, fontweight="bold")
@@ -1958,5 +1958,6 @@ def plot_label_vs_category(
     if save_path:
         fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
     return fig
+
 
 # TODO: Colour different reference contour categories (according to naming)
