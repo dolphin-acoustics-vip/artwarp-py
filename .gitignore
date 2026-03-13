@@ -88,15 +88,13 @@ plots/
 test_output/
 
 # specific to artwarp-py
-category_assignments.*
+category_assignments*
 *.pkl
 reference-contours/
-reference_contours/
+reference_contours*/
 references/
 report*/
 contours*/
-docs/CORE_MATLAB_VERIFICATION.txt
-VIP-ARTwarp-TRAINING/
 
 # Manim experimentation
 manim/*

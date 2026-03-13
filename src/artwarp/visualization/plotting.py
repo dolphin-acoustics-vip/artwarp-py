@@ -28,12 +28,14 @@ from artwarp.core.network import TrainingResults
 
 # Optional: DTW and resampling for alignment/resampling plots
 try:
-    from artwarp.core.dtw import dynamic_time_warp, compute_similarity_matrix
+    from artwarp.core.dtw import compute_similarity_matrix, dynamic_time_warp
 except ImportError:
     dynamic_time_warp = None  # type: ignore[assignment]
     compute_similarity_matrix = None  # type: ignore[assignment]
 try:
-    from scipy.cluster.hierarchy import dendrogram as scipy_dendrogram, linkage
+    from scipy.cluster.hierarchy import dendrogram as scipy_dendrogram
+    from scipy.cluster.hierarchy import linkage
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -734,7 +736,11 @@ def create_results_report(
 
         try:
             # use first ref contour length for grid size (or defaults)
-            n_valid = int(np.sum(~np.isnan(results.weight_matrix[:, 0]))) if results.weight_matrix.shape[1] > 0 else 15
+            n_valid = (
+                int(np.sum(~np.isnan(results.weight_matrix[:, 0])))
+                if results.weight_matrix.shape[1] > 0
+                else 15
+            )
             m, n = min(25, max(5, n_valid)), min(30, max(5, n_valid + 5))
             fig = plot_warp_constraint(warp_factor_level=wfl, m=m, n=n, figsize=(6, 6))
             p = add_path / "warp_constraint.png"
@@ -754,7 +760,9 @@ def create_results_report(
             pass
 
         try:
-            fig = plot_category_similarity_matrix(results.weight_matrix, warp_factor_level=wfl, figsize=(8, 7))
+            fig = plot_category_similarity_matrix(
+                results.weight_matrix, warp_factor_level=wfl, figsize=(8, 7)
+            )
             p = add_path / "category_similarity_matrix.png"
             fig.savefig(p, dpi=dpi, bbox_inches="tight")
             plt.close(fig)
@@ -763,7 +771,9 @@ def create_results_report(
             pass
 
         try:
-            fig = plot_category_embedding(results.weight_matrix, warp_factor_level=wfl, figsize=(8, 6))
+            fig = plot_category_embedding(
+                results.weight_matrix, warp_factor_level=wfl, figsize=(8, 6)
+            )
             p = add_path / "category_embedding.png"
             fig.savefig(p, dpi=dpi, bbox_inches="tight")
             plt.close(fig)
@@ -815,7 +825,10 @@ def create_results_report(
         if len(contours) > 0:
             try:
                 fig = plot_resampling_before_after(
-                    contours[0], tempres=0.01, sample_interval_sec=0.02, title="First contour (demo)"
+                    contours[0],
+                    tempres=0.01,
+                    sample_interval_sec=0.02,
+                    title="First contour (demo)",
                 )
                 p = add_path / "resampling_before_after.png"
                 fig.savefig(p, dpi=dpi, bbox_inches="tight")
@@ -1084,8 +1097,14 @@ def plot_dtw_alignment(
 
     # Left: both contours overlaid on the same time axis
     ax1.plot(np.arange(m), u1, color="#2E86AB", linewidth=2, label=f"Reference  (n = {m})")
-    ax1.plot(np.arange(n), u2, color="#E84855", linewidth=2, linestyle="--",
-             label=f"Comparison  (n = {n})")
+    ax1.plot(
+        np.arange(n),
+        u2,
+        color="#E84855",
+        linewidth=2,
+        linestyle="--",
+        label=f"Comparison  (n = {n})",
+    )
     ax1.set_xlabel("Time Index", fontsize=11, fontweight="bold")
     ax1.set_ylabel("Frequency (Hz)", fontsize=11, fontweight="bold")
     ax1.set_title("Input Contours", fontsize=11, fontweight="bold")
@@ -1103,16 +1122,30 @@ def plot_dtw_alignment(
         j_lo = max(0, max(round((i + 1) / wfl) - 1, (i - m) * wfl + n))
         j_hi = min(n - 1, min(wfl * (i + 1), round((i - m) / wfl + n)) - 1)
         if j_hi >= j_lo:
-            ax2.add_patch(Rectangle((j_lo - 0.5, i - 0.5), j_hi - j_lo + 1.0, 1.0,
-                                     facecolor="#DAEAF5", alpha=0.7, linewidth=0))
+            ax2.add_patch(
+                Rectangle(
+                    (j_lo - 0.5, i - 0.5),
+                    j_hi - j_lo + 1.0,
+                    1.0,
+                    facecolor="#DAEAF5",
+                    alpha=0.7,
+                    linewidth=0,
+                )
+            )
     # diagonal -> no-warp reference
     diag_end = min(m, n)
-    ax2.plot(np.linspace(0, diag_end - 1, diag_end),
-             np.linspace(0, diag_end - 1, diag_end),
-             color="#AAAAAA", linewidth=1, linestyle=":", label="No-Warp Diagonal")
+    ax2.plot(
+        np.linspace(0, diag_end - 1, diag_end),
+        np.linspace(0, diag_end - 1, diag_end),
+        color="#AAAAAA",
+        linewidth=1,
+        linestyle=":",
+        label="No-Warp Diagonal",
+    )
     # actual warping path
-    ax2.plot(path_j, path_i, color="#1A1A2E", linewidth=2,
-             label=f"Warping Path  (sim = {sim:.1f}%)")
+    ax2.plot(
+        path_j, path_i, color="#1A1A2E", linewidth=2, label=f"Warping Path  (sim = {sim:.1f}%)"
+    )
     ax2.set_xlabel("Comparison Contour Index", fontsize=11, fontweight="bold")
     ax2.set_ylabel("Reference Contour Index", fontsize=11, fontweight="bold")
     ax2.set_title("DTW Warping Path", fontsize=11, fontweight="bold")
@@ -1152,33 +1185,66 @@ def plot_art_schematic(
     ARROW_KW = dict(arrowstyle="-|>", color="#333333", lw=1.6, mutation_scale=14)
     BOX_H = 1.1
 
-    def _box(cx: float, cy: float, w: float, label: str,
-             facecolor: str, edgecolor: str, fontsize: float = 9.5) -> None:
-        ax.add_patch(FancyBboxPatch(
-            (cx - w / 2, cy - BOX_H / 2), w, BOX_H,
-            boxstyle="round,pad=0.08",
-            facecolor=facecolor, edgecolor=edgecolor, linewidth=1.8, zorder=3,
-        ))
-        ax.text(cx, cy, label, ha="center", va="center", fontsize=fontsize,
-                fontweight="bold", zorder=4, linespacing=1.4)
+    def _box(
+        cx: float,
+        cy: float,
+        w: float,
+        label: str,
+        facecolor: str,
+        edgecolor: str,
+        fontsize: float = 9.5,
+    ) -> None:
+        ax.add_patch(
+            FancyBboxPatch(
+                (cx - w / 2, cy - BOX_H / 2),
+                w,
+                BOX_H,
+                boxstyle="round,pad=0.08",
+                facecolor=facecolor,
+                edgecolor=edgecolor,
+                linewidth=1.8,
+                zorder=3,
+            )
+        )
+        ax.text(
+            cx,
+            cy,
+            label,
+            ha="center",
+            va="center",
+            fontsize=fontsize,
+            fontweight="bold",
+            zorder=4,
+            linespacing=1.4,
+        )
 
     def _arrow(x0: float, y0: float, x1: float, y1: float) -> None:
-        ax.annotate("", xy=(x1, y1), xytext=(x0, y0),
-                    arrowprops=dict(ARROW_KW), zorder=5)
+        ax.annotate("", xy=(x1, y1), xytext=(x0, y0), arrowprops=dict(ARROW_KW), zorder=5)
 
     def _label(x: float, y: float, text: str, color: str = "#555555") -> None:
-        ax.text(x, y, text, ha="center", va="center", fontsize=8.5,
-                fontstyle="italic", color=color, zorder=6)
+        ax.text(
+            x,
+            y,
+            text,
+            ha="center",
+            va="center",
+            fontsize=8.5,
+            fontstyle="italic",
+            color=color,
+            zorder=6,
+        )
 
     # ── Main flow boxes (top row) ─────────────────────────────────────────────
-    _box(1.2,  3.0, 1.8, "Input\ncontour",          FLOW_FACE, FLOW_EDGE)
-    _box(3.7,  3.0, 2.2, "DTW to all\nprototypes",  FLOW_FACE, FLOW_EDGE)
-    _box(6.4,  3.0, 2.0, "Sort by\nactivation",     FLOW_FACE, FLOW_EDGE)
-    _box(9.1,  3.0, 2.0, "Vigilance\ntest  (ρ)",    FLOW_FACE, FLOW_EDGE)
+    _box(1.2, 3.0, 1.8, "Input\ncontour", FLOW_FACE, FLOW_EDGE)
+    _box(3.7, 3.0, 2.2, "DTW to all\nprototypes", FLOW_FACE, FLOW_EDGE)
+    _box(6.4, 3.0, 2.0, "Sort by\nactivation", FLOW_FACE, FLOW_EDGE)
+    _box(9.1, 3.0, 2.0, "Vigilance\ntest  (ρ)", FLOW_FACE, FLOW_EDGE)
 
     # ── Outcome boxes (bottom row) ────────────────────────────────────────────
-    _box(5.8,  1.0, 2.6, "Update prototype\nweights (commit)", COMMIT_FACE, COMMIT_EDGE, fontsize=9.0)
-    _box(10.2, 1.0, 2.4, "Create new\ncategory",              NEW_FACE,    NEW_EDGE,    fontsize=9.0)
+    _box(
+        5.8, 1.0, 2.6, "Update prototype\nweights (commit)", COMMIT_FACE, COMMIT_EDGE, fontsize=9.0
+    )
+    _box(10.2, 1.0, 2.4, "Create new\ncategory", NEW_FACE, NEW_EDGE, fontsize=9.0)
 
     # ── Horizontal main-flow arrows ───────────────────────────────────────────
     _arrow(2.1, 3.0, 2.6, 3.0)
@@ -1187,8 +1253,8 @@ def plot_art_schematic(
 
     # ── Decision routing from vigilance box ──────────────────────────────────
     # branch point -> bottom centre of vigilance box
-    bx, by = 9.1, 3.0 - BOX_H / 2   # (9.1, 2.45)
-    jy = 1.8                          # horizontal junction y
+    bx, by = 9.1, 3.0 - BOX_H / 2  # (9.1, 2.45)
+    jy = 1.8  # horizontal junction y
 
     # trunk -> down from vigilance box to junction
     ax.plot([bx, bx], [by, jy], color="#333333", lw=1.6, zorder=2)
@@ -1205,11 +1271,19 @@ def plot_art_schematic(
 
     # ── Step numbers ─────────────────────────────────────────────────────────
     for step, cx in enumerate([1.2, 3.7, 6.4, 9.1], 1):
-        ax.text(cx, 3.0 + BOX_H / 2 + 0.15, f"Step {step}",
-                ha="center", va="bottom", fontsize=7.5, color="#777777")
+        ax.text(
+            cx,
+            3.0 + BOX_H / 2 + 0.15,
+            f"Step {step}",
+            ha="center",
+            va="bottom",
+            fontsize=7.5,
+            color="#777777",
+        )
 
-    ax.set_title("ARTwarp Algorithm: Per-Sample Decision Flow",
-                 fontsize=12, fontweight="bold", pad=8)
+    ax.set_title(
+        "ARTwarp Algorithm: Per-Sample Decision Flow", fontsize=12, fontweight="bold", pad=8
+    )
     plt.tight_layout()
     if save_path:
         fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
@@ -1244,11 +1318,16 @@ def plot_warp_constraint(
 
     for i in range(m):
         if j_hi_all[i] >= j_lo_all[i]:
-            ax.add_patch(Rectangle(
-                (j_lo_all[i] - 0.5, i - 0.5),
-                j_hi_all[i] - j_lo_all[i] + 1.0, 1.0,
-                facecolor="#2E86AB", alpha=0.18, linewidth=0,
-            ))
+            ax.add_patch(
+                Rectangle(
+                    (j_lo_all[i] - 0.5, i - 0.5),
+                    j_hi_all[i] - j_lo_all[i] + 1.0,
+                    1.0,
+                    facecolor="#2E86AB",
+                    alpha=0.18,
+                    linewidth=0,
+                )
+            )
 
     # band boundary -> connect the left and right edges of the feasible cells
     i_vals = np.arange(m)
@@ -1257,8 +1336,7 @@ def plot_warp_constraint(
 
     # diagonal reference -> no warping
     diag = np.linspace(0, min(m, n) - 1, min(m, n))
-    ax.plot(diag * n / m, diag, color="#E84855", lw=1.8, linestyle="-",
-            label="No-warp diagonal")
+    ax.plot(diag * n / m, diag, color="#E84855", lw=1.8, linestyle="-", label="No-warp diagonal")
 
     ax.set_xlim(-0.5, n - 0.5)
     ax.set_ylim(m - 0.5, -0.5)
@@ -1267,7 +1345,8 @@ def plot_warp_constraint(
     ax.set_title(
         f"Itakura Warping Constraint  ($\\rho = {wfl}$)\n"
         f"Shaded: feasible DTW alignment cells  |  m = {m}, n = {n}",
-        fontsize=10, fontweight="bold",
+        fontsize=10,
+        fontweight="bold",
     )
     ax.set_aspect("equal")
     ax.grid(True, alpha=0.25, linestyle="--")
@@ -1384,8 +1463,9 @@ def plot_category_similarity_matrix(
     ax.set_yticklabels(labels, fontsize=tick_fs)
     ax.set_xlabel("Category", fontsize=11, fontweight="bold")
     ax.set_ylabel("Category", fontsize=11, fontweight="bold")
-    ax.set_title("Pairwise DTW Similarity Between Category Prototypes (%)",
-                 fontsize=11, fontweight="bold")
+    ax.set_title(
+        "Pairwise DTW Similarity Between Category Prototypes (%)", fontsize=11, fontweight="bold"
+    )
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     plt.tight_layout()
@@ -1397,7 +1477,7 @@ def plot_category_similarity_matrix(
 def _classical_mds(D: NDArray[np.float64], n_components: int = 2) -> NDArray[np.float64]:
     """Classical MDS: embed distance matrix D into n_components dimensions."""
     n = D.shape[0]
-    D2 = D ** 2
+    D2 = D**2
     H = np.eye(n) - np.ones((n, n)) / n
     B = -0.5 * (H @ D2 @ H)
     w, v = np.linalg.eigh(B)
@@ -1417,7 +1497,7 @@ def plot_category_embedding(
 
     Pairwise DTW distances between all learned prototype contours are reduced to
     two dimensions using classical Multidimensional Scaling (MDS).
-    
+
     Categories that are close on the scatter plot are acoustically similar (small DTW distance);
     distant points represent perceptually distinct call types.
     """
@@ -1440,29 +1520,44 @@ def plot_category_embedding(
     fig, ax = plt.subplots(figsize=figsize)
     cmap = plt.get_cmap("tab20" if num_cats > 10 else "tab10")
     scatter = ax.scatter(
-        embed[:, 0], embed[:, 1],
-        c=np.arange(num_cats), cmap=cmap, s=90, edgecolors="black", linewidths=0.6, zorder=3,
+        embed[:, 0],
+        embed[:, 1],
+        c=np.arange(num_cats),
+        cmap=cmap,
+        s=90,
+        edgecolors="black",
+        linewidths=0.6,
+        zorder=3,
     )
     # label points only when the plot is not too cluttered
     if num_cats <= 40:
         for i in range(num_cats):
-            ax.annotate(str(i), (embed[i, 0], embed[i, 1]),
-                        fontsize=7.5, ha="center", va="bottom",
-                        xytext=(0, 5), textcoords="offset points")
+            ax.annotate(
+                str(i),
+                (embed[i, 0], embed[i, 1]),
+                fontsize=7.5,
+                ha="center",
+                va="bottom",
+                xytext=(0, 5),
+                textcoords="offset points",
+            )
     plt.colorbar(scatter, ax=ax, label="Category index", shrink=0.80)
 
     ax.set_xlabel(
         "MDS Dimension 1  (captures the most variation in pairwise DTW distances)",
-        fontsize=10, fontweight="bold",
+        fontsize=10,
+        fontweight="bold",
     )
     ax.set_ylabel(
         "MDS Dimension 2",
-        fontsize=10, fontweight="bold",
+        fontsize=10,
+        fontweight="bold",
     )
     ax.set_title(
         "Acoustic Space: Category Prototype Embedding\n"
         "(Classical MDS on pairwise DTW distances — closer = acoustically similar)",
-        fontsize=11, fontweight="bold",
+        fontsize=11,
+        fontweight="bold",
     )
     ax.grid(True, alpha=0.3, linestyle="--")
     ax.spines["top"].set_visible(False)
@@ -1488,6 +1583,7 @@ def plot_resampling_before_after(
     Demonstrates the effect of temporal normalization.
     """
     from artwarp.utils.resample import resample_contours
+
     resampled_list = resample_contours([contour], [tempres], sample_interval_sec)
     resampled = resampled_list[0]
     n_orig, n_res = len(contour), len(resampled)
@@ -1541,7 +1637,10 @@ def plot_contour_length_distribution(
     axes[0].hist(
         lengths,
         bins=min(50, max(10, len(set(lengths)))),
-        color="#2E86AB", edgecolor="white", alpha=0.85, linewidth=0.5,
+        color="#2E86AB",
+        edgecolor="white",
+        alpha=0.85,
+        linewidth=0.5,
     )
     axes[0].set_xlabel("Contour Length (samples)", fontsize=11, fontweight="bold")
     axes[0].set_ylabel("Count", fontsize=11, fontweight="bold")
@@ -1575,7 +1674,10 @@ def plot_contour_length_distribution(
         axes[1].hist(
             tr_vals,
             bins=n_bins_tr,
-            color="#E84855", edgecolor="white", alpha=0.85, linewidth=0.5,
+            color="#E84855",
+            edgecolor="white",
+            alpha=0.85,
+            linewidth=0.5,
         )
         axes[1].set_xlabel(
             f"Temporal Resolution (s/sample)  —  "
@@ -1586,14 +1688,22 @@ def plot_contour_length_distribution(
         axes[1].set_title("Temporal Resolution Distribution", fontsize=12, fontweight="bold")
     else:
         msg = (
-            "Temporal resolution not available.\n"
-            "Pass tempres_list to enable this panel."
+            "Temporal resolution not available.\n" "Pass tempres_list to enable this panel."
             if tempres_list is None
             else "No valid temporal resolution values\nfound in the supplied list."
         )
-        axes[1].text(0.5, 0.5, msg, ha="center", va="center",
-                     transform=axes[1].transAxes, fontsize=10, color="#777777",
-                     style="italic", multialignment="center")
+        axes[1].text(
+            0.5,
+            0.5,
+            msg,
+            ha="center",
+            va="center",
+            transform=axes[1].transAxes,
+            fontsize=10,
+            color="#777777",
+            style="italic",
+            multialignment="center",
+        )
         axes[1].set_title("Temporal Resolution Distribution", fontsize=12, fontweight="bold")
 
     axes[1].grid(True, axis="y", alpha=0.3, linestyle="--")
@@ -1660,12 +1770,16 @@ def plot_run_stability(
     ax.hist(
         num_categories_per_run,
         bins=min(20, max(5, len(set(num_categories_per_run)))),
-        color="#2E86AB", edgecolor="white", alpha=0.85, linewidth=0.5,
+        color="#2E86AB",
+        edgecolor="white",
+        alpha=0.85,
+        linewidth=0.5,
     )
     ax.set_xlabel("Number of Categories", fontsize=11, fontweight="bold")
     ax.set_ylabel("Count (Runs)", fontsize=11, fontweight="bold")
-    ax.set_title("Run Stability: Distribution of Category Count Across Runs",
-                 fontsize=12, fontweight="bold")
+    ax.set_title(
+        "Run Stability: Distribution of Category Count Across Runs", fontsize=12, fontweight="bold"
+    )
     ax.grid(True, axis="y", alpha=0.3, linestyle="--")
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
@@ -1729,13 +1843,18 @@ def plot_category_dendrogram(
         for j in range(i + 1, num_cats):
             s, _ = dynamic_time_warp(refs[i], refs[j], warp_factor_level)
             dist_list.append(100.0 - s)
+
     # linkage expects condensed distance (upper triangle)
     Z = linkage(np.array(dist_list), method="average")
     fig, ax = plt.subplots(figsize=figsize)
-    scipy_dendrogram(Z, ax=ax, labels=[str(i) for i in range(num_cats)],
-                     color_threshold=0.7 * max(Z[:, 2]))
-    ax.set_title("Category Prototype Dendrogram\n(Hierarchical Clustering on DTW Distance — average linkage)",
-                 fontsize=11, fontweight="bold")
+    scipy_dendrogram(
+        Z, ax=ax, labels=[str(i) for i in range(num_cats)], color_threshold=0.7 * max(Z[:, 2])
+    )
+    ax.set_title(
+      "Category Prototype Dendrogram\n(Hierarchical Clustering on DTW Distance — average linkage)",
+      fontsize=11,
+      fontweight="bold",
+    )
     ax.set_xlabel("Category", fontsize=11, fontweight="bold")
     ax.set_ylabel("DTW Distance", fontsize=11, fontweight="bold")
     ax.spines["top"].set_visible(False)
@@ -1784,7 +1903,14 @@ def plot_confusion_matrix(
     ax.set_title("Confusion matrix")
     for i in range(n_gt):
         for j in range(n_pred):
-            ax.text(j, i, int(cm[i, j]), ha="center", va="center", color="white" if cm[i, j] > cm.max() / 2 else "black")
+            ax.text(
+                j,
+                i,
+                str(int(cm[i, j])),
+                ha="center",
+                va="center",
+                color="white" if cm[i, j] > cm.max() / 2 else "black",
+            )
     plt.colorbar(im, ax=ax, label="Count")
     plt.tight_layout()
     if save_path:
@@ -1819,7 +1945,7 @@ def plot_label_vs_category(
     proportions = np.where(totals > 0, counts / totals, 0)
     fig, ax = plt.subplots(figsize=figsize)
     left = np.zeros(n_pred)
-    colors = plt.cm.tab10(np.linspace(0, 1, len(unique_gt)))
+    colors = plt.get_cmap("tab10")(np.linspace(0, 1, len(unique_gt)))
     for j, label in enumerate(unique_gt):
         ax.bar(range(n_pred), proportions[:, j], bottom=left, label=str(label), color=colors[j])
         left += proportions[:, j]
