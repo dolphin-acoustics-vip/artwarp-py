@@ -239,7 +239,11 @@ def command_plot(args: argparse.Namespace) -> None:
     print(f"\nGenerating visualization report in: {output_dir}")
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     paths = create_results_report(
-        results, contours, contour_names=names, output_dir=output_dir, dpi=args.dpi,
+        results,
+        contours,
+        contour_names=names,
+        output_dir=output_dir,
+        dpi=args.dpi,
         warp_factor_level=args.warp_factor,
         tempres_list=tempres_list,
     )
@@ -418,7 +422,9 @@ def create_parser() -> argparse.ArgumentParser:
         "--dpi", type=int, default=300, help="Resolution for saved figures (default: 300)"
     )
     plot_parser.add_argument(
-        "--warp-factor", type=int, default=3,
+        "--warp-factor",
+        type=int,
+        default=3,
         help="DTW warp factor used for similarity/alignment plots (default: 3, should match train)",
     )
 

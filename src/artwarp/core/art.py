@@ -54,13 +54,13 @@ def activate_categories(
         This matches the MATLAB ARTwarp_Activate_Categories.m implementation.
 
 
-        Important: 
+        Important:
             DTW_similarity is defined as N[m-1, n-1] / m, where m = len(weight_contour)
             and N is the cumulative similarity matrix along the optimal warping path.
 
             This is the same underlying quantity computed by calculate_match (see below),
             so activation and match differ only by the (1 - bias) scale factor.
-            
+
             When bias=0 (default), activation == match exactly.
             This equivalence also exists in the original MATLAB implementation.
     """
