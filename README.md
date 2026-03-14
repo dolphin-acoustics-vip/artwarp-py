@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="img/artwarp_py_banner.png" alt="ARTwarp-py" width="100%"/>
-</p>
-
 ![](https://raw.githubusercontent.com/dolphin-acoustics-vip/artwarp-py/main/img/artwarp_py_banner.png)
 
 
@@ -15,9 +11,6 @@
   </a>
   <a href="https://pypi.org/project/artwarp-py/">
     <img src="https://img.shields.io/pypi/pyversions/artwarp-py?logo=python&logoColor=white" alt="Python versions"/>
-  </a>
-  <a href="https://pypi.org/project/artwarp-py/">
-    <img src="https://img.shields.io/pypi/dm/artwarp-py?color=blue&label=downloads" alt="PyPI downloads"/>
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-LGPL--3.0-green" alt="License"/>
