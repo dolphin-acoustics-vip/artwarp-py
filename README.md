@@ -2,6 +2,9 @@
   <img src="img/artwarp_py_banner.png" alt="ARTwarp-py" width="100%"/>
 </p>
 
+![](https://raw.githubusercontent.com/dolphin-acoustics-vip/artwarp-py/main/img/artwarp_py_banner.png)
+
+
 # ARTwarp-py
 
 **A high-performance Python implementation of ARTwarp for automated categorization of tonal animal sounds.**
@@ -271,7 +274,7 @@ https://github.com/dolphin-acoustics-vip/artwarp
 
 ## Publishing a New Release (maintainers only)
 
-**1. Store your PyPI API token** in `~/.pypirc` so it is never typed in plaintext:
+**1. Store your PyPI API token** in `~/.pypirc` so it is *never* typed in plaintext (important):
 
 ```ini
 [distutils]
@@ -290,10 +293,9 @@ password = pypi-<your-api-token-here>
 **3. Build the distribution archives:**
 
 ```bash
-conda activate sig-process
 cd artwarp-py/
-pip install --upgrade setuptools wheel build twine
-python -m build          # produces dist/artwarp_py-<version>.tar.gz and .whl
+pip install --upgrade setuptools wheel build twine  # in whichever env you are using
+python -m build                                     # produces dist/artwarp_py-<version>.tar.gz and .whl
 ```
 
 **4. Upload to PyPI:**
