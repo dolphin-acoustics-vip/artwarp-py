@@ -38,5 +38,5 @@ if numba_available():
 # visualization kept separate -> no matplotlib required for core
 # from artwarp.visualization import plot_training_summary
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __all__ = ["ARTwarp", "load_contours"]
