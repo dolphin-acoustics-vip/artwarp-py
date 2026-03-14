@@ -6,6 +6,21 @@
 
 **A high-performance Python implementation of ARTwarp for automated categorization of tonal animal sounds.**
 
+<p align="center">
+  <a href="https://pypi.org/project/artwarp-py/">
+    <img src="https://img.shields.io/pypi/v/artwarp-py?color=blue&label=PyPI&logo=pypi&logoColor=white" alt="PyPI version"/>
+  </a>
+  <a href="https://pypi.org/project/artwarp-py/">
+    <img src="https://img.shields.io/pypi/pyversions/artwarp-py?logo=python&logoColor=white" alt="Python versions"/>
+  </a>
+  <a href="https://pypi.org/project/artwarp-py/">
+    <img src="https://img.shields.io/pypi/dm/artwarp-py?color=blue&label=downloads" alt="PyPI downloads"/>
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-LGPL--3.0-green" alt="License"/>
+  </a>
+</p>
+
 ## Overview
 
 ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combining **Dynamic Time Warping (DTW)** for contour similarity with an **Adaptive Resonance Theory (ART)** neural network for unsupervised clustering, with performance improvements while staying mathematically equivalent to the original algorithm.
@@ -45,7 +60,14 @@ ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combin
 **Requirements:** Python 3.8+, NumPy ≥1.20, SciPy ≥1.7, pandas ≥1.3, matplotlib ≥3.4, and optionally Numba ≥0.54 for JIT.
 
 ```bash
-> pip install -e .
+# install from PyPI
+pip install artwarp-py
+
+# optional: install with Numba JIT acceleration
+pip install artwarp-py[accelerate]
+
+# install from source (development)
+pip install -e .
 ```
 
 For environment setup and virtualenv details, see **[user/INSTALLATION.md](docs/user/INSTALLATION.md)** (end-user) and **[dev/ENVIRONMENT_SETUP.md](docs/dev/ENVIRONMENT_SETUP.md)** (developers) within **[docs/](docs/)**.
@@ -94,7 +116,7 @@ Altogether (resampling & exporting reference contours / category assignments):
 > artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02 --vigilance 85 --learning-rate 0.1 --max-iterations 50 --export-refs --export-categories
 ```
 
-Gener visualizations:
+Generate visualizations:
 
 ```bash
 # generate visualizations from Pickle (.pkl) file
@@ -247,22 +269,43 @@ ARTwarp distribution or see https://www.gnu.org/licenses/lgpl.
 This is a complete rewrite of the original ARTwarp MATLAB software available at:
 https://github.com/dolphin-acoustics-vip/artwarp
 
-**Publishing (PyPI/pip):** [Python packaging tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/) · [Stack Overflow: publishing to PyPI](https://stackoverflow.com/questions/56129825/publishing-modules-to-pip-and-pypi)
+## Publishing a New Release (maintainers only)
 
-The following are steps (specific to @PedroGGBM) to upload the PyPI package:
+**1. Store your PyPI API token** in `~/.pypirc` so it is never typed in plaintext:
+
+```ini
+[distutils]
+index-servers = pypi
+
+[pypi]
+repository = https://upload.pypi.org/legacy/
+username = __token__
+password = pypi-<your-api-token-here>
+```
+
+> Generate or rotate tokens at [pypi.org/manage/account/token/](https://pypi.org/manage/account/token/). Scope the token to the `artwarp-py` project only.
+
+**2. Bump the version** in `pyproject.toml` (and `src/artwarp/__init__.py` if duplicated there), then update `CHANGELOG.md`.
+
+**3. Build the distribution archives:**
 
 ```bash
-# to generate distribution archives (build/)
-> conda activate sig-process # or your corresponding venv (e.g., conda, venv, uv, etc)
-> cd <base_directory>
-> python -m pip install --upgrade setuptools wheel build # ensure latest version of PyPA's build installed
-> python -m build
+conda activate sig-process
+cd artwarp-py/
+pip install --upgrade setuptools wheel build twine
+python -m build          # produces dist/artwarp_py-<version>.tar.gz and .whl
+```
 
-# to upload distribution archive
-> python -m pip install --upgrade twine
-> python -m twine upload --repository testpypi dist/* # this is to test it
-> python -m pip install --index-url https://test.pypi.org/simple/ --no-deps example-package-YOUR-USERNAME-HERE # to test install on test server for PyPI
+**4. Upload to PyPI:**
 
-### !!! Once registered in PyPI and own official API key
-> python -m twine upload dist/* # this is to upload it
+```bash
+python -m twine upload dist/*
+# twine reads credentials from ~/.pypirc automatically
+```
+
+**5. Verify** the new version appears at [pypi.org/project/artwarp-py/](https://pypi.org/project/artwarp-py/), then tag the release in git:
+
+```bash
+git tag v<version>
+git push origin v<version>
 ```
