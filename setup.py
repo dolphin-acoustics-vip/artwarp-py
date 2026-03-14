@@ -10,7 +10,7 @@ with open(readme_path, "r", encoding="utf-8") as f:
 
 setup(
     name="artwarp-py",
-    version="1.0.0",
+    version="1.0.1",
     author="Original ARTwarp by Deecke, V. B. & Janik, V. M. (2006); Python implementation by Pedro Gronda Garrigues (2026)",
     description="High-performance Python implementation of ARTwarp for bioacoustic signal categorization",
     long_description=long_description,

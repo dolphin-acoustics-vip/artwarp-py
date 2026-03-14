@@ -7,7 +7,7 @@ ARTwarp-py is a complete, high-performance Python reimplementation of the ARTwar
 ## Project Status: COMPLETE
 
 Date: March, 2026  
-Version: 1.0.0
+Version: 1.0.1
 Status: Fully functional
 
 ## What Was Built
