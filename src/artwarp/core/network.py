@@ -223,7 +223,6 @@ class ARTwarp:
             sample_order = np.random.permutation(num_samples)
             num_reclassifications = 0
 
-            # CHANGE
             # calculate the number of contours in each category
             if iteration > 1:
                 num_per_cat = np.bincount(categories.astype(np.int64))
@@ -251,8 +250,6 @@ class ARTwarp:
                 resonance = False
                 max_match = 0.0
 
-
-                #CHANGE
                 # if it is the only contour in the category check every other category before choosing its previous category
                 if num_in_old_category == 1:
                     # moves the first element to the back
@@ -262,7 +259,6 @@ class ARTwarp:
                 for cat_rank in range(len(sorted_indices)):
 
                     cat_idx = sorted_indices[cat_rank]
-                    #print(cat_idx)
 
                     # weight contour + warp func
                     weight_contour = get_weight_contour(self.weight_matrix, cat_idx)
