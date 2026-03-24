@@ -185,9 +185,10 @@ for iteration in range(max_iterations):
 - `.txt` files (tab-delimited)
 
 **Output Formats**:
-- Pickle files (`.pkl`) for complete results
+- Pickle files (`.pkl`) for complete results (includes `category_parent_names`)
 - CSV files for category assignments
 - Individual CSV files for reference contours
+- CSV provenance metadata (`metadata.csv`) — UUID per reference contour + parent contour names; written automatically alongside reference contours when using `--export-refs` or `export_reference_contour_metadata()`
 
 ### 6. Validation (`utils/validation.py`)
 
@@ -223,6 +224,7 @@ This implementation is a rewrite of [artwarp](https://github.com/dolphin-acousti
 |--------|--------|--------|
 | **Category indices** | 1-based (1 .. numCategories) | 0-based (0 .. num_categories-1) internally; use `one_based_categories=True` in `export_category_assignments` for .csv |
 | **Reference contour export** | SaveRefContours.m: `refContour_1.csv`, `%7.1f` per line | `export_reference_contours(..., prefix="refContour")` (default), same numeric format |
+| **Reference contour provenance** | `REFCONTOURS(i).id` (UUID), `REFCONTOURS(i).parent_ids` (input IDs); saved in `.ctr` | `TrainingResults.category_parent_names`; `export_reference_contour_metadata()` → `metadata.csv` with `category`, `ref_contour_id`, `parent_contour_name` |
 | **Valid weight positions** | `find(weight > 0)` for activation, match, update | `(weight > 0) & np.isfinite(weight)` in art.py and weights.py |
 | **DTW length ratio** | Reject when `max(m,n)/(min(m,n)-1) >= warpFactorLevel` | Same; check runs first (before short-contour branch) |
 | **Load saved run** | "Load Categorization" (.mat with NET, DATA) | `load_mat_categorization(filepath)` in `artwarp.io.loaders` |
@@ -240,6 +242,7 @@ Algorithm steps (warp, unwarp, activate, match, update_weights, add_new_category
 | ARTwarp_Run_Categorization | core/network.py `fit()` | Same loop, convergence, resample option via `resample_contours()` |
 | Load_Data, Load_CSV_Data, Load_TabDelim_Data | io/loaders.py `load_contours()` | .ctr, .csv, .txt; same contour/tempres handling |
 | SaveRefContours.m | io/exporters.py `export_reference_contours()` | refContour_1.csv, %7.1f |
+| REFCONTOURS struct (id, parent_ids) | `TrainingResults.category_parent_names`; `export_reference_contour_metadata()` | CSV instead of .ctr; UUID per prototype, parent names list |
 | Load Categorization (.mat) | io/loaders.py `load_mat_categorization()` | NET + optional DATA |
 | Resample option (GUI) | utils/resample.py `resample_contours()`; CLI `train --resample` | Same formula; CLI uses `--sample-interval`, `--tempres` |
 | Get_Parameters, Create_Figure, Plot_Net, Plot_Net2 | CLI + API + visualization/ | No GUI; params via constructor/CLI; plots via `plot_*` |
@@ -279,14 +282,15 @@ The weight matrix stores category prototypes:
 ```python
 @dataclass
 class TrainingResults:
-    categories: NDArray[np.float64]      # category assignments
-    matches: NDArray[np.float64]         # match values
-    weight_matrix: NDArray[np.float64]   # final weights
-    num_categories: int                  # number of categories created
-    num_iterations: int                  # iterations performed
-    converged: bool                      # convergence status
-    iteration_history: List[tuple]       # per-iteration statistics
-    training_time: float                 # total training time
+    categories: NDArray[np.float64]              # category assignments
+    matches: NDArray[np.float64]                 # match values
+    weight_matrix: NDArray[np.float64]           # final weights
+    num_categories: int                          # number of categories created
+    num_iterations: int                          # iterations performed
+    converged: bool                              # convergence status
+    iteration_history: List[tuple]               # per-iteration statistics
+    training_time: float                         # total training time
+    category_parent_names: Dict[int, List[str]]  # provenance: category → contour names
 ```
 
 ## Performance Optimizations

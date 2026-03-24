@@ -303,3 +303,88 @@ class TestTrainingResults:
         uncategorized = results.get_uncategorized_count()
 
         assert uncategorized == 2
+
+    def test_category_parent_names_default_empty(self):
+        """TrainingResults.category_parent_names defaults to empty dict."""
+        results = TrainingResults(
+            categories=np.array([0.0, 1.0]),
+            matches=np.zeros(2),
+            weight_matrix=np.zeros((10, 2)),
+            num_categories=2,
+            num_iterations=1,
+            converged=True,
+        )
+        assert results.category_parent_names == {}
+
+    def test_category_parent_names_explicit(self):
+        """TrainingResults.category_parent_names can be set explicitly."""
+        parent_names = {0: ["a", "b"], 1: ["c"]}
+        results = TrainingResults(
+            categories=np.array([0.0, 0.0, 1.0]),
+            matches=np.zeros(3),
+            weight_matrix=np.zeros((10, 2)),
+            num_categories=2,
+            num_iterations=1,
+            converged=True,
+            category_parent_names=parent_names,
+        )
+        assert results.category_parent_names[0] == ["a", "b"]
+        assert results.category_parent_names[1] == ["c"]
+
+
+class TestCategoryParentNames:
+    """Tests for category_parent_names provenance tracking in fit()."""
+
+    def test_parent_names_populated_after_fit(self):
+        """fit() populates category_parent_names with contour names."""
+        contours = [
+            np.array([100.0, 200.0, 300.0]),
+            np.array([105.0, 205.0, 305.0]),
+            np.array([800.0, 900.0, 1000.0]),
+        ]
+        names = ["contour_A", "contour_B", "contour_C"]
+
+        network = ARTwarp(vigilance=85.0, verbose=False, random_seed=42)
+        results = network.fit(contours, contour_names=names)
+
+        assert isinstance(results.category_parent_names, dict)
+        assert len(results.category_parent_names) == results.num_categories
+
+        all_parents = [n for name_list in results.category_parent_names.values() for n in name_list]
+        assert sorted(all_parents) == sorted(names)
+
+    def test_parent_names_no_duplicate_assignments(self):
+        """Each contour name appears exactly once across all categories."""
+        contours = [np.array([float(i), float(i + 1)]) for i in range(5)]
+        names = [f"c{i}" for i in range(5)]
+
+        network = ARTwarp(vigilance=85.0, verbose=False, random_seed=0)
+        results = network.fit(contours, contour_names=names)
+
+        all_parents = [n for name_list in results.category_parent_names.values() for n in name_list]
+        assert len(all_parents) == len(names)
+        assert len(set(all_parents)) == len(names)
+
+    def test_parent_names_auto_generated_when_no_names(self):
+        """When contour_names not given, auto-generated names appear in parent_names."""
+        contours = [np.array([100.0, 200.0]), np.array([500.0, 600.0])]
+
+        network = ARTwarp(vigilance=85.0, verbose=False, random_seed=42)
+        results = network.fit(contours)
+
+        all_parents = [n for name_list in results.category_parent_names.values() for n in name_list]
+        assert len(all_parents) == 2
+        for name in all_parents:
+            assert name.startswith("contour_")
+
+    def test_parent_names_keys_match_category_indices(self):
+        """Keys in category_parent_names are valid 0-based category indices."""
+        contours = [
+            np.array([100.0, 200.0, 300.0]),
+            np.array([500.0, 600.0, 700.0]),
+        ]
+        network = ARTwarp(vigilance=85.0, verbose=False, random_seed=42)
+        results = network.fit(contours)
+
+        valid_cats = set(range(results.num_categories))
+        assert set(results.category_parent_names.keys()).issubset(valid_cats)

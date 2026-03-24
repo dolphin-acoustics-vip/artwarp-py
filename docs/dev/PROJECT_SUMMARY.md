@@ -74,6 +74,7 @@ Status: Fully functional
 - Pickle format for complete results (and plotting utility)
 - CSV export for assignments
 - Individual CSV for reference contours
+- CSV provenance metadata (`export_reference_contour_metadata`): UUID per reference contour + parent contour names, mirroring MATLAB ARTwarp stable-1 `REFCONTOURS.id` / `REFCONTOURS.parent_ids`
 
 ### 3. Utilities
 
@@ -102,18 +103,19 @@ Status: Fully functional
 #### Unit Tests
 - **test_dtw.py**: DTW algorithm tests (29 tests: core DTW/unwarp + Python-path tests for coverage when Numba disabled)
 - **test_art.py**: ART component tests (18 tests)
-- **test_network.py**: Network training and prediction tests (18 tests)
+- **test_network.py**: Network training and prediction tests (24 tests: includes `TestCategoryParentNames` for provenance tracking)
 - **test_visualization.py**: Plotting and report tests (35 tests: core plots, discovery curve, DTW/ART schematic, diagnostics, reporting)
 - **test_matlab_compat.py**: MATLAB file and behavior compatibility tests (9 tests)
-- **test_loaders.py**: Data loaders tests — load_ctr_file, load_csv_file, load_txt_file, load_contours, load_mat_categorization (22 tests)
+- **test_loaders.py**: Data loaders and exporters tests -> load_ctr_file (incl. provenance fields), load_csv_file, load_txt_file, load_contours, load_mat_categorization, export_reference_contour_metadata (32 tests)
 - **test_validation.py**: Validation utilities tests — validate_contour, validate_contours, validate_parameters, numba (36 tests)
 
-**Total**: **164 tests** covering:
+**Total**: **183 tests** covering:
 - Mathematical correctness
 - Edge cases
 - Error handling
 - Performance characteristics
-- I/O (loaders) and validation (parameter/contour checks)
+- I/O (loaders, exporters) and validation (parameter/contour checks)
+- Provenance metadata (category_parent_names, export_reference_contour_metadata)
 
 ### 6. Documentation
 
@@ -176,7 +178,7 @@ tests/
 └── __init__.py
 
 ```
-**164 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
+**183 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
 
 ### Documentation
 ```
@@ -228,13 +230,14 @@ examples/
 - [x] Memory-efficient data structures
 
 ### ✓ I/O and Data Handling
-- [x] Load .ctr files (MATLAB format)
+- [x] Load .ctr files (MATLAB format, incl. provenance fields `id`/`parent_ids`)
 - [x] Load .csv files
 - [x] Load .txt files (tab-delimited)
 - [x] Auto-format detection
-- [x] Export to pickle (complete results)
+- [x] Export to pickle (complete results incl. `category_parent_names`)
 - [x] Export to CSV (assignments)
 - [x] Export reference contours
+- [x] Export reference contour provenance metadata (UUID per prototype + parent contour names)
 
 ### ✓ User Interface
 - [x] Command-line interface
@@ -282,9 +285,9 @@ The Python implementation maintains exact mathematical equivalence with the orig
 ## Testing Verification
 
 The implementation includes:
-- **164 unit tests** covering all core functions, I/O loaders, validation, visualization (including discovery curve and additional algorithm/diagnostics/reporting plots), and DTW Python fallback (for coverage)
+- **183 unit tests** covering all core functions, I/O loaders/exporters, validation, visualization (including discovery curve and additional algorithm/diagnostics/reporting plots), DTW Python fallback (for coverage), and provenance tracking
 - **test_validation.py** (25 tests): validate_contour, validate_contours, validate_parameters (all branches and error messages)
-- **test_loaders.py** (22 tests): load_ctr_file, load_csv_file, load_txt_file, load_contours (formats, return_tempres, errors), load_mat_categorization extended cases
+- **test_loaders.py** (32 tests): load_ctr_file (incl. provenance fields `id`/`parent_ids`), load_csv_file, load_txt_file, load_contours (formats, return_tempres, errors), load_mat_categorization extended cases, export_reference_contour_metadata (CSV format, UUID generation, one-based option, etc.)
 - **test_dtw.py** (28 tests): core DTW/unwarp plus Python-path tests (NUMBA_AVAILABLE=False) for full coverage of dtw.py fallback
 - **Edge case testing** (empty arrays, boundary conditions)
 - **Mathematical correctness tests** (similarity calculations)

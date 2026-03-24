@@ -119,6 +119,7 @@ class TrainingResults:
     converged: bool
     iteration_history: List[tuple]
     training_time: float
+    category_parent_names: Dict[int, List[str]]  # populated by fit()
 ```
 
 #### Attributes
@@ -131,6 +132,10 @@ class TrainingResults:
 - **converged**: Whether training converged (no reclassifications)
 - **iteration_history**: List of (iteration, num_reclassifications) tuples
 - **training_time**: Total training time in seconds
+- **category_parent_names**: Provenance map from 0-based category index to the list
+  of contour names assigned to that category after final convergence.
+  Mirrors `REFCONTOURS.parent_ids` from ARTwarp (MATLAB) stable-1.
+  Empty dict when loaded from an older pickle that pre-dates this field.
 
 #### Methods
 
@@ -249,6 +254,37 @@ export_reference_contours(
 )
 ```
 
+### export_reference_contour_metadata()
+
+Export reference contour provenance metadata to a CSV file.
+
+For each category prototype, assigns a stable UUID (`ref_contour_id`) and records every
+input contour name that was assigned to that category (`parent_contour_name`).
+Mirrors `REFCONTOURS.id` and `REFCONTOURS.parent_ids` from ARTwarp (MATLAB) stable-1,
+stored as CSV instead of `.ctr`.
+
+```python
+from artwarp.io.exporters import export_reference_contour_metadata
+
+ref_ids = export_reference_contour_metadata(
+    category_parent_names=results.category_parent_names,
+    filepath='reference_contours/metadata.csv',
+    one_based_categories=False  # set True for MATLAB-style 1-based indices
+)
+# ref_ids: {0: 'uuid-...', 1: 'uuid-...', ...}
+```
+
+The output CSV has three columns:
+
+| category | ref_contour_id | parent_contour_name |
+|----------|---------------|---------------------|
+| 0 | 550e8400-… | whistle_001 |
+| 0 | 550e8400-… | whistle_003 |
+| 1 | f47ac10b-… | whistle_002 |
+
+When `--export-refs` is used via the CLI (`train` or `export` commands), this file is
+written automatically as `metadata.csv` alongside the reference contour CSVs.
+
 ### export_category_assignments()
 
 Export category assignments to CSV file.
@@ -330,7 +366,7 @@ If you wish to preprocess in a separate Python script, call the functions listed
 | `--max-iterations` | 50 | Max iterations → `ARTwarp(max_iterations=...)` |
 | `--warp-factor` | 3 | DTW warping factor → `ARTwarp(warp_factor_level=...)` |
 | `--seed` | None | Random seed → `ARTwarp(random_seed=...)` |
-| `--export-refs` | false | Export reference contours to CSV |
+| `--export-refs` | false | Export reference contours to CSV and provenance `metadata.csv` |
 | `--export-categories` | false | Export category assignments to CSV |
 | `-q`, `--quiet` | false | Suppress progress → `ARTwarp(verbose=False)` |
 | `--resample` | false | **Preprocessing**: resample contours to uniform temporal resolution before training |

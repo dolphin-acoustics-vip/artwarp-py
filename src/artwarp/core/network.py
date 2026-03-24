@@ -44,6 +44,10 @@ class TrainingResults:
         converged: Whether training converged (no reclassifications)
         iteration_history: List of (iteration, num_reclassifications) tuples
         training_time: Total training time in seconds
+        category_parent_names: Mapping from 0-based category index to list of
+            contour names assigned to that category after final convergence
+            Mirrors REFCONTOURS.parent_ids from ARTwarp (MATLAB) stable-1
+            Empty dict when not populated (e.g. results loaded from an older pickle)
     """
 
     categories: NDArray[np.float64]
@@ -54,6 +58,7 @@ class TrainingResults:
     converged: bool
     iteration_history: List[tuple] = field(default_factory=list)
     training_time: float = 0.0
+    category_parent_names: Dict[int, List[str]] = field(default_factory=dict)
 
     def get_category_sizes(self) -> Dict[int, int]:
         """Get the number of samples in each category."""
@@ -326,6 +331,16 @@ class ARTwarp:
             print(f"Final categories: {self.num_categories}")
             print(f"Uncategorized: {np.sum(np.isnan(categories))}")
 
+        # build provenance map: category index -> list of contour names assigned to it
+        category_parent_names: Dict[int, List[str]] = {}
+        for i in range(num_samples):
+            cat = categories[i]
+            if not np.isnan(cat):
+                cat_int = int(cat)
+                if cat_int not in category_parent_names:
+                    category_parent_names[cat_int] = []
+                category_parent_names[cat_int].append(contour_names[i])
+
         return TrainingResults(
             categories=categories,
             matches=matches,
@@ -335,6 +350,7 @@ class ARTwarp:
             converged=converged,
             iteration_history=iteration_history,
             training_time=training_time,
+            category_parent_names=category_parent_names,
         )
 
     def predict(

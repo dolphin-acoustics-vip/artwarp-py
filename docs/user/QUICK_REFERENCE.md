@@ -72,12 +72,18 @@ categories, matches = network.predict(new_contours)
 
 ### Export and Visualize Results
 ```python
-from artwarp.io.exporters import export_results, export_reference_contours
+from artwarp.io.exporters import (
+    export_results,
+    export_reference_contours,
+    export_reference_contour_metadata,
+)
 from artwarp.visualization import create_results_report
 
 # export data
 export_results(results, 'results.pkl')
 export_reference_contours(results.weight_matrix, './references')
+# provenance: UUID per prototype + parent contour names (auto-written by --export-refs)
+export_reference_contour_metadata(results.category_parent_names, './references/metadata.csv')
 
 # generate visual report
 create_results_report(results, contours, names, output_dir='./report')
@@ -110,12 +116,13 @@ results = network.fit(contours, contour_names=names)
 ## Results Structure
 
 ```python
-results.categories       # array of category assignments
-results.matches          # array of match values
-results.weight_matrix    # category prototypes
-results.num_categories   # num of categories
-results.converged        # convergence status
-results.training_time    # time in seconds
+results.categories             # array of category assignments
+results.matches                # array of match values
+results.weight_matrix          # category prototypes
+results.num_categories         # num of categories
+results.converged              # convergence status
+results.training_time          # time in seconds
+results.category_parent_names  # {cat_idx: [contour_name, ...]} provenance map
 ```
 
 ## Troubleshooting
@@ -145,8 +152,8 @@ Process in batches or reduce max_categories
 All formats should contain frequency values over time.
 
 ### Output Files
-- **.pkl**: Python pickle (complete results)
-- **.csv**: Category assignments or reference contours
+- **.pkl**: Python pickle (complete results, includes provenance)
+- **.csv**: Category assignments, reference contours, or provenance metadata (`metadata.csv`)
 
 ## Testing
 
