@@ -15,8 +15,8 @@
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-LGPL--3.0-green" alt="License"/>
   </a>
-  <a href="https://app.codecov.io/gh/dolphin-acoustics-vip/artwarp-py/tree/main">
-    <img src="https://codecov.io/gh/dolphin-acoustics-vip/artwarp-py/branch/main/graph/badge.svg" alt="codecov"/>
+  <a href="https://codecov.io/gh/dolphin-acoustics-vip/artwarp-py" >
+    <img src="https://codecov.io/gh/dolphin-acoustics-vip/artwarp-py/graph/badge.svg?token=ECX390IRI9"/>
   </a>
 </p>
 

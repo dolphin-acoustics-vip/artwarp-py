@@ -142,11 +142,11 @@ def main() -> None:
     df_mat = pd.read_csv(matlab_path)
     df_py  = pd.read_csv(python_path)
 
-    # Normalise contour names: strip extensions and whitespace
+    # normalize contour names -> strip extensions & whitespace
     df_mat["key"] = df_mat["contour_name"].str.strip().apply(_strip_ext)
     df_py["key"]  = df_py["contour_name"].str.strip().apply(_strip_ext)
 
-    # Fix MATLAB match scores: if values are ~100× too large, divide by 100
+    # fix MATLAB match scores -> if values are ~100× too large, divide by 100
     mat_match_max = df_mat["match"].max()
     if mat_match_max > 200:
         df_mat["match"] = df_mat["match"] / 100.0
@@ -196,7 +196,7 @@ def main() -> None:
     avg_size_py  = n_shared / n_cats_py
     print(f"  {'Mean category size':30s}  {avg_size_mat:>10.1f}  {avg_size_py:>10.1f}")
 
-    # Singleton counts (categories with exactly 1 member)
+    # singleton counts -> categories with exactly 1 member
     _, mat_counts = np.unique(labels_mat, return_counts=True)
     _, py_counts  = np.unique(labels_py,  return_counts=True)
     sing_mat = int((mat_counts == 1).sum())
@@ -228,19 +228,19 @@ def main() -> None:
         print(f"  {'V-measure':40s}  {vms:.4f}   [ 0, 1]  higher=better")
         print(f"  {'Best-match accuracy (Hungarian)':40s}  {bma:.4f}   [ 0, 1]  higher=better")
 
-        # Interpretation
+        # interpretation
         print()
         print("  Interpretation:")
         if ari >= 0.80:
-            verdict = "Excellent agreement — the two clusterings are nearly identical."
+            verdict = "Excellent agreement —> the two clusterings are nearly identical."
         elif ari >= 0.60:
-            verdict = "Good agreement — major structure is shared, minor differences exist."
+            verdict = "Good agreement —> major structure is shared, minor differences exist."
         elif ari >= 0.40:
-            verdict = "Moderate agreement — similar broad groupings but notable differences."
+            verdict = "Moderate agreement —> similar broad groupings but notable differences."
         elif ari >= 0.20:
-            verdict = "Weak agreement — some shared structure but significant divergence."
+            verdict = "Weak agreement —> some shared structure but significant divergence."
         else:
-            verdict = "Poor agreement — clusterings differ substantially."
+            verdict = "Poor agreement —> clusterings differ substantially."
         print(f"  ARI={ari:+.4f} → {verdict}")
     else:
         print("  ✗  scikit-learn not installed.  Run: pip install scikit-learn")
@@ -270,7 +270,7 @@ def main() -> None:
         n_py_cats   = int(series.nunique())
         cat_purities.append((mat_cat, n_in, purity_here, dominant_py, n_py_cats))
 
-    # Sort by purity ascending (most impure first)
+    # sort by purity ascending -> most impure first
     cat_purities.sort(key=lambda x: x[2])
 
     print(f"  {'MATLAB cat':>10s}  {'size':>6s}  {'purity':>7s}  {'dominant Py cat':>16s}  {'# Py cats':>10s}")
@@ -298,7 +298,7 @@ def main() -> None:
     print("  PAIR-LEVEL AGREEMENT")
     print(_separator())
 
-    # Sample for speed if dataset is large
+    # sample for speed if dataset is large
     n = len(labels_mat)
     if n > 2000:
         rng = np.random.default_rng(42)
