@@ -21,6 +21,7 @@ from artwarp import ARTwarp, load_contours
 from artwarp.core.network import TrainingResults
 from artwarp.io.exporters import (
     export_category_assignments,
+    export_reference_contour_metadata,
     export_reference_contours,
     export_results,
     load_results,
@@ -103,6 +104,9 @@ def command_train(args: argparse.Namespace) -> None:
         ref_dir = Path(args.output).parent / "reference_contours"
         print(f"Exporting reference contours to: {ref_dir}")
         export_reference_contours(results.weight_matrix, str(ref_dir))
+        meta_file = ref_dir / "metadata.csv"
+        print(f"Exporting reference contour metadata to: {meta_file}")
+        export_reference_contour_metadata(results.category_parent_names, str(meta_file))
 
     # export category assignments if requested
     if args.export_categories:
@@ -187,6 +191,10 @@ def command_export(args: argparse.Namespace) -> None:
         ref_dir = output_dir / "reference_contours"
         print(f"Exporting reference contours to: {ref_dir}")
         export_reference_contours(data["weight_matrix"], str(ref_dir))
+        if data.get("category_parent_names"):
+            meta_file = ref_dir / "metadata.csv"
+            print(f"Exporting reference contour metadata to: {meta_file}")
+            export_reference_contour_metadata(data["category_parent_names"], str(meta_file))
 
     # export category assignments
     if args.export_type in ["all", "categories"]:
@@ -233,6 +241,7 @@ def command_plot(args: argparse.Namespace) -> None:
         converged=data["converged"],
         iteration_history=data["iteration_history"],
         training_time=data["training_time"],
+        category_parent_names=data.get("category_parent_names", {}),
     )
 
     output_dir = args.output_dir

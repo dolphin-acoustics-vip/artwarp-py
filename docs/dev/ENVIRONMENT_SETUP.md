@@ -292,11 +292,11 @@ pip install -e .[dev]
 ### Current Test Environment (Verified)
 
 ```
-OS: Linux 6.18.5-arch1-1
-Python: 3.13.11
+OS: Linux 6.18.13-arch1-1
+Python: 3.14.2 (miniconda sig-process)
 Conda: 25.11.0
-Virtual Environment: venv_artwarp
-Test Results: 164/164 passed (100%) (as of February 2026)
+Virtual Environment: sig-process (conda)
+Test Results: 183/183 passed (100%) (as of March 2026)
 ```
 
 ---

@@ -41,6 +41,11 @@ jobs:
             --cov-report=term \
             --cov-fail-under=80
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

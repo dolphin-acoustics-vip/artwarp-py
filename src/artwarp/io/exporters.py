@@ -4,6 +4,7 @@ Export utilities for ARTwarp results.
 Supports exporting:
 - Training results (pickle format)
 - Reference contours (CSV format)
+- Reference contour provenance metadata (CSV format)
 - Category assignments (CSV format)
 
 @author: Pedro Gronda Garrigues
@@ -11,6 +12,7 @@ Supports exporting:
 
 import csv
 import pickle
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
@@ -51,6 +53,7 @@ def export_results(
         "converged": results.converged,
         "iteration_history": results.iteration_history,
         "training_time": results.training_time,
+        "category_parent_names": results.category_parent_names,
     }
 
     if include_names and contour_names is not None:
@@ -102,6 +105,57 @@ def export_reference_contours(
             writer = csv.writer(f)
             for freq_value in valid_contour:
                 writer.writerow([f"{freq_value:7.1f}"])  # MATLAB SaveRefContours: %7.1f
+
+
+def export_reference_contour_metadata(
+    category_parent_names: Dict[int, List[str]],
+    filepath: str,
+    one_based_categories: bool = False,
+) -> Dict[int, str]:
+    """
+    Export reference contour provenance metadata to a CSV file.
+
+    For each category prototype, assigns a stable UUID (ref_contour_id) and
+    records every input contour name that was assigned to that category during
+    training (parent_contour_name). The UUIDs are generated fresh each call,
+    consistent with MATLAB ARTwarp which regenerates them on every run.
+
+    Mirrors REFCONTOURS.id and REFCONTOURS.parent_ids from ARTwarp (MATLAB)
+    stable-1 (post-Feb 2026), stored as CSV instead of .ctr.
+
+    Args:
+        category_parent_names: Mapping from 0-based category index to the list of
+            contour names assigned to that category.
+            Comes directly from TrainingResults.category_parent_names.
+        filepath: Output CSV file path.
+        one_based_categories: If True, export category column as 1-based to match
+            the MATLAB convention.  Default False keeps Python 0-based indices.
+
+    Returns:
+        Dict mapping 0-based category index to its generated UUID ref_contour_id,
+        allowing callers to cross-reference IDs with other exports.
+
+    Creates a CSV with columns: category, ref_contour_id, parent_contour_name.
+    Each row corresponds to one (category, parent contour) pair.
+    Categories with no assigned contours are omitted.
+    """
+    output_path = Path(filepath)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    offset = 1 if one_based_categories else 0
+
+    ref_ids: Dict[int, str] = {cat_idx: str(uuid.uuid4()) for cat_idx in category_parent_names}
+
+    with open(output_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["category", "ref_contour_id", "parent_contour_name"])
+        for cat_idx in sorted(category_parent_names.keys()):
+            ref_id = ref_ids[cat_idx]
+            cat_out = cat_idx + offset
+            for parent_name in category_parent_names[cat_idx]:
+                writer.writerow([cat_out, ref_id, parent_name])
+
+    return ref_ids
 
 
 def export_category_assignments(

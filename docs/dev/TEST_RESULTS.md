@@ -1,6 +1,6 @@
 # ARTwarp-py Test Results
 
-**Date**: February, 2026  
+**Date**: March, 2026  
 **Version**: 1.0.1
 **Environment**: Linux, Python 3.14.2 (miniconda sig-process)  
 **Status**: ALL TESTS PASSING :D
@@ -10,22 +10,22 @@
 ## Test Summary
 
 ```
-===================================================================== test session starts ======================================================================
+============================= test session starts ==============================
 platform linux -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
 cachedir: .pytest_cache
 rootdir: /home/pedroggbm/Documents/vp4038-dolphin-acoustics/ARTWarp/artwarp-py
 configfile: pyproject.toml
 plugins: cov-7.0.0
-collected 164 items
-===================================================================== 164 passed in 7.72s ======================================================================
+collected 183 items
+============================= 183 passed in 10.87s =============================
 ```
 
 ### Overall Statistics
-- **Total Tests**: 164
-- **Passed**: 164 (100%)
+- **Total Tests**: 183
+- **Passed**: 183 (100%)
 - **Failed**: 0
 - **Skipped**: 0
-- **Duration**: ~7.7 seconds
+- **Duration**: ~10.9 seconds
 
 ---
 
@@ -107,8 +107,8 @@ collected 164 items
 
 ---
 
-### 3. Loaders Tests (`test_loaders.py`)
-**Status**: 22/22 passed
+### 3. Loaders and Exporters Tests (`test_loaders.py`)
+**Status**: 32/32 passed
 
 #### Load CTR File (6 tests)
 - `test_load_fcontour` - Load .ctr with 'fcontour' variable
@@ -137,6 +137,23 @@ collected 164 items
 - `test_load_mat_data_empty_returns_net_only` - DATA present but empty
 - `test_load_mat_weight_1d_reshaped_to_2d` - 1-d weight reshaped to (n, 1)
 
+#### Load CTR File Provenance (3 tests)
+- `test_load_ctr_returns_id_none_when_absent` - `id` key present and None when not in file
+- `test_load_ctr_returns_parent_ids_none_when_absent` - `parent_ids` key present and None when not in file
+- `test_load_ctr_reads_id_string` - UUID id string returned correctly when present
+
+#### Export Reference Contour Metadata (10 tests)
+- `test_basic_export_creates_file` - Output CSV file is created
+- `test_csv_has_correct_header` - Header row: category, ref_contour_id, parent_contour_name
+- `test_row_count_matches_total_parents` - One data row per (category, parent) pair
+- `test_parent_names_appear_in_csv` - All input names appear in parent_contour_name column
+- `test_same_ref_id_within_category` - All rows for a category share the same UUID
+- `test_different_ref_ids_across_categories` - Different categories get different UUIDs
+- `test_returns_uuid_dict` - Return value maps category index to UUID string
+- `test_one_based_categories` - one_based_categories=True writes 1-based values
+- `test_empty_parent_names_writes_only_header` - Empty dict produces header-only CSV
+- `test_creates_parent_directories` - Intermediate directories created automatically
+
 ---
 
 ### 4. MATLAB Compatibility Tests (`test_matlab_compat.py`)
@@ -147,7 +164,7 @@ collected 164 items
 ---
 
 ### 5. Network Tests (`test_network.py`)
-**Status**: 18/18 passed
+**Status**: 24/24 passed
 
 #### Initialization (6 tests)
 - `test_default_initialization` - Default parameter values
@@ -171,9 +188,17 @@ collected 164 items
 - `test_predict_before_training_error` - Pre-training error handling
 - `test_predict_dissimilar_contour` - Dissimilar contour rejection
 
-#### Training Results (2 tests)
+#### Training Results (4 tests)
 - `test_get_category_sizes` - Category size calculation
 - `test_get_uncategorized_count` - Uncategorized count
+- `test_category_parent_names_default_empty` - category_parent_names defaults to empty dict
+- `test_category_parent_names_explicit` - category_parent_names can be set explicitly
+
+#### Category Parent Names / Provenance (4 tests)
+- `test_parent_names_populated_after_fit` - fit() populates category_parent_names with contour names
+- `test_parent_names_no_duplicate_assignments` - Each contour name appears exactly once
+- `test_parent_names_auto_generated_when_no_names` - Auto-generated names appear in parent_names
+- `test_parent_names_keys_match_category_indices` - Keys are valid 0-based category indices
 
 ---
 
@@ -314,7 +339,8 @@ Then open `htmlcov/index.html` in a browser.
 - **Visualization**: High coverage
 - **Validation** (`utils/validation.py`): Covered by `test_validation.py` (validate_contour, validate_contours, validate_parameters)
 - **Numba check** (`utils/numba_check.py`): Covered by `test_validation.py` (numba_available, report_numba_status, check_numba; install prompt and pip/conda paths tested via mocks)
-- **Loaders** (`io/loaders.py`): Covered by `test_loaders.py` and `test_matlab_compat.py` (load_ctr_file, load_csv_file, load_txt_file, load_contours, load_mat_categorization)
+- **Loaders** (`io/loaders.py`): Covered by `test_loaders.py` and `test_matlab_compat.py` (load_ctr_file incl. provenance fields, load_csv_file, load_txt_file, load_contours, load_mat_categorization)
+- **Exporters** (`io/exporters.py`): export_reference_contour_metadata covered by `test_loaders.py`; export_results/load_results covered by `test_matlab_compat.py`
 
 ### Edge Cases Tested
 - Empty inputs
@@ -414,7 +440,7 @@ isort==7.0.0
 
 ## Conclusion
 
-**ARTwarp-py v1.0.1 passes all 164 tests with 100% success rate.**
+**ARTwarp-py v1.0.1 passes all 183 tests with 100% success rate.**
 
 ## Author Note
 
@@ -428,8 +454,8 @@ Thank you.
 
 ---
 
-_Test execution completed: February, 2026_  
-_All tests passed: 164/164 (100%)_  
+_Test execution completed: March, 2026_  
+_All tests passed: 183/183 (100%)_  
 _Status: READY FOR USE_
 
 ---

@@ -6,7 +6,7 @@
 **A high-performance Python implementation of ARTwarp for automated categorization of tonal animal sounds.**
 
 <p align="center">
-  <a href="https://pypi.org/project/artwarp-py/">
+  <a href="https://pypi.org/project/artwarp-py/1.0.1/">
     <img src="https://img.shields.io/pypi/v/artwarp-py?color=blue&label=PyPI&logo=pypi&logoColor=white" alt="PyPI version"/>
   </a>
   <a href="https://pypi.org/project/artwarp-py/">
@@ -14,6 +14,9 @@
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-LGPL--3.0-green" alt="License"/>
+  </a>
+  <a href="https://app.codecov.io/gh/dolphin-acoustics-vip/artwarp-py/tree/main">
+    <img src="https://codecov.io/gh/dolphin-acoustics-vip/artwarp-py/branch/main/graph/badge.svg" alt="codecov"/>
   </a>
 </p>
 

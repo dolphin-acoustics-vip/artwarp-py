@@ -5,6 +5,7 @@
 
 from artwarp.io.exporters import (
     export_category_assignments,
+    export_reference_contour_metadata,
     export_reference_contours,
     export_results,
     load_results,
@@ -25,6 +26,7 @@ __all__ = [
     "load_mat_categorization",
     "export_results",
     "export_reference_contours",
+    "export_reference_contour_metadata",
     "export_category_assignments",
     "load_results",
 ]
