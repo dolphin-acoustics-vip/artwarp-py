@@ -231,7 +231,7 @@ prompt_yesno() {
 }
 
 # ---------- Main menu ----------
-# menu -> printed to stderr; reprompt until valid choice 1–5
+# menu -> printed to stderr; reprompt until valid choice 1–6
 main_menu() {
   local choice
   while true; do
@@ -240,13 +240,14 @@ main_menu() {
     echo "  2) Plot    — Generate visualization report from results (.pkl)" >&2
     echo "  3) Predict — Predict categories for new contours using trained model" >&2
     echo "  4) Export  — Export reference contours / category assignments from .pkl" >&2
-    echo "  5) Quit" >&2
+    echo "  5) OCEANS  — Fetch dolphin call data from OCEANS and extract contours" >&2
+    echo "  6) Quit" >&2
     echo "" >&2
-    prompt "Choose 1–5" >&2
+    prompt "Choose 1–6" >&2
     read -r choice
     choice="${choice// /}"
-    case "$choice" in 1|2|3|4|5) echo "$choice"; return 0 ;; esac
-    err "Invalid option. Enter 1, 2, 3, 4, or 5." >&2
+    case "$choice" in 1|2|3|4|5|6) echo "$choice"; return 0 ;; esac
+    err "Invalid option. Enter 1, 2, 3, 4, 5, or 6." >&2
   done
 }
 
@@ -421,6 +422,82 @@ run_export() {
   fi
 }
 
+# ---------- OCEANS ----------
+run_oceans() {
+  header "OCEANS data pipeline"
+  echo "  OCEANS (Odontocete Call Environment and Archival Network)" >&2
+  echo "  Developed by James Sullivan:" >&2
+  echo "  https://github.com/dolphin-acoustics-vip/database-management-system" >&2
+  echo "" >&2
+
+  # credential check
+  subheader "Credentials"
+  if [[ -n "${OCEAN_ACCESS_TOKEN:-}" ]]; then
+    echo "  Using OCEAN_ACCESS_TOKEN from environment." >&2
+  elif [[ -n "${OCEAN_USERNAME:-}" ]] && [[ -n "${OCEAN_PASSWORD:-}" ]]; then
+    echo "  Using OCEAN_USERNAME / OCEAN_PASSWORD from environment." >&2
+  else
+    warn "  No OCEANS credentials found in environment." >&2
+    warn "  Set before running:" >&2
+    warn "    export OCEAN_USERNAME='your@email.ac.uk'" >&2
+    warn "    export OCEAN_PASSWORD='your_password'" >&2
+    warn "  Or use a pre-obtained token:" >&2
+    warn "    export OCEAN_ACCESS_TOKEN='eyJ...'" >&2
+    echo "" >&2
+    if ! prompt_yesno "Continue anyway (will prompt interactively)?" "y"; then
+      warn "Cancelled." >&2
+      return 0
+    fi
+  fi
+
+  if [[ -n "${OCEAN_BASE_URL:-}" ]]; then
+    echo "  API server: ${OCEAN_BASE_URL}" >&2
+  else
+    echo "  API server: production" >&2
+  fi
+  echo "" >&2
+
+  subheader "Action"
+  echo "  1) Fetch — Download selections, extract contours to CSV" >&2
+  echo "  2) Count — Count available selections (no download)" >&2
+  local action val
+  while true; do
+    val=$(prompt_with_default "Choose 1–2" "1" int)
+    case "$val" in 1|2) action="$val"; break ;; esac
+    err "Enter 1 or 2." >&2
+  done
+
+  local args=()
+  if [[ "$action" == "1" ]]; then
+    local output_dir max_per_species
+    subheader "Output"
+    output_dir=$(prompt_with_default "Output directory" "./contours_ocean" path)
+    [[ -z "$output_dir" ]] && output_dir="./contours_ocean"
+    args+=("oceans" "fetch" "-o" "$output_dir")
+    max_per_species=$(prompt_with_default "Max contours per species (empty = no limit)" "" optional_int)
+    [[ -n "$max_per_species" ]] && args+=("--max-per-species" "$max_per_species")
+    if prompt_yesno "Quiet mode?" "n"; then args+=("--quiet"); fi
+  else
+    args+=("oceans" "count")
+  fi
+
+  echo "" >&2
+  header "Command"
+  echo "  $ARTWARP_CMD ${args[*]}" >&2
+  echo "" >&2
+
+  if prompt_yesno "Run this command?" "y"; then
+    if $ARTWARP_CMD "${args[@]}"; then
+      success "Done."
+    else
+      err "Command failed (exit $?)."
+      return 1
+    fi
+  else
+    warn "Cancelled." >&2
+  fi
+}
+
 # ---------- Entry ----------
 main() {
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-.}")" && pwd)"
@@ -441,7 +518,8 @@ main() {
       2) run_plot ;;
       3) run_predict ;;
       4) run_export ;;
-      5) success "Bye."; exit 0 ;;
+      5) run_oceans ;;
+      6) success "Bye."; exit 0 ;;
       *) err "Invalid option." ;;
     esac
     echo ""

@@ -38,6 +38,7 @@ dependencies = [
 
 [project.optional-dependencies]
 accelerate = ["numba>=0.54.0"]
+oceans = ["requests>=2.25.0"]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
@@ -48,6 +49,7 @@ dev = [
 ]
 all = [
     "numba>=0.54.0",
+    "requests>=2.25.0",
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
     "black>=22.0.0",

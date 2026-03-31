@@ -43,6 +43,7 @@ If you're looking for user-facing documentation, see the docs/user/ directory:
 - **docs/user/VISUALIZATION.md**   - Visualization guide
 - **docs/user/QUICK_REFERENCE.md** - Quick reference cheat sheet
 - **docs/user/ARCHITECTURE.md**    - System architecture
+- **docs/user/OCEANS.md**          - OCEANS data-fetch integration guide
 
 ## For Developers [!!!]
 
@@ -63,6 +64,11 @@ This `docs/dev/` directory contains:
    - Multiple installation methods
    - Platform-specific notes
 
+4. **OCEANS Integration**
+   - Internal design and API endpoint reference
+   - Authentication architecture
+   - Testing strategy for mocked HTTP calls
+
 ## Directory Structure
 
 ```
@@ -76,13 +82,15 @@ artwarp-py/
 │   │   ├── ENVIRONMENT_SETUP.md           # detailed environment guide
 │   │   ├── TEST_RESULTS.md                # test documentation
 │   │   ├── PROJECT_SUMMARY.md             # complete project summary
-│   │   └── PERFORMANCE_OPTIMIZATIONS.md   # optimizations for JIT compiler
+│   │   ├── PERFORMANCE_OPTIMIZATIONS.md   # optimizations for JIT compiler
+│   │   └── OCEANS_DEV.md                  # OCEANS integration developer notes
 │   └── user/
 │       ├── INSTALLATION.md                # setup instructions
 │       ├── API.md                         # API reference
 │       ├── VISUALIZATION.md               # user visualization guide
 │       ├── QUICK_REFERENCE.md             # cheat sheet
-│       └── ARCHITECTURE.md                # system design
+│       ├── ARCHITECTURE.md                # system design
+│       └── OCEANS.md                      # OCEANS data-fetch integration guide
 ├── src/                               # source code
 ├── tests/                             # test suite
 ├── img/                               # README banner
@@ -117,6 +125,8 @@ The **GitHub Wiki** for this repo is synced from this `docs/` directory. When yo
 | `docs/dev/ENVIRONMENT_SETUP.md` | Dev-ENVIRONMENT_SETUP |
 | `docs/dev/TEST_RESULTS.md` | Dev-TEST_RESULTS |
 | `docs/dev/PERFORMANCE_OPTIMIZATIONS.md` | Dev-PERFORMANCE_OPTIMIZATIONS |
+| `docs/user/OCEANS.md` | User-OCEANS |
+| `docs/dev/OCEANS_DEV.md` | Dev-OCEANS_DEV |
 
 ---
 

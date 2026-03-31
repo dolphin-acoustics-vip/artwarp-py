@@ -40,6 +40,13 @@ For best performance, install with acceleration support:
 pip install -e ".[accelerate]"
 ```
 
+For the **OCEANS data-fetch integration** (downloads real dolphin call data from
+the University of St Andrews OCEANS database):
+```bash
+pip install -e ".[oceans]"        # from source
+pip install artwarp-py[oceans]    # from PyPI
+```
+
 For visualization capabilities:
 ```bash
 pip install -e ".[viz]"
@@ -52,7 +59,7 @@ pip install -e ".[dev]"
 
 Install everything:
 ```bash
-pip install -e ".[accelerate,viz,dev]"
+pip install -e ".[accelerate,oceans,dev]"
 ```
 
 ### Option 3: Install from PyPI (when available)
@@ -214,7 +221,24 @@ Core dependencies (automatically installed):
 - matplotlib >= 3.4.0 (for visualization)
 
 Optional dependencies:
-- numba >= 0.54.0 (for JIT acceleration)
+- numba >= 0.54.0 (for JIT acceleration — `pip install artwarp-py[accelerate]`)
+- requests >= 2.25.0 (for OCEANS integration — `pip install artwarp-py[oceans]`)
+
+### OCEANS credentials (never commit to source control)
+
+If you use the OCEANS integration, set these environment variables before running:
+
+```bash
+> export OCEAN_USERNAME="your@email.ac.uk"
+> export OCEAN_PASSWORD="your_password"
+# or, with a pre-obtained token (valid ~30 min):
+> export OCEAN_ACCESS_TOKEN="eyJ..."
+
+# test server (no API privileges required):
+# export OCEAN_BASE_URL="https://rescomp-test-2.st-andrews.ac.uk/ocean/api"
+```
+
+See `docs/user/OCEANS.md` for the full OCEANS guide.
 
 Development dependencies:
 - pytest >= 7.0.0
@@ -228,9 +252,10 @@ After installation:
 1. **Quick Start**: See `docs/user/QUICK_REFERENCE.md` for common usage patterns
 2. **API Documentation**: See `docs/user/API.md` for complete API reference
 3. **Visualization**: See `docs/user/VISUALIZATION.md` for plotting guide
-4. **Examples**: Check `examples/` directory for complete demos
-5. **Architecture**: See `docs/user/ARCHITECTURE.md` for design details
-6. **Detailed Docs**: See `docs/dev/` directory for additional documentation (for developers)
+4. **OCEANS Integration**: See `docs/user/OCEANS.md` to fetch real dolphin call data
+5. **Examples**: Check `examples/` directory for complete demos
+6. **Architecture**: See `docs/user/ARCHITECTURE.md` for design details
+7. **Detailed Docs**: See `docs/dev/` directory for additional documentation (for developers)
 
 ---
 

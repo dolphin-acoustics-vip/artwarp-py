@@ -107,12 +107,29 @@ conda deactivate
 
 ### Core Dependencies (Required)
 - **numpy** >= 1.20.0 - Numerical computing
-- **scipy** >= 1.7.0 - Scientific computing (for .mat file loading)
+- **scipy** >= 1.7.0 - Scientific computing (WAV I/O, spectrogram, .mat loading)
 - **pandas** >= 1.3.0 - Data manipulation (for CSV/TXT loading)
 - **matplotlib** >= 3.4.0 - Visualization
 
-### Optional Dependencies (Recommended)
-- **numba** >= 0.54.0 - JIT compilation for performance acceleration
+### Optional Dependencies
+- **numba** >= 0.54.0 - JIT compilation for performance acceleration (`pip install artwarp-py[accelerate]`)
+- **requests** >= 2.25.0 - OCEANS data-fetch integration (`pip install artwarp-py[oceans]`)
+
+### OCEANS credentials (never commit to source control)
+
+When using the OCEANS integration, set credentials via environment variables.
+A `.env` file (added to `.gitignore`) is a convenient approach:
+
+```bash
+# .env  (add to .gitignore!)
+> export OCEAN_USERNAME="your@email.ac.uk"
+> export OCEAN_PASSWORD="your_password"
+# or use a pre-obtained token:
+> export OCEAN_ACCESS_TOKEN="eyJ..."
+
+# test server (no API privileges required):
+> export OCEAN_BASE_URL="https://rescomp-test-2.st-andrews.ac.uk/ocean/api"
+```
 
 ### Development Dependencies
 - **pytest** >= 7.0.0 - Testing framework
@@ -292,11 +309,11 @@ pip install -e .[dev]
 ### Current Test Environment (Verified)
 
 ```
-OS: Linux 6.18.13-arch1-1
+OS: Linux 6.19.9-arch1-1
 Python: 3.14.2 (miniconda sig-process)
 Conda: 25.11.0
 Virtual Environment: sig-process (conda)
-Test Results: 183/183 passed (100%) (as of March 2026)
+Test Results: 233/233 passed (100%) (as of March 2026)
 ```
 
 ---
@@ -343,7 +360,9 @@ python -c "import artwarp; print('OK')"
 - **Visualization Guide**: See `docs/user/VISUALIZATION.md` for plotting instructions
 - **Examples**: Check `examples/` directory for usage examples
 - **Tests**: Review `tests/unit/` for test examples
-- **Interactive launcher**: From repo root, `./run.sh` (no args) opens a menu for Train / Plot / Predict / Export
+- **Interactive launcher**: From repo root, `./run.sh` (no args) opens a menu for Train / Plot / Predict / Export / OCEANS
+- **OCEANS launcher**: `./oceans.sh` (no args) opens a dedicated OCEANS Fetch / Count menu
+- **OCEANS docs**: See `docs/user/OCEANS.md` for the integration guide
 
 ---
 
@@ -361,7 +380,7 @@ For further assistance, consult GitHub Issues, or shoot me a message -> pgg6@st-
 
 ---
 
-_Last Updated: January 29, 2026_  
+_Last Updated: March 30, 2026_  
 _Tested Environment: Linux 6.18.5, Python 3.13.11_
 
 ---

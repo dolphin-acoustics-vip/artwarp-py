@@ -9,7 +9,7 @@
 For more rigorous environment setup, view INSTALLATION.md!
 
 ```bash
-pip install numpy scipy pandas
+> pip install numpy scipy pandas
 # optional: pip install numba matplotlib
 ```
 
@@ -28,13 +28,13 @@ Activate your virtual environment first so `artwarp-py` is on your PATH (e.g. `s
 Then, for direct commands:
 
 ```bash
-artwarp-py train --input-dir ./contours --output results.pkl --vigilance 85
+> artwarp-py train --input-dir ./contours --output results.pkl --vigilance 85
 
 # with resampling (like MATLAB resample option)
-artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02
+> artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02
 
 # generate visualization report
-artwarp-py plot --results results.pkl --input-dir ./contours --output-dir ./report
+> artwarp-py plot --results results.pkl --input-dir ./contours --output-dir ./report
 ```
 
 Without activating, use the venv’s Python: `./venv/bin/python -m artwarp.cli.main train ...` (or `... plot ...`).
@@ -103,7 +103,7 @@ contours, names, tempres = load_contours('./data', return_tempres=True)
 
 ### Resample Before Training (CLI or API)
 ```bash
-artwarp-py train -i ./contours -o results.pkl --resample --sample-interval 0.02
+> artwarp-py train -i ./contours -o results.pkl --resample --sample-interval 0.02
 ```
 ```python
 from artwarp.utils import resample_contours
@@ -159,23 +159,23 @@ All formats should contain frequency values over time.
 
 ```bash
 # run all tests (use venv Python so dependencies are found)
-python -m pytest tests/ -v
+> python -m pytest tests/ -v
 
 # run specific test file
-python -m pytest tests/unit/test_dtw.py -v
+> python -m pytest tests/unit/test_dtw.py -v
 
 # run without slow tests
-python -m pytest tests/ -m "not slow"
+> python -m pytest tests/ -m "not slow"
 ```
 
 ## Examples
 
 ```bash
 # basic example
-python examples/simple_example.py
+> python examples/simple_example.py
 
 # basic visualization
-python examples/visualization_example.py
+> thon examples/visualization_example.py
 ```
 
 ## Documentation
@@ -220,6 +220,46 @@ train_data, test_data = train_test_split(contours, test_size=0.2)
 network = ARTwarp(vigilance=85.0).fit(train_data)
 categories, matches = network.predict(test_data)
 ```
+
+## OCEANS Data Pipeline
+
+Fetch real dolphin call data directly from OCEANS into artwarp-py.
+
+**Install dependency:**
+```bash
+> pip install artwarp-py[oceans]   # adds requests
+```
+
+**Set credentials (never commit):**
+```bash
+> export OCEAN_USERNAME="your@email.ac.uk"
+> export OCEAN_PASSWORD="your_password"
+# test server (no API privileges needed):
+# export OCEAN_BASE_URL="https://rescomp-test-2.st-andrews.ac.uk/ocean/api"
+```
+
+**Fetch + train in two commands:**
+```bash
+artwarp-py oceans fetch --output-dir ./contours_ocean --max-per-species 50
+artwarp-py train --input-dir ./contours_ocean --format csv --output results.pkl
+```
+
+**Python shortcut:**
+```python
+from artwarp.oceans import fetch_contours_to_dir
+n = fetch_contours_to_dir("./contours_ocean", max_per_species=50)
+```
+
+**Interactive launchers:**
+```bash
+> ./oceans.sh      # OCEANS-only guided menu
+> ./run.sh         # choose option 5 — OCEANS
+```
+
+OCEANS is developed by James Sullivan:
+[github.com/dolphin-acoustics-vip/database-management-system](https://github.com/dolphin-acoustics-vip/database-management-system)
+
+See `docs/user/OCEANS.md` for the full guide.
 
 ## Error Messages
 

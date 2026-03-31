@@ -31,6 +31,7 @@ ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combin
 - [Features](#features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [OCEANS Integration](#oceans-integration)
 - [Documentation](#documentation)
 - [Architecture](#architecture)
 - [Algorithm Details](#algorithm-details)
@@ -47,6 +48,7 @@ ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combin
 |------|-------------|
 | **Performance** | Optimized algorithms using NumPy, with optional Numba JIT compilation |
 | **Input formats** | `.ctr` (MATLAB), `.csv`, `.txt`; load MATLAB categorization (`.mat`) via `load_mat_categorization()` |
+| **OCEANS** | Fetch real dolphin call data directly from OCEANS into the training pipeline |
 | **Visualization** | Publication-worthy plots and reports |
 | **CLI** | Command-line interface for training, plotting, and batch workflows |
 | **Quality** | Type hints, tests, coverage, and documentation |
@@ -60,13 +62,16 @@ ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combin
 
 ```bash
 # install from PyPI
-pip install artwarp-py
+> pip install artwarp-py
 
-# optional: install with Numba JIT acceleration
-pip install artwarp-py[accelerate]
+# optional: Numba JIT acceleration
+> pip install artwarp-py[accelerate]
+
+# optional: OCEANS data-fetch integration (adds requests)
+> pip install artwarp-py[oceans]
 
 # install from source (development)
-pip install -e .
+> pip install -e .
 ```
 
 For environment setup and virtualenv details, see **[user/INSTALLATION.md](docs/user/INSTALLATION.md)** (end-user) and **[dev/ENVIRONMENT_SETUP.md](docs/dev/ENVIRONMENT_SETUP.md)** (developers) within **[docs/](docs/)**.
@@ -154,6 +159,45 @@ plot_training_summary(results)
 
 ---
 
+## OCEANS Integration
+
+[OCEANS](https://github.com/dolphin-acoustics-vip/database-management-system) (Odontocete Call
+Environment and Archival Network) is the University of St Andrews dolphin acoustics database,
+developed by **James Sullivan**.  artwarp-py includes an integration to fetch real
+dolphin call data directly into the training pipeline.
+
+```bash
+> pip install artwarp-py[oceans]
+
+> export OCEAN_USERNAME="your@email.ac.uk"
+> export OCEAN_PASSWORD="your_password"
+
+# download selections and extract contours
+> artwarp-py oceans fetch --output-dir ./contours_ocean --max-per-species 50
+
+# train on the fetched data
+> artwarp-py train --input-dir ./contours_ocean --format csv --output results.pkl
+```
+
+Or use the interactive launchers:
+
+```bash
+> ./oceans.sh    # dedicated OCEANS menu (Fetch / Count)
+> ./run.sh       # choose option 5 — OCEANS
+```
+
+Python API:
+
+```python
+from artwarp.oceans import fetch_contours_to_dir, OceansClient
+
+n = fetch_contours_to_dir("./contours_ocean", max_per_species=50)
+```
+
+See **[docs/user/OCEANS.md](docs/user/OCEANS.md)** for the full guide.
+
+---
+
 ## Documentation
 
 | Document | Description |
@@ -163,12 +207,14 @@ plot_training_summary(results)
 | [**docs/user/API.md**](docs/user/API.md) | (User Guide) Public API (loaders, exporters, options) |
 | [**docs/user/ARCHITECTURE.md**](docs/user/ARCHITECTURE.md) | (User Guide) Code layout and design |
 | [**docs/user/VISUALIZATION.md**](docs/user/VISUALIZATION.md) | (User Guide) Plotting and report generation |
+| [**docs/user/OCEANS.md**](docs/user/OCEANS.md) | (User Guide) OCEANS data-fetch integration |
 | [**CHANGELOG.md**](CHANGELOG.md) | Version history |
 | [**docs/README.md**](docs/README.md) | Docs index and overview |
 | [**docs/dev/ENVIRONMENT_SETUP.md**](docs/dev/ENVIRONMENT_SETUP.md) | (Developers) Detailed environment and tooling |
 | [**docs/dev/PROJECT_SUMMARY.md**](docs/dev/PROJECT_SUMMARY.md) | (Developers) Project summary and goals |
 | [**docs/dev/PERFORMANCE_OPTIMIZATIONS.md**](docs/dev/PERFORMANCE_OPTIMIZATIONS.md) | (Developers) Performance notes and benchmarks |
 | [**docs/dev/TEST_RESULTS.md**](docs/dev/TEST_RESULTS.md) | (Developers) CI, test matrix, and coverage |
+| [**docs/dev/OCEANS_DEV.md**](docs/dev/OCEANS_DEV.md) | (Developers) OCEANS integration internals |
 
 ---
 
@@ -184,6 +230,11 @@ artwarp/
 ├── io/
 │   ├── loaders.py      # Data loading (.ctr, .csv, .txt, .mat)
 │   └── exporters.py    # Results export
+├── oceans/             # OCEANS data-fetch integration (optional)
+│   ├── auth.py         # Credential management (env vars, secure)
+│   ├── api.py          # OceansClient REST client
+│   ├── contours.py     # WAV → frequency contour pipeline
+│   └── cli.py          # oceans fetch / count CLI subcommands
 ├── visualization/
 │   └── plotting.py     # Plotting and reports
 ├── utils/
@@ -257,6 +308,7 @@ ARTwarp is distributed under the **GNU Lesser General Public License v3**. See [
 - **Python implementation:** Pedro Gronda Garrigues (2026)  
 - **Original MATLAB:** Volker Deecke & Vincent Janik (2006)  
 - **Original MATLAB repo:** https://github.com/dolphin-acoustics-vip/artwarp  
+- **OCEANS database:** James Sullivan — [github.com/dolphin-acoustics-vip/database-management-system](https://github.com/dolphin-acoustics-vip/database-management-system)  
 
 ARTwarp is distributed under the terms of the GNU Lesser General Public
 License, version 3, as published by the Free Software Foundation. For
