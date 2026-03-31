@@ -6,6 +6,7 @@ Provides commands for:
 - Predicting categories for new data
 - Exporting results and visualizations
 - Generating visualization reports
+- Fetching data from OCEANS (Odontocete Call Environment and Archival Network)
 
 @author: Pedro Gronda Garrigues
 """
@@ -261,7 +262,7 @@ def command_plot(args: argparse.Namespace) -> None:
         print(f"  {name}: {path}")
 
 
-def create_parser() -> argparse.ArgumentParser:
+def create_parser() -> argparse.ArgumentParser:  # noqa: C901
     """Create the argument parser for the CLI."""
     parser = argparse.ArgumentParser(
         description="ARTwarp-py: High-performance bioacoustic signal categorization",
@@ -437,6 +438,18 @@ def create_parser() -> argparse.ArgumentParser:
         help="DTW warp factor used for similarity/alignment plots (default: 3, should match train)",
     )
 
+    # ---- oceans command group ----
+    try:
+        from artwarp.oceans.cli import add_oceans_parser
+
+        add_oceans_parser(subparsers)
+    except ImportError:
+        # requests not installed -> register a stub that prints a helpful message
+        _oceans_stub = subparsers.add_parser(
+            "oceans",
+            help="OCEANS data pipeline (requires 'requests': pip install artwarp-py[oceans])",
+        )
+
     return parser
 
 
@@ -460,6 +473,19 @@ def main() -> None:
             command_export(args)
         elif args.command == "plot":
             command_plot(args)
+        elif args.command == "oceans":
+            try:
+                from artwarp.oceans.cli import command_oceans
+
+                command_oceans(args)
+            except ImportError as exc:
+                print(
+                    f"Error: OCEANS integration requires additional dependencies.\n"
+                    f"Install with: pip install artwarp-py[oceans]\n"
+                    f"Details: {exc}",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
         sys.exit(1)

@@ -1,7 +1,7 @@
 # ARTwarp-py Test Results
 
 **Date**: March, 2026  
-**Version**: 1.0.1
+**Version**: 1.1.0
 **Environment**: Linux, Python 3.14.2 (miniconda sig-process)  
 **Status**: ALL TESTS PASSING :D
 
@@ -16,16 +16,16 @@ cachedir: .pytest_cache
 rootdir: /home/pedroggbm/Documents/vp4038-dolphin-acoustics/ARTWarp/artwarp-py
 configfile: pyproject.toml
 plugins: cov-7.0.0
-collected 183 items
-============================= 183 passed in 10.87s =============================
+collected 233 items
+============================= 233 passed in ~12s ================================
 ```
 
 ### Overall Statistics
-- **Total Tests**: 183
-- **Passed**: 183 (100%)
+- **Total Tests**: 233
+- **Passed**: 233 (100%)
 - **Failed**: 0
 - **Skipped**: 0
-- **Duration**: ~10.9 seconds
+- **Duration**: ~12 seconds
 
 ---
 
@@ -284,6 +284,78 @@ collected 183 items
 - `test_plot_confusion_matrix` - Confusion matrix (ground truth)
 - `test_plot_label_vs_category` - Label vs category stacked bar
 
+### 8. OCEANS Integration Tests (`test_oceans.py`)
+**Status**: 50/50 passed  
+**Note**: All tests are fully offline; no real network calls. All HTTP interactions are replaced with `unittest.mock` patches.
+
+#### Auth / Credential Resolution (14 tests)
+- `TestGetBaseUrl::test_default_production` - Default production URL
+- `TestGetBaseUrl::test_env_override_strips_slash` - OCEAN_BASE_URL override
+- `TestGetTokenFromEnv::test_returns_token_when_set` - Token from env
+- `TestGetTokenFromEnv::test_returns_none_when_empty` - Empty token → None
+- `TestGetTokenFromEnv::test_returns_none_when_unset` - Missing → None
+- `TestGetCredentialsFromEnv::test_both_set` - Both username+password from env
+- `TestGetCredentialsFromEnv::test_both_unset` - Unset → (None, None)
+- `TestPromptCredentials::test_raises_when_not_tty` - Non-TTY raises ValueError
+- `TestPromptCredentials::test_prompts_when_tty` - TTY prompts correctly
+- `TestPromptCredentials::test_raises_on_empty_username` - Empty input raises
+- `TestResolveAuth::test_explicit_token_wins` - Explicit token highest priority
+- `TestResolveAuth::test_env_token_wins_over_credentials` - Env token over creds
+- `TestResolveAuth::test_explicit_credentials` - Explicit username/password
+- `TestResolveAuth::test_env_credentials` - Username/password from env vars
+
+#### OceansClient — Login (3 tests)
+- `TestOceansClientLogin::test_login_success` - Successful auth returns token
+- `TestOceansClientLogin::test_login_wrong_password` - 400 raises OceansAuthError
+- `TestOceansClientLogin::test_login_unexpected_error` - 500 raises OceansAPIError
+
+#### OceansClient — Metadata endpoints (6 tests)
+- `TestOceansClientMetadata::test_get_encounters_list` - List response parsed
+- `TestOceansClientMetadata::test_get_encounters_dict_response_wrapped` - Dict response wrapped in list
+- `TestOceansClientMetadata::test_get_encounters_api_error` - 500 raises OceansAPIError
+- `TestOceansClientMetadata::test_get_recordings` - Recordings for encounter
+- `TestOceansClientMetadata::test_get_selections` - Selections for recording
+- `TestOceansClientMetadata::test_401_triggers_reauth` - 401 triggers re-auth
+
+#### OceansClient — File download (4 tests)
+- `TestOceansClientFileDownload::test_download_wav_success` - WAV download + filename
+- `TestOceansClientFileDownload::test_download_wav_wrong_content_type` - Wrong MIME raises
+- `TestOceansClientFileDownload::test_download_spectrogram_success` - PNG download
+- `TestOceansClientFileDownload::test_download_spectrogram_not_found` - 404 raises
+
+#### WAV → Contour extraction (5 tests)
+- `TestExtractContourFromWavBytes::test_basic_extraction_returns_array` - Returns 1D array
+- `TestExtractContourFromWavBytes::test_contour_values_are_positive_frequencies` - All ≥ 0 Hz
+- `TestExtractContourFromWavBytes::test_denoising_quantile_applied` - Quantile filter applied
+- `TestExtractContourFromWavBytes::test_stereo_wav_converted_to_mono` - Stereo handled
+- `TestExtractContourFromWavBytes::test_invalid_bytes_raise` - Bad bytes → ValueError
+
+#### fetch_contours_to_dir pipeline (6 tests)
+- `TestFetchContoursToDir::test_writes_csvs` - CSVs written
+- `TestFetchContoursToDir::test_max_per_species_respected` - Cap respected
+- `TestFetchContoursToDir::test_skips_selection_without_file_id` - Missing file_id skipped
+- `TestFetchContoursToDir::test_handles_api_error_gracefully` - APIError → 0 files
+- `TestFetchContoursToDir::test_creates_output_dir` - Output dir created
+- `TestFetchContoursToDir::test_uses_default_species_when_none_given` - Default species used
+
+#### CLI — Parser (4 tests)
+- `TestAddOceansParser::test_parser_registered` - `oceans fetch` registered
+- `TestAddOceansParser::test_fetch_defaults` - Default argument values
+- `TestAddOceansParser::test_fetch_with_all_options` - All options parsed
+- `TestAddOceansParser::test_count_subcommand_registered` - `oceans count` registered
+
+#### CLI — Command dispatch (6 tests)
+- `TestCommandOceansFetch::test_calls_fetch_and_prints_summary` - fetch called
+- `TestCommandOceansFetch::test_exits_1_on_zero_writes` - 0 files → sys.exit(1)
+- `TestCommandOceansFetch::test_exits_1_on_value_error` - ValueError → sys.exit(1)
+- `TestCommandOceansCount::test_calls_count_and_prints` - count called
+- `TestCommandOceansDispatch::test_no_subcommand_exits_1` - Missing subcommand → exit 1
+- `TestCommandOceansDispatch::test_unknown_subcommand_exits_1` - Unknown → exit 1
+
+#### Public API surface (2 tests)
+- `TestOceansPublicAPI::test_public_symbols_importable` - All exports importable
+- `TestOceansPublicAPI::test_default_species_ids_are_uuids` - UUIDs are valid format
+
 ---
 
 ## Bug Fixes Applied
@@ -341,6 +413,10 @@ Then open `htmlcov/index.html` in a browser.
 - **Numba check** (`utils/numba_check.py`): Covered by `test_validation.py` (numba_available, report_numba_status, check_numba; install prompt and pip/conda paths tested via mocks)
 - **Loaders** (`io/loaders.py`): Covered by `test_loaders.py` and `test_matlab_compat.py` (load_ctr_file incl. provenance fields, load_csv_file, load_txt_file, load_contours, load_mat_categorization)
 - **Exporters** (`io/exporters.py`): export_reference_contour_metadata covered by `test_loaders.py`; export_results/load_results covered by `test_matlab_compat.py`
+- **OCEANS auth** (`oceans/auth.py`): All credential resolution paths covered by `test_oceans.py`
+- **OCEANS API** (`oceans/api.py`): All endpoints, error cases, and re-auth logic covered (mocked HTTP)
+- **OCEANS contours** (`oceans/contours.py`): Full pipeline covered including stereo/mono, denoising, API errors
+- **OCEANS CLI** (`oceans/cli.py`): Parser, dispatch, error exits covered
 
 ### Edge Cases Tested
 - Empty inputs
@@ -440,7 +516,7 @@ isort==7.0.0
 
 ## Conclusion
 
-**ARTwarp-py v1.0.1 passes all 183 tests with 100% success rate.**
+**ARTwarp-py v1.1.0 passes all 233 tests with 100% success rate.**
 
 ## Author Note
 
@@ -455,7 +531,7 @@ Thank you.
 ---
 
 _Test execution completed: March, 2026_  
-_All tests passed: 183/183 (100%)_  
+_All tests passed: 233/233 (100%)_  
 _Status: READY FOR USE_
 
 ---

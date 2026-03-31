@@ -435,6 +435,103 @@ artwarp-py plot \
     --dpi 300
 ```
 
+## OCEANS Integration API
+
+The `artwarp.oceans` subpackage provides a first-class integration with the
+OCEANS database (developed by James Sullivan:
+[github.com/dolphin-acoustics-vip/database-management-system](https://github.com/dolphin-acoustics-vip/database-management-system)).
+
+Requires `pip install artwarp-py[oceans]`.
+
+### `OceansClient`
+
+Low-level authenticated REST client for the OCEANS API.
+
+```python
+from artwarp.oceans import OceansClient
+
+client = OceansClient(
+    base_url=None,        # str  — override OCEAN_BASE_URL env var
+    username=None,        # str  — override OCEAN_USERNAME env var
+    password=None,        # str  — override OCEAN_PASSWORD env var
+    access_token=None,    # str  — pre-obtained JWT (skips login)
+    verbose=False,        # bool — print progress messages
+)
+```
+
+**Methods:**
+
+| Method | Returns | Description |
+|---|---|---|
+| `login(username, password)` | `str` | Authenticate and return bearer token |
+| `get_encounters(species_id, encounter_id)` | `list[dict]` | List encounters |
+| `get_recordings(encounter_id, recording_id)` | `list[dict]` | List recordings |
+| `get_selections(recording_id, selection_id)` | `list[dict]` | List selections |
+| `download_wav(file_id)` | `(str, bytes)` | Download WAV file |
+| `download_spectrogram(selection_id)` | `(str, bytes)` | Download spectrogram PNG |
+
+Credentials are resolved in this priority order: explicit `access_token` argument →
+`OCEAN_ACCESS_TOKEN` env var → explicit `username`/`password` → env vars → interactive prompt.
+
+### `fetch_contours_to_dir`
+
+High-level end-to-end pipeline: OCEANS → WAV → frequency contours → CSV files.
+
+```python
+from artwarp.oceans import fetch_contours_to_dir
+
+n = fetch_contours_to_dir(
+    output_dir="./contours_ocean",  # str — directory for CSV output
+    species_ids=None,               # list[str] | None — UUIDs; None = default
+    max_per_species=None,           # int | None — cap per-species download
+    client=None,                    # OceansClient | None — auto-created if None
+    username=None,                  # str | None
+    password=None,                  # str | None
+    access_token=None,              # str | None
+    nperseg=256,                    # int — spectrogram window size
+    peak_quantile=0.9,              # float — noise-suppression quantile
+    verbose=True,                   # bool
+)
+# returns int — number of CSV files written
+```
+
+### `count_available_selections`
+
+Count available selections without downloading:
+
+```python
+from artwarp.oceans.contours import count_available_selections
+
+stats = count_available_selections()
+# {"3ebfce8d-...": 142, "3ebfcfab-...": 78, "total": 220}
+```
+
+### `DEFAULT_SPECIES_IDS`
+
+Built-in species UUIDs (bottlenose dolphin, *Tursiops truncatus*):
+
+```python
+from artwarp.oceans import DEFAULT_SPECIES_IDS
+```
+
+### OCEANS exceptions
+
+| Exception | When raised |
+|---|---|
+| `OceansAuthError` | Wrong credentials, expired token, or login refused |
+| `OceansAPIError` | Non-200 HTTP response from any OCEANS endpoint |
+
+### CLI
+
+```bash
+artwarp-py oceans fetch --output-dir DIR [--max-per-species N] [--species-id UUID]
+artwarp-py oceans count [--species-id UUID]
+```
+
+See `docs/user/OCEANS.md` for the complete guide.
+
+---
+
 ## Type Hints
 
 All functions include complete type hints:

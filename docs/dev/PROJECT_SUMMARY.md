@@ -7,7 +7,7 @@ ARTwarp-py is a complete, high-performance Python reimplementation of the ARTwar
 ## Project Status: COMPLETE
 
 Date: March, 2026  
-Version: 1.0.1
+Version: 1.1.0
 Status: Fully functional
 
 ## What Was Built
@@ -88,17 +88,46 @@ Status: Fully functional
 - Resample contours to a uniform temporal resolution (seconds per point)
 - Used by `train --resample` and optionally via `load_contours(..., return_tempres=True)` + `resample_contours()`
 
-### 4. Command-Line Interface
+### 4. OCEANS Integration (`src/artwarp/oceans/`)
+
+Real-data pipeline from the OCEANS database (developed by James Sullivan:
+[github.com/dolphin-acoustics-vip/database-management-system](https://github.com/dolphin-acoustics-vip/database-management-system))
+directly into the ARTwarp-py training pipeline.
+
+#### Authentication (`src/artwarp/oceans/auth.py`)
+- Secure credential management via environment variables only
+- Priority: explicit token → `OCEAN_ACCESS_TOKEN` env → username/password → env vars → interactive prompt
+- Supports production and test OCEANS servers
+
+#### API Client (`src/artwarp/oceans/api.py`)
+- `OceansClient` REST client using `requests.Session`
+- Lazy auth + automatic one-shot 401 re-authentication
+- All confirmed OCEANS endpoints: auth, encounters, recordings, selections, WAV download, spectrogram download
+- `OceansAuthError` / `OceansAPIError` exceptions
+- Streaming downloads (no large WAV files fully loaded into memory)
+
+#### Contour Pipeline (`src/artwarp/oceans/contours.py`)
+- `fetch_contours_to_dir`: OCEANS → WAV bytes → scipy spectrogram → peak-frequency contour → CSV
+- `count_available_selections`: dry-run count without downloading
+- `extract_contour_from_wav_bytes` / `extract_contour_from_wav_file`: low-level WAV → contour
+
+#### CLI Integration (`src/artwarp/oceans/cli.py`)
+- `artwarp-py oceans fetch` — download + extract pipeline
+- `artwarp-py oceans count` — selection count
+- Graceful ImportError stub when `requests` not installed
+
+### 5. Command-Line Interface
 
 #### CLI (`src/artwarp/cli/main.py`)
 - Full CLI
 - `train` command for network training
 - `predict` command for existing data
 - `export` command for various formats
-- Many more commands (please read script)
+- `plot` command for visualization reports
+- `oceans` command group (fetch / count)
 - Argument parsing
 
-### 5. Testing Infrastructure
+### 6. Testing Infrastructure
 
 #### Unit Tests
 - **test_dtw.py**: DTW algorithm tests (29 tests: core DTW/unwarp + Python-path tests for coverage when Numba disabled)
@@ -108,8 +137,9 @@ Status: Fully functional
 - **test_matlab_compat.py**: MATLAB file and behavior compatibility tests (9 tests)
 - **test_loaders.py**: Data loaders and exporters tests -> load_ctr_file (incl. provenance fields), load_csv_file, load_txt_file, load_contours, load_mat_categorization, export_reference_contour_metadata (32 tests)
 - **test_validation.py**: Validation utilities tests — validate_contour, validate_contours, validate_parameters, numba (36 tests)
+- **test_oceans.py**: OCEANS integration tests (50 tests: auth/credential resolution, OceansClient login/metadata/file endpoints, WAV→contour extraction, fetch_contours_to_dir pipeline, CLI parser and dispatch — all offline/mocked)
 
-**Total**: **183 tests** covering:
+**Total**: **233 tests** covering:
 - Mathematical correctness
 - Edge cases
 - Error handling
@@ -117,19 +147,21 @@ Status: Fully functional
 - I/O (loaders, exporters) and validation (parameter/contour checks)
 - Provenance metadata (category_parent_names, export_reference_contour_metadata)
 
-### 6. Documentation
+### 7. Documentation
 
 #### Guides
 - **docs/README.md**: Overview and quick start
 - **docs/user/INSTALLATION.md**: Complete installation guide
 - **docs/user/ARCHITECTURE.md**: Detailed architecture documentation
 - **docs/user/QUICK_REFERENCE.md**: Quick reference for user
-- **docs/user/VISUALIZATION.md**: Get started with plotting 
+- **docs/user/VISUALIZATION.md**: Get started with plotting
 - **docs/user/API.md**: Complete API reference
+- **docs/user/OCEANS.md**: OCEANS data-fetch integration guide
+- **docs/dev/OCEANS_DEV.md**: OCEANS integration developer notes
 - **CHANGELOG.md**: Version history
 - **LICENSE**: LGPL v3.0
 
-### 7. Examples
+### 8. Examples
 
 - **simple_example.py**: Demonstrating complete usage
 - Synthetic contour generation
@@ -147,20 +179,26 @@ src/artwarp/
 │   ├── art.py          (ART components)
 │   ├── weights.py      (Weight management)
 │   ├── network.py      (Main algorithm)
-│   └── __init__.py   
+│   └── __init__.py
 ├── io/
 │   ├── loaders.py      (Data loading)
 │   ├── exporters.py    (Result export)
-│   └── __init__.py   
+│   └── __init__.py
+├── oceans/             (OCEANS integration — optional)
+│   ├── __init__.py     (Public surface)
+│   ├── auth.py         (Credential management)
+│   ├── api.py          (OceansClient REST client)
+│   ├── contours.py     (WAV → contour pipeline)
+│   └── cli.py          (oceans fetch / count subcommands)
 ├── utils/
 │   ├── validation.py   (Validation)
 │   ├── resample.py     (Resampling)
 │   ├── numba_check.py  (Numba availability)
-│   └── __init__.py   
+│   └── __init__.py
 ├── cli/
 │   ├── main.py         (CLI interface)
 │   └── __init__.py
-└── __init__.py    
+└── __init__.py
 
 ```
 
@@ -174,22 +212,25 @@ tests/
 │   ├── test_loaders.py
 │   ├── test_validation.py
 │   ├── test_matlab_compat.py
-│   └── test_visualization.py
+│   ├── test_visualization.py
+│   └── test_oceans.py     (50 tests — all offline/mocked)
 └── __init__.py
 
 ```
-**183 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
+**233 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
 
 ### Documentation
 ```
 LICENSE
 README.md
-CHANGELOG.md  
+CHANGELOG.md
 docs/user/INSTALLATION.md
 docs/user/ARCHITECTURE.md
 docs/user/QUICK_REFERENCE.md
 docs/user/VISUALIZATION.md
-docs/user/API.md                 
+docs/user/API.md
+docs/user/OCEANS.md
+docs/dev/OCEANS_DEV.md
 
 ```
 
@@ -239,6 +280,17 @@ examples/
 - [x] Export reference contours
 - [x] Export reference contour provenance metadata (UUID per prototype + parent contour names)
 
+### ✓ OCEANS Integration
+- [x] Secure credential management (env vars, never stored in code)
+- [x] `OceansClient` REST client (auth, encounters, recordings, selections, WAV/PNG download)
+- [x] Automatic token refresh on 401
+- [x] `fetch_contours_to_dir` end-to-end pipeline (OCEANS → CSV)
+- [x] `count_available_selections` for dry-run estimation
+- [x] `artwarp-py oceans fetch` / `oceans count` CLI subcommands
+- [x] `oceans.sh` interactive launcher
+- [x] `run.sh` menu integration (option 5)
+- [x] 50 unit tests (all offline/mocked)
+
 ### ✓ User Interface
 - [x] Command-line interface
 - [x] Programmatic Python API
@@ -261,6 +313,8 @@ examples/
 - [x] API reference
 - [x] Examples
 - [x] Changelog
+- [x] OCEANS user guide (`docs/user/OCEANS.md`)
+- [x] OCEANS developer notes (`docs/dev/OCEANS_DEV.md`)
 
 ## Mathematical Equivalence
 
@@ -285,7 +339,7 @@ The Python implementation maintains exact mathematical equivalence with the orig
 ## Testing Verification
 
 The implementation includes:
-- **183 unit tests** covering all core functions, I/O loaders/exporters, validation, visualization (including discovery curve and additional algorithm/diagnostics/reporting plots), DTW Python fallback (for coverage), and provenance tracking
+- **233 unit tests** covering all core functions, I/O loaders/exporters, validation, visualization (including discovery curve and additional algorithm/diagnostics/reporting plots), DTW Python fallback (for coverage), provenance tracking, and OCEANS integration (all offline/mocked)
 - **test_validation.py** (25 tests): validate_contour, validate_contours, validate_parameters (all branches and error messages)
 - **test_loaders.py** (32 tests): load_ctr_file (incl. provenance fields `id`/`parent_ids`), load_csv_file, load_txt_file, load_contours (formats, return_tempres, errors), load_mat_categorization extended cases, export_reference_contour_metadata (CSV format, UUID generation, one-based option, etc.)
 - **test_dtw.py** (28 tests): core DTW/unwarp plus Python-path tests (NUMBA_AVAILABLE=False) for full coverage of dtw.py fallback
@@ -298,10 +352,12 @@ The implementation includes:
 
 ```
 artwarp-py/
-├── run.sh                # interactive launcher (Train / Plot / Predict / Export)
+├── run.sh                # interactive launcher (Train / Plot / Predict / Export / OCEANS)
+├── oceans.sh             # dedicated OCEANS interactive launcher (Fetch / Count)
 ├── src/artwarp/          # main package
 │   ├── core/             # core algorithms
 │   ├── io/               # i/o operations
+│   ├── oceans/           # OCEANS data-fetch integration (optional)
 │   ├── utils/            # utils
 │   └── cli/              # CLI interface
 ├── tests/                # test suite
@@ -355,8 +411,9 @@ artwarp-py export --results results.pkl --output-dir ./exports
 - pandas >= 1.3.0
 
 ### Optional Dependencies
-- numba >= 0.54.0 (JIT acceleration)
+- numba >= 0.54.0 (JIT acceleration — `pip install artwarp-py[accelerate]`)
 - matplotlib >= 3.4.0 (visualization)
+- requests >= 2.25.0 (OCEANS integration — `pip install artwarp-py[oceans]`)
 
 ### Development Dependencies
 - pytest >= 7.0.0
