@@ -227,13 +227,11 @@ class ARTwarp:
                 old_category = categories[sample_idx]
                 current_contour = contours[sample_idx]
 
-                
                 if np.isnan(old_category):
                     num_in_old_category = 0
                 else:
                     # calculate the number of whistles in the category
                     num_in_old_category = (categories == old_category).sum()
-
 
                 # activate categories (bottom-up)
                 if self.num_categories > 0:
