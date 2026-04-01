@@ -223,23 +223,17 @@ class ARTwarp:
             sample_order = np.random.permutation(num_samples)
             num_reclassifications = 0
 
-            # calculate the number of contours in each category
-            if iteration > 1:
-                # filter out nan
-                keep = ~np.isnan(categories)
-                num_per_cat = np.bincount(categories[keep].astype(np.int64))
-
             for sample_idx in sample_order:
                 old_category = categories[sample_idx]
                 current_contour = contours[sample_idx]
 
-                if iteration > 1:
-                    if np.isnan(old_category):
-                        num_in_old_category = 0
-                    else:
-                        num_in_old_category = num_per_cat[old_category.astype(np.int64)]
-                else:
+                
+                if np.isnan(old_category):
                     num_in_old_category = 0
+                else:
+                    # calculate the number of whistles in the category
+                    num_in_old_category = (categories == old_category).sum()
+
 
                 # activate categories (bottom-up)
                 if self.num_categories > 0:
@@ -259,13 +253,8 @@ class ARTwarp:
                 # if 1 contour category check every other category first
                 if num_in_old_category == 1:
                     # moves the previous category to the back
-                    sorted_indices_old = np.roll(sorted_indices, -1)
-                    
                     sorted_indices = sorted_indices[sorted_indices != old_category]
                     sorted_indices = np.append(sorted_indices, old_category).astype(np.int32)
-                    if (not all(sorted_indices == sorted_indices_old)):
-                        print(sorted_indices_old)
-                        print(sorted_indices)
 
                 for cat_rank in range(len(sorted_indices)):
 
