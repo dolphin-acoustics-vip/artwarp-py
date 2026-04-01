@@ -258,8 +258,14 @@ class ARTwarp:
 
                 # if 1 contour category check every other category first
                 if num_in_old_category == 1:
-                    # moves the first element to the back
-                    sorted_indices = np.roll(sorted_indices, -1)
+                    # moves the previous category to the back
+                    sorted_indices_old = np.roll(sorted_indices, -1)
+                    
+                    sorted_indices = sorted_indices[sorted_indices != old_category]
+                    sorted_indices = np.append(sorted_indices, old_category).astype(np.int32)
+                    if (not all(sorted_indices == sorted_indices_old)):
+                        print(sorted_indices_old)
+                        print(sorted_indices)
 
                 for cat_rank in range(len(sorted_indices)):
 
