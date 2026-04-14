@@ -63,6 +63,10 @@ def add_new_category(
         return np.column_stack([weight_matrix, new_category])
 
 
+def delete_category(cat_idx: int, weight_matrix: NDArray[np.float64]) -> NDArray[np.float64]:
+    return np.delete(weight_matrix, cat_idx, axis=1)
+
+
 def update_weights(
     input_contour: NDArray[np.float64],
     weight_matrix: NDArray[np.float64],
