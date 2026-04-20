@@ -494,7 +494,7 @@ class ARTwarp:
         num_samples = len(contours)
         num_categories = weight.shape[1]
 
-        lone_mask = np.ones(num_samples, dtype=bool)
+        lone_mask: NDArray[np.bool_] = np.ones(num_samples, dtype=np.bool_)
         lone_mask[np.isnan(categories)] = False
         for cat in range(num_categories):
             cat_mask = categories == cat
