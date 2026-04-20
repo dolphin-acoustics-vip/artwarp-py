@@ -35,7 +35,7 @@ def command_train(args: argparse.Namespace) -> None:
     """Execute the train command."""
     print(f"Loading contours from: {args.input_dir}")
 
-    need_tempres = getattr(args, "resample", False)
+    need_tempres = getattr(args, "resample", True)
     tempres_floats: List[float] = []
     try:
         if need_tempres:
@@ -68,8 +68,8 @@ def command_train(args: argparse.Namespace) -> None:
 
     print(f"Loaded {len(contours)} contours")
 
-    if getattr(args, "resample", False):
-        sample_interval = getattr(args, "sample_interval", 0.02)
+    if getattr(args, "resample", True):
+        sample_interval = getattr(args, "sample_interval", 0.01)
         contours = resample_contours(contours, tempres_floats, sample_interval)
         print(f"Resampled contours to {sample_interval}s interval")
 
@@ -88,6 +88,10 @@ def command_train(args: argparse.Namespace) -> None:
         warp_factor_level=args.warp_factor,
         random_seed=args.seed,
         verbose=not args.quiet,
+        recat_single_categories=args.recat_single_categories,
+        compare_warped=args.compare_warped,
+        deprioritize_lone_category_search=args.deprioritize_lone_category_search,
+        purge_empty_categories=args.purge_empty_categories,
     )
 
     # train
@@ -298,7 +302,10 @@ def create_parser() -> argparse.ArgumentParser:
         "--learning-rate", type=float, default=0.1, help="Learning rate (0-1, default: 0.1)"
     )
     train_parser.add_argument(
-        "--bias", type=float, default=0.0, help="Activation bias (0-1, default: 0.0)"
+        "--bias",
+        type=float,
+        default=1e-6,
+        help="Activation bias (0-1, default: 1e-6)",
     )
     train_parser.add_argument(
         "--max-categories", type=int, default=50, help="Maximum number of categories (default: 50)"
@@ -319,20 +326,29 @@ def create_parser() -> argparse.ArgumentParser:
         "--export-categories", action="store_true", help="Export category assignments to CSV"
     )
     train_parser.add_argument("-q", "--quiet", action="store_true", help="Suppress progress output")
-    train_parser.add_argument(
+    _resample_mx = train_parser.add_mutually_exclusive_group()
+    _resample_mx.add_argument(
         "--resample",
+        dest="resample",
         action="store_true",
-        help=(
-            "Resample contours to a uniform temporal resolution before training "
-            "(like MATLAB resample option)"
-        ),
+        help="Resample contours before training (default: on)",
     )
+    _resample_mx.add_argument(
+        "--no-resample",
+        dest="resample",
+        action="store_false",
+        help="Disable resampling",
+    )
+    train_parser.set_defaults(resample=True)
     train_parser.add_argument(
         "--sample-interval",
         type=float,
-        default=0.02,
+        default=0.01,
         metavar="SEC",
-        help="Target sampling interval in seconds when --resample (default: 0.02)",
+        help=(
+            "Target sampling interval in seconds when resampling is on "
+            "(default: 0.01)"
+        ),
     )
     train_parser.add_argument(
         "--tempres",
@@ -340,8 +356,8 @@ def create_parser() -> argparse.ArgumentParser:
         default=0.01,
         metavar="SEC",
         help=(
-            "Default temporal resolution (sec/point) for contours that do not provide it, "
-            "when --resample (default: 0.01)"
+            "Default temporal resolution (sec/point) for contours that do not provide it "
+            "when resampling is on (default: 0.01)"
         ),
     )
     train_parser.add_argument(
@@ -353,6 +369,42 @@ def create_parser() -> argparse.ArgumentParser:
             "Cap contour length to N points (downsample longer contours). "
             "Use to avoid huge memory use when contours are very long (e.g. 100k+ points). "
             "Example: 5000 keeps DTW matrices small."
+        ),
+    )
+    train_parser.add_argument(
+        "--recat-single-categories",
+        action="store_true",
+        help=(
+            "MATLAB recatSingleCats: after each iteration's sample loop, run "
+            "ARTwarp_Recat_Single_Cats (reassign lone-category contours when another "
+            "category resonates) (default: off)."
+        ),
+    )
+    train_parser.add_argument(
+        "--compare-warped",
+        action="store_true",
+        help=(
+            "MATLAB compareWarped: use compare-warped weight updates (ART_Update_Weights "
+            "compare_warped==1) and ARTwarp_Average_Weights after each iteration "
+            "(default: off)."
+        ),
+    )
+    train_parser.add_argument(
+        "--deprioritize-lone-category-search",
+        action="store_true",
+        help=(
+            "Experimental (PR delete_unused_categories): when a sample is the only "
+            "contour in its category, try other categories before its current one in the "
+            "resonance search order. Not in MATLAB stable v2.0 (default: off)."
+        ),
+    )
+    train_parser.add_argument(
+        "--purge-empty-categories",
+        action="store_true",
+        help=(
+            "Experimental (PR deleted_unused_categories): after each iteration, remove weight columns with zero "
+            "assigned contours and reindex category labels. Not in MATLAB stable v2.0 "
+            "(default: off)."
         ),
     )
 

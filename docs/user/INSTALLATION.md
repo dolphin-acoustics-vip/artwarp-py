@@ -120,7 +120,7 @@ print(f'Test passed! Created {results.num_categories} category(ies)')
 artwarp-py --help
 ```
 
-For an **interactive menu** (prompts for all options), run from the project root: `./run.sh`. When you run the CLI or `./run.sh`, a **Numba status** line is shown; if Numba is not installed, you’ll see a warning and, in an interactive terminal, an option to install it automatically (pip/conda). When you use the Python API (e.g. `import artwarp`), the package prints a one-line Numba status on import.
+For an **interactive menu** (prompts for all options), run from the project root: `./run.sh`. Train defaults match MATLAB **`ARTwarp_cli_mode.m`** (bias **1e-6**, resample **on**, sample interval **0.01** s); optional **MATLAB parity** prompts (`recatSingleCats`, `compareWarped`) match `ARTwarp_Run_Categorisation.m`. The menu also offers optional prompts (`--deprioritize-lone-category-search`, `--purge-empty-categories`) for the experimental behaviours merged historically, not part of MATLAB `stable` v2.0. When you run the CLI or `./run.sh`, a **Numba status** line is shown; if Numba is not installed, you’ll see a warning and, in an interactive terminal, an option to install it automatically (pip/conda). When you use the Python API (e.g. `import artwarp`), the package prints a one-line Numba status on import.
 
 ## Running Tests
 
