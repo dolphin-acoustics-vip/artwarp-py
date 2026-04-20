@@ -104,11 +104,14 @@ class ARTwarp:
             Default False matches MATLAB with ``compareWarped`` off.
         deprioritize_lone_category_search: If True, when the current sample is the **only**
             contour assigned to its category, try **other** categories in activation order
-            **before** its current category (experimental behaviour from PR deleted_unused_categories
-            ``delete_unused_categories`` / ``f671e5a``). **Not** in MATLAB ``stable``. Default False.
+            **before** its current category (experimental behaviour from PR
+            deleted_unused_categories
+            ``delete_unused_categories`` / ``f671e5a``). **Not** in MATLAB ``stable``.
+            Default False.
         purge_empty_categories: If True, after each iteration (after optional recat /
             ``compare_warped``), remove weight columns with **zero** assigned contours and
-            reindex assignments (same PR deleted_unused_categories cleanup). **Not** in MATLAB ``stable``. Default False.
+            reindex assignments (same PR deleted_unused_categories cleanup). **Not** in
+            MATLAB ``stable``. Default False.
 
     Example:
         >>> network = ARTwarp(vigilance=85.0, learning_rate=0.1)
@@ -233,10 +236,8 @@ class ARTwarp:
             print(f"Warp factor:     {self.warp_factor_level}")
             print(f"Recat single cats: {self.recat_single_categories}")
             print(f"Compare warped:    {self.compare_warped}")
-            print(
-                f"Deprioritize lone: {self.deprioritize_lone_category_search}")
-            print(
-                f"Purge empty cats:  {self.purge_empty_categories}")
+            print(f"Deprioritize lone: {self.deprioritize_lone_category_search}")
+            print(f"Purge empty cats:  {self.purge_empty_categories}")
             if self._random_seed is not None:
                 print(f"Random seed:     {self._random_seed}")
             print()
@@ -276,7 +277,8 @@ class ARTwarp:
                 resonance = False
                 max_match = 0.0
 
-                # PR deleted_unused_categories (martion2007): if lone in category, try other prototypes first
+                # PR deleted_unused_categories (martion2007): if lone in category
+                # try other prototypes first
                 if (
                     self.deprioritize_lone_category_search
                     and num_in_old_category == 1
@@ -348,9 +350,7 @@ class ARTwarp:
                 )
 
             if self.compare_warped:
-                contour_lengths = np.array(
-                    [len(c) for c in contours], dtype=np.int64
-                )
+                contour_lengths = np.array([len(c) for c in contours], dtype=np.int64)
                 self.weight_matrix = average_weights(
                     self.weight_matrix, contour_lengths, categories
                 )

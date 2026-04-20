@@ -345,10 +345,7 @@ def create_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.01,
         metavar="SEC",
-        help=(
-            "Target sampling interval in seconds when resampling is on "
-            "(default: 0.01)"
-        ),
+        help=("Target sampling interval in seconds when resampling is on " "(default: 0.01)"),
     )
     train_parser.add_argument(
         "--tempres",
@@ -402,8 +399,9 @@ def create_parser() -> argparse.ArgumentParser:
         "--purge-empty-categories",
         action="store_true",
         help=(
-            "Experimental (PR deleted_unused_categories): after each iteration, remove weight columns with zero "
-            "assigned contours and reindex category labels. Not in MATLAB stable v2.0 "
+            "Experimental (PR deleted_unused_categories): after each iteration, "
+            "remove weight columns with zero assigned contours and reindex category "
+            "labels. Not in MATLAB stable v2.0 "
             "(default: off)."
         ),
     )
