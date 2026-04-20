@@ -113,12 +113,14 @@ Done          Try Next Category
 - `update_weights()`: Apply learning rule with length adaptation
 - `get_weight_contour()`: Extract category prototype
 
-**Weight Update Algorithm**:
+**Weight Update Algorithm** (when `compare_warped` is False, matching MATLAB `compareWarped == 0`):
 1. Warp input to match weight length using DTW result
 2. Update content: `new_weight = old_weight + lr * (warped_input - old_weight)`
 3. Calculate new length: `new_length = old_length + lr * (input_length - old_length)`
 4. Unwarp and interpolate to new length
 5. Store in weight matrix
+
+When `compare_warped` is True (MATLAB `compareWarped == 1`), the implementation follows `ART_Update_Weights.m`: fixed reference length (no unwarp pass) and content update from the warped input as in MATLAB.
 
 ### 4. Main Network (`core/network.py`)
 
@@ -136,8 +138,12 @@ Constructor parameters (all passed from CLI `train` where applicable):
 - `warp_factor_level` (int, default 3): DTW warping factor (CLI `--warp-factor`)
 - `random_seed` (int, optional): Reproducibility (CLI `--seed`)
 - `verbose` (bool, default True): Progress output (CLI `-q`/`--quiet` inverts)
+- `recat_single_categories` (bool, default False): MATLAB `recatSingleCats` (CLI `--recat-single-categories`)
+- `compare_warped` (bool, default False): MATLAB `compareWarped` (CLI `--compare-warped`)
+- `deprioritize_lone_category_search` (bool, default False): **Not in MATLAB `stable`.** Optional search-order tweak from merged experimental PR (`martion2007/delete_unused_categories`): when a sample is the only contour in its category, try other categories before its current one in the resonance loop (CLI `--deprioritize-lone-category-search`).
+- `purge_empty_categories` (bool, default False): **Not in MATLAB `stable`.** Optional post-iteration cleanup from the same PR: remove weight columns with **zero** assigned contours and reindex labels (CLI `--purge-empty-categories`). Distinct from MATLAB’s **`ARTwarp_Recat_Single_Cats`** (Kai / `recatSingleCats`), which only removes a column after a **successful** lone-contour reassignment.
 
-Resampling is **not** a network parameter: `--resample`, `--sample-interval`, and `--tempres` are applied in the CLI by loading contours with `return_tempres=True`, calling `resample_contours(contours, tempres_list, sample_interval)`, then passing the resampled contours to `ARTwarp(...).fit(contours, names)`.
+Resampling is **not** a network parameter: the **`train`** CLI applies resampling by default (MATLAB `resample=1`); `--no-resample` turns it off. With resampling on, the CLI loads contours with `return_tempres=True`, calls `resample_contours(contours, tempres_list, sample_interval)`, then passes contours to `ARTwarp(...).fit(contours, names)`.
 
 - Implements training loop
 - Handles convergence detection
@@ -206,7 +212,7 @@ for iteration in range(max_iterations):
 **Key Function**: `resample_contours(contours, tempres, sample_interval_sec)`  
 Matches MATLAB ARTwarp "Resample Contours" option: same formula as `interp1(1:length(contour), contour, 1:sampleInterval/tempres:length(contour))`. Use before `fit()` when contours have different sampling rates.
 
-**CLI** (`train` command): `--resample` enables resampling before training. `--sample-interval SEC` (default 0.02) is the target sampling interval in seconds. `--tempres SEC` (default 0.01) is the default temporal resolution (seconds per point) for contours that do not provide it (e.g. some .ctr files). When `--resample` is set, contours are loaded with `return_tempres=True`, missing tempres are filled with `--tempres`, then `resample_contours(contours, tempres_list, sample_interval)` is called; the resampled contours are passed to `ARTwarp(...).fit(contours, names)`. These options are not passed into the ARTwarp constructor.
+**CLI** (`train` command): resampling is **on by default** (`--no-resample` to match MATLAB `resample=0`). `--sample-interval SEC` defaults to **0.01** (MATLAB `sampleInterval`). `--tempres SEC` (default 0.01) fills missing per-contour temporal resolution when resampling. These options are preprocessing only, not `ARTwarp` constructor fields.
 
 ### 8. Numba check (`utils/numba_check.py`)
 
@@ -215,6 +221,12 @@ Matches MATLAB ARTwarp "Resample Contours" option: same formula as `interp1(1:le
 **Key functions**: `numba_available()`, `report_numba_status()` (status only), `check_numba(offer_install=True)` (status + optional install prompt). The package calls `report_numba_status()` on import so API users (e.g. in Jupyter) see the Numba status. The CLI calls `check_numba(offer_install=stdin.isatty())` at startup so interactive runs can prompt to install Numba if missing.
 
 **Entry points**: `run.sh` (interactive launcher) and `artwarp-py` / `python -m artwarp.cli.main` (CLI) both trigger the Numba check when run; see **Quick Start** in the main README.
+
+## Tracking MATLAB `stable` v2.0 [NEW]
+
+The reference MATLAB implementation is the sibling directory **`../artwarp`** tracked on branch **`stable`**. Keep that checkout **up to date** (`git pull` there) when you need the latest upstream behaviour; artwarp-py does not auto-sync to remote. Training behaviour in artwarp-py is implemented to match **`ARTwarp_Run_Categorisation.m`**, **`ARTwarp_cli_mode.m`** (CLI defaults), **`ARTwarp_Update_Weights.m`**, **`ARTwarp_Recat_Single_Cats.m`**, **`ARTwarp_Average_Weights.m`**, and related `.m` files as they exist on **`stable`** at your pulled revision.
+
+**Not identical run-for-run to MATLAB:** sample order uses different RNG (`sort(randn(n,1))` vs NumPy). The **`ARTwarp`** Python class still defaults **`bias=0.0`** (typical GUI); the **`train`** CLI defaults **`bias=1e-6`** and **resampling on**, matching **`ARTwarp_cli_mode.m`**.
 
 ## Alignment with MATLAB ARTwarp
 
@@ -228,10 +240,12 @@ This implementation is a rewrite of [artwarp](https://github.com/dolphin-acousti
 | **Valid weight positions** | `find(weight > 0)` for activation, match, update | `(weight > 0) & np.isfinite(weight)` in art.py and weights.py |
 | **DTW length ratio** | Reject when `max(m,n)/(min(m,n)-1) >= warpFactorLevel` | Same; check runs first (before short-contour branch) |
 | **Load saved run** | "Load Categorization" (.mat with NET, DATA) | `load_mat_categorization(filepath)` in `artwarp.io.loaders` |
-| **Resample option** | GUI: resample to sampleInterval (ms) using tempres | `resample_contours(contours, tempres, sample_interval_sec)` in `artwarp.utils`; CLI: `--resample --sample-interval 0.02 --tempres 0.01` |
+| **Resample option** | GUI / CLI `ARTwarp_cli_mode`: resample default **on**, `sampleInterval` default **0.01** s | `resample_contours(...)` in `artwarp.utils`; CLI defaults resample **on** (`--no-resample` to disable), `--sample-interval` default **0.01**, `--tempres` default **0.01** |
+| **recatSingleCats** | Optional after each iteration: `ARTwarp_Recat_Single_Cats.m` | `recat_single_categories=True` or CLI `--recat-single-categories` (default off, same as MATLAB unchecked) |
+| **compareWarped** | Optional: `compareWarped` in `ARTwarp_Update_Weights`; then `ARTwarp_Average_Weights.m` each iteration | `compare_warped=True` or CLI `--compare-warped` (default off) |
 | **.ctr / .csv / .txt** | Load_Data, Load_CSV_Data, Load_TabDelim_Data | `load_contours(..., file_format='ctr'|'csv'|'txt')`, same contour and tempres; optional `return_tempres=True` for resampling |
 
-Algorithm steps (warp, unwarp, activate, match, update_weights, add_new_category, training loop and convergence) match the MATLAB logic.
+Algorithm steps (warp, unwarp, activate, match, update_weights, add_new_category, training loop and convergence) match the MATLAB logic. Optional post-iteration passes (`recatSingleCats`, `compareWarped`) match `ARTwarp_Run_Categorisation.m` order: inner sample loop, then recat if enabled, then average weights if `compareWarped`, then (if enabled) `purge_empty_categories` via `purge_empty_category_columns()` in `weights.py`, then convergence on inner-loop reclassifications only. The in-loop **`deprioritize_lone_category_search`** step runs only when that flag is on (non-MATLAB).
 
 ### Feature parity with MATLAB artwarp
 
@@ -239,12 +253,17 @@ Algorithm steps (warp, unwarp, activate, match, update_weights, add_new_category
 |--------|--------|--------|
 | warp.m, unwarp.m | core/dtw.py | Same algorithm, length ratio and constraints aligned |
 | ARTwarp_Calculate_Match, _Activate_Categories, _Add_New_Category, _Update_Weights | core/art.py, core/weights.py | Same logic; valid = weight > 0 |
-| ARTwarp_Run_Categorization | core/network.py `fit()` | Same loop, convergence, resample option via `resample_contours()` |
+| ARTwarp_Run_Categorisation | core/network.py `fit()` | Same loop and convergence; optional `ARTwarp_Recat_Single_Cats` / `ARTwarp_Average_Weights` when flags set; resample via `resample_contours()` before `fit()` |
+| ARTwarp_Recat_Single_Cats | `_recat_single_categories()` | When `recat_single_categories` / `--recat-single-categories` |
+| ARTwarp_Average_Weights | `average_weights()` in weights.py | When `compare_warped` / `--compare-warped` (after recat block in MATLAB order) |
+| *(none on MATLAB `stable`)* | `purge_empty_category_columns()` in `weights.py` | Optional: `purge_empty_categories` / `--purge-empty-categories` after recat + compare-warped |
+| *(none on MATLAB `stable`)* | `deprioritize_lone_category_search` in `network.py` | Optional: `--deprioritize-lone-category-search` inside sample loop |
+| ARTwarp_Update_Weights (compare_warped) | `update_weights(..., compare_warped=...)` | Matches `ART_Update_Weights.m` branches |
 | Load_Data, Load_CSV_Data, Load_TabDelim_Data | io/loaders.py `load_contours()` | .ctr, .csv, .txt; same contour/tempres handling |
 | SaveRefContours.m | io/exporters.py `export_reference_contours()` | refContour_1.csv, %7.1f |
 | REFCONTOURS struct (id, parent_ids) | `TrainingResults.category_parent_names`; `export_reference_contour_metadata()` | CSV instead of .ctr; UUID per prototype, parent names list |
 | Load Categorization (.mat) | io/loaders.py `load_mat_categorization()` | NET + optional DATA |
-| Resample option (GUI) | utils/resample.py `resample_contours()`; CLI `train --resample` | Same formula; CLI uses `--sample-interval`, `--tempres` |
+| Resample option (GUI / CLI) | utils/resample.py `resample_contours()`; CLI resample **on** by default | Same formula; `--no-resample` disables; `--sample-interval` / `--tempres` match `ARTwarp_cli_mode.m` defaults |
 | Get_Parameters, Create_Figure, Plot_Net, Plot_Net2 | CLI + API + visualization/ | No GUI; params via constructor/CLI; plots via `plot_*` |
 | ARTwarp_Assess_Net | — | Not implemented (species misclassification diagnostic) |
 | ARTwarp_Test_Net (assign best, no vigilance) | `predict()` uses vigilance | Can add `assign_best_only` if needed |

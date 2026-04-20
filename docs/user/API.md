@@ -17,7 +17,11 @@ network = ARTwarp(
     max_iterations=50,
     warp_factor_level=3,
     random_seed=None,
-    verbose=True
+    verbose=True,
+    recat_single_categories=False,
+    compare_warped=False,
+    deprioritize_lone_category_search=False,
+    purge_empty_categories=False,
 )
 ```
 
@@ -33,7 +37,7 @@ network = ARTwarp(
   
 - **bias** (float, default=0.0): Activation bias, range [0, 1]
   - Higher bias makes categories more selective
-  - Usually kept at 0.0 for standard ARTwarp
+  - Default **0.0** matches typical MATLAB **GUI** usage. The **`train`** CLI uses **`--bias`** default **1e-6** (MATLAB **`ARTwarp_cli_mode.m`**).
   
 - **max_categories** (int, default=100): Maximum number of categories to create
   - Prevents unlimited category growth
@@ -54,6 +58,14 @@ network = ARTwarp(
   - Leave None for different results each run
   
 - **verbose** (bool, default=True): Whether to print progress information
+
+- **recat_single_categories** (bool, default=False): If True, after each training iteration’s sample loop, run the same post-pass as MATLAB `ARTwarp_Recat_Single_Cats` (GUI/CLI `recatSingleCats`). Lone-category contours may be reassigned and empty categories removed via `ARTwarp_Delete_Category`. Default False matches MATLAB with this option off.
+
+- **compare_warped** (bool, default=False): If True, use MATLAB `compareWarped == 1` weight updates (`ART_Update_Weights` / `ARTwarp_Update_Weights`) and, after each iteration, `ARTwarp_Average_Weights`. Default False matches MATLAB with this option off.
+
+- **deprioritize_lone_category_search** (bool, default=False): **Not in MATLAB `stable`.** When True, if the current sample is the **only** contour assigned to its category, the resonance search tries **other** categories (by activation order) **before** its current category—matching experimental PR (`martion2007/delete_unused_categories`). CLI: **`--deprioritize-lone-category-search`**.
+
+- **purge_empty_categories** (bool, default=False): **Not in MATLAB `stable`.** When True, after each iteration (after optional `recat_single_categories` and `compare_warped`), remove weight columns with **zero** assigned contours and reindex category indices (`purge_empty_category_columns` in `weights.py`). This is **orphan-column cleanup**, distinct from MATLAB’s lone-contour recat (which deletes a column only after a **successful** reassignment). Verbose training prints **`purged N empty categories`** each iteration when this flag is on. CLI: **`--purge-empty-categories`**.
 
 #### Methods
 
@@ -347,7 +359,7 @@ Ensure the `artwarp-py` command is on your PATH (activate your virtual environme
 
 ### train
 
-Train a network on contour files. Parameters that affect the **ARTwarp network** (vigilance, learning_rate, bias, max_categories, max_iterations, warp_factor_level, random_seed, verbose) are passed into the `ARTwarp` constructor. The options **resample**, **sample-interval**, and **tempres** are **preprocessing** only: they resample contours before training and are not network parameters.
+Train a network on contour files. Parameters that affect the **ARTwarp network** (vigilance, learning_rate, bias, max_categories, max_iterations, warp_factor_level, random_seed, verbose, recat_single_categories, compare_warped, deprioritize_lone_category_search, purge_empty_categories) are passed into the `ARTwarp` constructor. **Preprocessing:** by default, contours are **resampled** like MATLAB **`ARTwarp_cli_mode.m`** (`resample=1`, `sampleInterval=0.01`); pass **`--no-resample`** to match `resample=0`. **`--tempres`** only applies when resampling is on. The Python class `ARTwarp(..., bias=0.0)` still defaults bias to zero for direct API use; **`train`** passes **`--bias`** (default **1e-6**) into the constructor so CLI matches MATLAB CLI.
 
 If you wish to preprocess in a separate Python script, call the functions listed in the example code cells above.
 
@@ -361,17 +373,21 @@ If you wish to preprocess in a separate Python script, call the functions listed
 | `--freq-column` | 0 | Frequency column index (CSV/TXT) |
 | `--vigilance` | 85.0 | Match threshold [1, 99] → `ARTwarp(vigilance=...)` |
 | `--learning-rate` | 0.1 | Weight update rate → `ARTwarp(learning_rate=...)` |
-| `--bias` | 0.0 | Activation bias → `ARTwarp(bias=...)` |
+| `--bias` | 1e-6 | Activation bias → `ARTwarp(bias=...)` (MATLAB `ARTwarp_cli_mode` default) |
 | `--max-categories` | 50 | Max categories → `ARTwarp(max_categories=...)` |
 | `--max-iterations` | 50 | Max iterations → `ARTwarp(max_iterations=...)` |
 | `--warp-factor` | 3 | DTW warping factor → `ARTwarp(warp_factor_level=...)` |
 | `--seed` | None | Random seed → `ARTwarp(random_seed=...)` |
+| `--recat-single-categories` | false | MATLAB `recatSingleCats` → `ARTwarp(recat_single_categories=True)` |
+| `--compare-warped` | false | MATLAB `compareWarped` → `ARTwarp(compare_warped=True)` |
+| `--deprioritize-lone-category-search` | false | Non-MATLAB PR: lone-category search order → `ARTwarp(deprioritize_lone_category_search=True)` |
+| `--purge-empty-categories` | false | Non-MATLAB PR: drop orphan prototype columns each iter → `ARTwarp(purge_empty_categories=True)` |
 | `--export-refs` | false | Export reference contours to CSV and provenance `metadata.csv` |
 | `--export-categories` | false | Export category assignments to CSV |
 | `-q`, `--quiet` | false | Suppress progress → `ARTwarp(verbose=False)` |
-| `--resample` | false | **Preprocessing**: resample contours to uniform temporal resolution before training |
-| `--sample-interval` | 0.02 | **Preprocessing**: target sampling interval (seconds) when `--resample` |
-| `--tempres` | 0.01 | **Preprocessing**: default temporal resolution (sec/point) for contours without it, when `--resample` |
+| `--resample` / `--no-resample` | resample **on** | **Preprocessing**: resample before training (MATLAB `resample=1`); use `--no-resample` for `resample=0` |
+| `--sample-interval` | 0.01 | **Preprocessing**: target sampling interval in seconds (MATLAB `sampleInterval`) |
+| `--tempres` | 0.01 | **Preprocessing**: default sec/point when a contour has no tempres, when resampling is on |
 
 **Example (basic)**:
 
@@ -389,13 +405,33 @@ artwarp-py train \
     --export-categories
 ```
 
-**Example (with resampling, MATLAB-aligned)**:
+**Example (explicit resample interval / tempres; resampling is already on by default)**:
 
 ```bash
-artwarp-py train -i ./contours -o results.pkl --resample --sample-interval 0.02 --tempres 0.01
+artwarp-py train -i ./contours -o results.pkl --sample-interval 0.01 --tempres 0.01
 ```
 
-When `--resample` is used, contours are loaded with `return_tempres=True`, then `resample_contours(contours, tempres_list, sample_interval)` is called; contours without tempres use `--tempres`. The resampled contours are then passed to `ARTwarp(...).fit(contours, names)`.
+**Example (skip resampling, MATLAB `resample=0`)**:
+
+```bash
+artwarp-py train -i ./contours -o results.pkl --no-resample
+```
+
+**Example (MATLAB optional training flags, same order of effect as `ARTwarp_Run_Categorisation.m`)**:
+
+```bash
+artwarp-py train -i ./contours -o results.pkl --recat-single-categories --compare-warped
+```
+
+**Example (optional Marco's extensions — not in MATLAB `stable`)**:
+
+```bash
+artwarp-py train -i ./contours -o results.pkl \
+  --deprioritize-lone-category-search \
+  --purge-empty-categories
+```
+
+With default resampling **on**, contours are loaded with `return_tempres=True`, then `resample_contours(contours, tempres_list, sample_interval)` is called; contours without tempres use `--tempres`. Use **`--no-resample`** to skip. The **`train`** command passes **`--bias`** (default **1e-6**) into `ARTwarp` unless you override it.
 
 ### predict
 

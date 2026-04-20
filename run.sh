@@ -3,7 +3,9 @@
 # ARTwarp-py — interactive launcher and CLI entry point
 #
 # Interactive (no args): menu to configure and run train / plot / predict / export
-#   with prompts for every CLI option, defaults, and validation.
+#   with prompts for every CLI option, defaults, and validation (Train includes MATLAB
+#   parity for v2.0: recatSingleCats, compareWarped — same as artwarp-py --recat-single-categories / --compare-warped).
+#   Optional extensions: --deprioritize-lone-category-search, --purge-empty-categories.
 # Direct (with args): forwards to artwarp-py (e.g. ./run.sh train -i ./contours -o results.pkl).
 #
 # Usage:
@@ -274,7 +276,7 @@ run_train() {
   args+=(--vigilance "$vigilance")
   learning_rate=$(prompt_with_default "Learning rate (0–1)" "0.1" learning_rate_01)
   args+=(--learning-rate "$learning_rate")
-  bias=$(prompt_with_default "Bias (0–1)" "0.0" bias_01)
+  bias=$(prompt_with_default "Bias (0–1)" "0.000001" bias_01)
   args+=(--bias "$bias")
   max_categories=$(prompt_with_default "Max categories" "50" int_positive)
   args+=(--max-categories "$max_categories")
@@ -285,13 +287,30 @@ run_train() {
   seed=$(prompt_with_default "Random seed (empty = none)" "" optional_int)
   [[ -n "$seed" ]] && args+=(--seed "$seed")
 
-  subheader "Resampling (optional)"
-  if prompt_yesno "Resample contours to uniform temporal resolution?" "n"; then
-    args+=(--resample)
-    sample_interval=$(prompt_with_default "Sample interval (seconds)" "0.02" float)
+  subheader "MATLAB ARTwarp v2.0 parity (optional)"
+  if prompt_yesno "Recategorise single-whistle categories (SWCs)?" "n"; then
+    args+=(--recat-single-categories)
+  fi
+  if prompt_yesno "Compare warped / average weights per iteration?" "n"; then
+    args+=(--compare-warped)
+  fi
+
+  subheader "Optional purge empty categories / deprioritize lone-category search order experimental training extensions (non-MATLAB stable v2.0)"
+  if prompt_yesno "Deprioritize lone-category search order (try other cats first)?" "n"; then
+    args+=(--deprioritize-lone-category-search)
+  fi
+  if prompt_yesno "Purge orphan weight columns (zero assigned contours per iter)?" "n"; then
+    args+=(--purge-empty-categories)
+  fi
+
+  subheader "Resampling (MATLAB ARTwarp_cli_mode: default on)"
+  if prompt_yesno "Resample contours to uniform temporal resolution?" "y"; then
+    sample_interval=$(prompt_with_default "Sample interval (seconds)" "0.01" float)
     args+=(--sample-interval "$sample_interval")
     tempres=$(prompt_with_default "Default tempres (sec/point)" "0.01" float)
     args+=(--tempres "$tempres")
+  else
+    args+=(--no-resample)
   fi
   max_contour_length=$(prompt_with_default "Max contour length (empty = no cap)" "" optional_int)
   [[ -n "$max_contour_length" ]] && args+=(--max-contour-length "$max_contour_length")

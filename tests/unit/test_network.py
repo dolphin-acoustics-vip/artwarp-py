@@ -26,6 +26,10 @@ class TestARTwarpInitialization:
         assert network.max_categories == 100
         assert network.max_iterations == 50
         assert network.warp_factor_level == 3
+        assert network.recat_single_categories is False
+        assert network.compare_warped is False
+        assert network.deprioritize_lone_category_search is False
+        assert network.purge_empty_categories is False
 
     def test_custom_parameters(self):
         """Test network with custom parameters."""
@@ -200,6 +204,41 @@ class TestARTwarpTraining:
         assert isinstance(results.converged, bool)
         assert len(results.iteration_history) > 0
         assert results.training_time >= 0
+
+    def test_pr10_flags_training_smoke(self):
+        """Marco's PR optional extensions complete fit without error."""
+        contours = [
+            np.array([100.0, 200.0, 300.0]),
+            np.array([105.0, 205.0, 305.0]),
+            np.array([500.0, 600.0, 700.0]),
+        ]
+        net = ARTwarp(
+            vigilance=85.0,
+            verbose=False,
+            random_seed=42,
+            deprioritize_lone_category_search=True,
+            purge_empty_categories=True,
+        )
+        results = net.fit(contours)
+        assert results.num_categories >= 1
+        assert results.weight_matrix.shape[1] == results.num_categories
+
+    def test_purge_empty_verbose_shows_purged_count(self, capsys):
+        """When purge_empty_categories is on, iteration log includes purged count."""
+        contours = [
+            np.array([100.0, 200.0, 300.0]),
+            np.array([105.0, 205.0, 305.0]),
+        ]
+        net = ARTwarp(
+            vigilance=85.0,
+            verbose=True,
+            random_seed=0,
+            max_iterations=3,
+            purge_empty_categories=True,
+        )
+        net.fit(contours)
+        out = capsys.readouterr().out
+        assert "purged" in out
 
 
 class TestARTwarpPrediction:
