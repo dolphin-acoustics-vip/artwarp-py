@@ -65,9 +65,7 @@ def add_new_category(
         return np.column_stack([weight_matrix, new_category])
 
 
-def delete_category(
-    category_index: int, weight_matrix: NDArray[np.float64]
-) -> NDArray[np.float64]:
+def delete_category(category_index: int, weight_matrix: NDArray[np.float64]) -> NDArray[np.float64]:
     """
     Delete a category column from the weight matrix.
 
