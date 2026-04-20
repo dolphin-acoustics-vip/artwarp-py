@@ -150,6 +150,7 @@ def purge_empty_category_columns(
     num_deleted = 0
 
     valid = ~np.isnan(c)
+    counts: NDArray[np.int64]
     if not np.any(valid):
         counts = np.zeros(n_col, dtype=np.int64)
     else:
