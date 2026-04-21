@@ -88,6 +88,7 @@ def command_train(args: argparse.Namespace) -> None:
         warp_factor_level=args.warp_factor,
         random_seed=args.seed,
         verbose=not args.quiet,
+        delete_categories=args.delete_categories,
     )
 
     # train
@@ -354,6 +355,11 @@ def create_parser() -> argparse.ArgumentParser:
             "Use to avoid huge memory use when contours are very long (e.g. 100k+ points). "
             "Example: 5000 keeps DTW matrices small."
         ),
+    )
+    train_parser.add_argument(
+        "--delete-categories",
+        action="store_true",
+        help="Try and recategorise 1 whistle categories",
     )
 
     # predict command

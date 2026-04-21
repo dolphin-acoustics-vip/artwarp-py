@@ -111,6 +111,7 @@ class ARTwarp:
         warp_factor_level: int = 3,
         random_seed: Optional[int] = None,
         verbose: bool = True,
+        delete_categories: bool = False,
     ):
         # validate params
         if not 1 <= vigilance <= 99:
@@ -133,6 +134,7 @@ class ARTwarp:
         self.max_iterations = max_iterations
         self.warp_factor_level = warp_factor_level
         self.verbose = verbose
+        self.delete_categories = delete_categories
         self._random_seed = random_seed
 
         # optional random seed
@@ -227,11 +229,12 @@ class ARTwarp:
                 old_category = categories[sample_idx]
                 current_contour = contours[sample_idx]
 
-                if np.isnan(old_category):
-                    num_in_old_category = 0
-                else:
-                    # calculate the number of whistles in the category
-                    num_in_old_category = (categories == old_category).sum()
+                if self.delete_categories:
+                    if np.isnan(old_category):
+                        num_in_old_category = 0
+                    else:
+                        # calculate the number of whistles in the category
+                        num_in_old_category = (categories == old_category).sum()
 
                 # activate categories (bottom-up)
                 if self.num_categories > 0:
@@ -248,11 +251,12 @@ class ARTwarp:
                 resonance = False
                 max_match = 0.0
 
-                # if 1 contour category check every other category first
-                if num_in_old_category == 1:
-                    # moves the previous category to the back
-                    sorted_indices = sorted_indices[sorted_indices != old_category]
-                    sorted_indices = np.append(sorted_indices, old_category).astype(np.int32)
+                if self.delete_categories:
+                    # if 1 contour category check every other category first
+                    if num_in_old_category == 1:
+                        # moves the previous category to the back
+                        sorted_indices = sorted_indices[sorted_indices != old_category]
+                        sorted_indices = np.append(sorted_indices, old_category).astype(np.int32)
 
                 for cat_rank in range(len(sorted_indices)):
 
@@ -312,27 +316,27 @@ class ARTwarp:
             new_cats_this_round = self.num_categories - categories_at_iter_start
             pct_reclass = (num_reclassifications / num_samples * 100) if num_samples else 0
 
-            # calculate number of categories with 0 and 1 contours
-            # filter out nan values
-            keep = ~np.isnan(categories)
-            num_per_cat = np.bincount(categories[keep].astype(np.int64))
-
-            # delete all categories with no contours
             num_cat_deleted = 0
-            i = 0
+            if self.delete_categories:
+                # calculate number of categories with 0 and 1 contours
+                # filter out nan values
+                keep = ~np.isnan(categories)
+                num_per_cat = np.bincount(categories[keep].astype(np.int64))
 
-            while i < len(num_per_cat):
-                if num_per_cat[i] == 0:
-                    num_cat_deleted += 1
-                    self.weight_matrix = delete_category(i, self.weight_matrix)
+                # delete all categories with no contours
+                i = 0
+                while i < len(num_per_cat):
+                    if num_per_cat[i] == 0:
+                        num_cat_deleted += 1
+                        self.weight_matrix = delete_category(i, self.weight_matrix)
 
-                    # shift all other cat_idx by 1 so they are still correct
-                    categories = np.where(categories > i, categories - 1, categories)
-                    self.num_categories -= 1
-                    num_per_cat = np.delete(num_per_cat, i)
-                else:
-                    # only move forward if a category isn't deleted
-                    i += 1
+                        # shift all other cat_idx by 1 so they are still correct
+                        categories = np.where(categories > i, categories - 1, categories)
+                        self.num_categories -= 1
+                        num_per_cat = np.delete(num_per_cat, i)
+                    else:
+                        # only move forward if a category isn't deleted
+                        i += 1
 
             if self.verbose:
                 color = _green if num_reclassifications == 0 else _red
@@ -340,11 +344,13 @@ class ARTwarp:
                     f"reclassified {num_reclassifications:4d} / {num_samples} "
                     f"({pct_reclass:5.1f}%){_reset}"
                 )
+
+                deletion_string = f"  |  deleted {num_cat_deleted:2d} categories this round" if self.delete_categories else ""
                 print(
                     f"  {color}iter {iteration:3d}{_reset}  │  "
                     f"categories {self.num_categories:3d}  "
                     f"(+{new_cats_this_round:2d} this round)  │  {reclass_str}"
-                    f"  |  deleted {num_cat_deleted:2d} categories this round"
+                    f"{deletion_string}"
                 )
             categories_at_iter_start = self.num_categories
 

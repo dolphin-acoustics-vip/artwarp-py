@@ -255,7 +255,7 @@ run_train() {
   header "Train ARTwarp network"
   local input_dir output format
   local vigilance learning_rate bias max_categories max_iterations warp_factor seed
-  local resample sample_interval tempres max_contour_length
+  local resample sample_interval tempres max_contour_length allow_deletion
   local export_refs export_categories quiet
   local args=()
 
@@ -282,6 +282,9 @@ run_train() {
   args+=(--max-iterations "$max_iterations")
   warp_factor=$(prompt_with_default "Warp factor (DTW)" "3" int_positive)
   args+=(--warp-factor "$warp_factor")
+  if prompt_yesno "Allow deletion of redundant single whistle categories?" "n"; then
+    args+=("--delete-categories")
+  fi
   seed=$(prompt_with_default "Random seed (empty = none)" "" optional_int)
   [[ -n "$seed" ]] && args+=(--seed "$seed")
 
