@@ -27,6 +27,7 @@ Example:
 """
 
 from artwarp.core.network import ARTwarp
+from artwarp.core.weights import purge_empty_category_columns
 from artwarp.io.loaders import load_contours
 from artwarp.utils.numba_check import numba_available, report_numba_status
 
@@ -39,4 +40,4 @@ if numba_available():
 # from artwarp.visualization import plot_training_summary
 
 __version__ = "1.0.1"
-__all__ = ["ARTwarp", "load_contours"]
+__all__ = ["ARTwarp", "load_contours", "purge_empty_category_columns"]

@@ -16,13 +16,13 @@ cachedir: .pytest_cache
 rootdir: /home/pedroggbm/Documents/vp4038-dolphin-acoustics/ARTWarp/artwarp-py
 configfile: pyproject.toml
 plugins: cov-7.0.0
-collected 183 items
-============================= 183 passed in 10.87s =============================
+collected 196 items
+============================= 196 passed in 10.87s =============================
 ```
 
 ### Overall Statistics
-- **Total Tests**: 183
-- **Passed**: 183 (100%)
+- **Total Tests**: 196
+- **Passed**: 196 (100%)
 - **Failed**: 0
 - **Skipped**: 0
 - **Duration**: ~10.9 seconds
@@ -164,7 +164,7 @@ collected 183 items
 ---
 
 ### 5. Network Tests (`test_network.py`)
-**Status**: 24/24 passed
+**Status**: 26/26 passed
 
 #### Initialization (6 tests)
 - `test_default_initialization` - Default parameter values
@@ -174,7 +174,7 @@ collected 183 items
 - `test_invalid_bias` - Bias validation
 - `test_random_seed_reproducibility` - Reproducible results
 
-#### Training (7 tests)
+#### Training (9 tests)
 - `test_simple_training` - Basic training workflow
 - `test_identical_contours_one_category` - Single category formation
 - `test_max_categories_limit` - Maximum category enforcement
@@ -182,6 +182,8 @@ collected 183 items
 - `test_empty_contours_list` - Empty input handling
 - `test_contour_names` - Contour name tracking
 - `test_training_results_structure` - Results structure correctness
+- `test_pr10_flags_training_smoke` - Marco's additional feature flags (`deprioritize_lone_category_search`, `purge_empty_categories`) complete `fit()` without error
+- `test_purge_empty_verbose_shows_purged_count` - Verbose iteration line includes `purged` when purge flag is on
 
 #### Prediction (3 tests)
 - `test_predict_after_training` - Post-training prediction
@@ -202,8 +204,15 @@ collected 183 items
 
 ---
 
+### 5b. Weight matrix (`test_weights.py`)
+**Status**: 8/8 passed
+
+(Average weights MATLAB parity, delete/reindex, optional **`purge_empty_category_columns`** for Marco's orphan purge feature, `update_weights` compare-warped branch.)
+
+---
+
 ### 6. Validation and Utils Tests (`test_validation.py`)
-**Status**: 36/36 passed
+**Status**: 39/39 passed (includes `TestCLITrainMatlabFlags`: CLI `--recat-single-categories` / `--compare-warped` / flags argparse)
 
 #### Validate Contour (8 tests)
 - `test_valid_contour_passes` - Valid 1D positive numeric array
@@ -440,7 +449,7 @@ isort==7.0.0
 
 ## Conclusion
 
-**ARTwarp-py v1.0.1 passes all 183 tests with 100% success rate.**
+**ARTwarp-py v1.0.1 passes all 196 tests with 100% success rate.**
 
 ## Author Note
 
@@ -455,7 +464,7 @@ Thank you.
 ---
 
 _Test execution completed: March, 2026_  
-_All tests passed: 183/183 (100%)_  
+_All tests passed: 196/196 (100%)_  
 _Status: READY FOR USE_
 
 ---
