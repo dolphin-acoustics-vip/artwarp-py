@@ -30,8 +30,16 @@ Then, for direct commands:
 ```bash
 artwarp-py train --input-dir ./contours --output results.pkl --vigilance 85
 
-# with resampling (like MATLAB resample option)
-artwarp-py train --input-dir ./contours --output results.pkl --resample --sample-interval 0.02
+# resampling is on by default (MATLAB ARTwarp_cli_mode); explicit interval / skip:
+artwarp-py train --input-dir ./contours --output results.pkl --sample-interval 0.01
+artwarp-py train --input-dir ./contours --output results.pkl --no-resample
+
+# optional MATLAB training flags (same names as GUI: recatSingleCats, compareWarped)
+artwarp-py train --input-dir ./contours --output results.pkl --recat-single-categories --compare-warped
+
+# optional extensions (non-MATLAB stable; search reorder + orphan column purge)
+artwarp-py train --input-dir ./contours --output results.pkl \
+  --deprioritize-lone-category-search --purge-empty-categories
 
 # generate visualization report
 artwarp-py plot --results results.pkl --input-dir ./contours --output-dir ./report
@@ -49,8 +57,12 @@ Without activating, use the venv’s Python: `./venv/bin/python -m artwarp.cli.m
 | max_categories | 1+ | 50 | Limit category creation |
 | max_iterations | 1+ | 50 | Max training iterations |
 | warp_factor_level | 2+ | 3 | Max time warping |
+| recat_single_categories | on/off | off | MATLAB `recatSingleCats`: lone-contour recat after each iteration |
+| compare_warped | on/off | off | MATLAB `compareWarped`: warped weight branch + average weights each iteration |
+| deprioritize_lone_category_search | on/off | off | Try other categories before current when sample is alone in its category |
+| purge_empty_categories | on/off | off | Each iteration, delete weight columns with zero assigned contours |
 
-**CLI-only (train)**: `--resample` (flag), `--sample-interval SEC` (default 0.02), `--tempres SEC` (default 0.01) — resample contours to uniform temporal resolution before training (MATLAB resample option).
+**CLI-only (train)**: resample **on** by default (`--no-resample` to match MATLAB `resample=0`); `--sample-interval SEC` (default **0.01**), `--tempres SEC` (default **0.01**). **`--recat-single-categories`** and **`--compare-warped`** mirror MATLAB `ARTwarp_Run_Categorisation.m` optional steps (default off). **`--deprioritize-lone-category-search`** and **`--purge-empty-categories`** are optional behaviours (default off). Interactive `./run.sh` prompts for resampling (default yes), bias (default **1e-6**), MATLAB parity flags, then extensions.
 
 ## Common Use Cases
 
@@ -103,13 +115,15 @@ contours, names, tempres = load_contours('./data', return_tempres=True)
 
 ### Resample Before Training (CLI or API)
 ```bash
-artwarp-py train -i ./contours -o results.pkl --resample --sample-interval 0.02
+artwarp-py train -i ./contours -o results.pkl
+# or custom interval (CLI default sample interval is 0.01 s)
+artwarp-py train -i ./contours -o results.pkl --sample-interval 0.02
 ```
 ```python
 from artwarp.utils import resample_contours
 contours, names, tempres = load_contours('./data', return_tempres=True)
 tempres = [t or 0.01 for t in tempres]
-contours = resample_contours(contours, tempres, 0.02)
+contours = resample_contours(contours, tempres, 0.01)
 results = network.fit(contours, contour_names=names)
 ```
 

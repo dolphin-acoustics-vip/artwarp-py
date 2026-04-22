@@ -4,7 +4,7 @@
 
 ARTwarp-py includes visualization capabilities for analyzing and presenting training results. All visualization functions follow scientific plotting best practices and produce research-style figures (to be validated by actual researchers).
 
-This plotting functionality, specific to CLI, serves as a MATLAB rendering alternative. They are generated using the pickle file generated from training (`train` command in CLI), providing good result encapsulation!
+This plotting functionality, specific to CLI, serves as a MATLAB rendering alternative. They are generated using the pickle file generated from training (`train` command in CLI), providing good result encapsulation! Training-time options such as **`--recat-single-categories`** / **`--compare-warped`** (MATLAB `stable`) or optional flags (`--deprioritize-lone-category-search`, `--purge-empty-categories`) only affect what is stored in that pickle if you used them when training.
 
 ## Features
 

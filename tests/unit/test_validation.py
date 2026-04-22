@@ -304,3 +304,58 @@ class TestNumbaCheck:
         ):
             result = check_numba(offer_install=True, stream=stream)
         assert result is False
+
+
+class TestCLITrainMatlabFlags:
+    """CLI train passes recat / compare-warped into ARTwarp (MATLAB parity)."""
+
+    def test_recat_and_compare_warped_parse_to_true(self):
+        from artwarp.cli.main import create_parser
+
+        p = create_parser()
+        a = p.parse_args(
+            [
+                "train",
+                "-i",
+                "./contours",
+                "-o",
+                "results.pkl",
+                "--recat-single-categories",
+                "--compare-warped",
+            ]
+        )
+        assert a.command == "train"
+        assert a.recat_single_categories is True
+        assert a.compare_warped is True
+
+    def test_defaults_false(self):
+        from artwarp.cli.main import create_parser
+
+        p = create_parser()
+        a = p.parse_args(["train", "-i", "./c", "-o", "out.pkl"])
+        assert a.recat_single_categories is False
+        assert a.compare_warped is False
+        assert a.bias == 1e-6
+        assert a.resample is True
+        assert a.sample_interval == 0.01
+        assert a.deprioritize_lone_category_search is False
+        assert a.purge_empty_categories is False
+
+    def test_pr10_cli_flags_parse_to_true(self):
+        from artwarp.cli.main import create_parser
+
+        p = create_parser()
+        a = p.parse_args(
+            [
+                "train",
+                "-i",
+                "./c",
+                "-o",
+                "out.pkl",
+                "--deprioritize-lone-category-search",
+                "--purge-empty-categories",
+            ]
+        )
+        assert a.command == "train"
+        assert a.deprioritize_lone_category_search is True
+        assert a.purge_empty_categories is True
