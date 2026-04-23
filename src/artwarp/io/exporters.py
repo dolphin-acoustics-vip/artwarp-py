@@ -11,10 +11,11 @@ Supports exporting:
 """
 
 import csv
+import dataclasses
 import pickle
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -199,11 +200,18 @@ def load_results(filepath: str) -> Dict[str, Any]:
     """
     Load training results from a pickle file.
 
+    Accepts both legacy dict pickles (written by ``export_results()``) and
+    pickles that contain a ``TrainingResults`` dataclass directly (written by
+    the Sarasota tuning script).
+
     Args:
-        filepath: Path to pickle file created by export_results()
+        filepath: Path to pickle file
 
     Returns:
         Dictionary containing training results
     """
     with open(filepath, "rb") as f:
-        return cast(Dict[str, Any], pickle.load(f))
+        obj = pickle.load(f)
+    if isinstance(obj, TrainingResults):
+        return dataclasses.asdict(obj)
+    return dict(obj)
