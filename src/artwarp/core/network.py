@@ -10,7 +10,7 @@ categorization algorithm, combining DTW and ART components.
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -33,6 +33,24 @@ from artwarp.core.weights import (
 
 
 @dataclass
+class IterationSnapshot:
+    """
+    Network state captured at a specific training iteration (after the full
+    sample loop and any post-iteration steps such as recat or purge).
+
+    Used for parity testing against MATLAB per-iteration ``.mat`` / CSV exports.
+    Not implemented as an actual flag throughout because it's a reason why MATLAB is slow.
+    """
+
+    iteration: int
+    categories: NDArray[np.float64]
+    matches: NDArray[np.float64]
+    weight_matrix: NDArray[np.float64]
+    num_categories: int
+    num_reclassifications: int
+
+
+@dataclass
 class TrainingResults:
     """
     Container for ARTwarp training results.
@@ -51,6 +69,8 @@ class TrainingResults:
             contour names assigned to that category after final convergence
             Mirrors REFCONTOURS.parent_ids from ARTwarp (MATLAB) stable-1
             Empty dict when not populated (e.g. results loaded from an older pickle)
+        iteration_snapshots: Optional map ``iteration -> IterationSnapshot`` when
+            ``fit(snapshot_iterations=...)`` was used. Empty when not requested.
     """
 
     categories: NDArray[np.float64]
@@ -62,6 +82,7 @@ class TrainingResults:
     iteration_history: List[tuple] = field(default_factory=list)
     training_time: float = 0.0
     category_parent_names: Dict[int, List[str]] = field(default_factory=dict)
+    iteration_snapshots: Dict[int, IterationSnapshot] = field(default_factory=dict)
 
     def get_category_sizes(self) -> Dict[int, int]:
         """Get the number of samples in each category."""
@@ -94,7 +115,13 @@ class ARTwarp:
         max_categories: Maximum number of categories to create
         max_iterations: Maximum number of training iterations
         warp_factor_level: Maximum DTW warping factor (default: 3)
-        random_seed: Random seed for reproducibility (optional)
+        random_seed: Random seed for reproducibility (optional). Still affects
+            ``recat_single_categories`` lone-index shuffling when that feature is on.
+        randomize_sample_order: If True (default), shuffle the contour presentation order
+            with ``numpy.random.permutation`` at the start of each training iteration.
+            If False, use the same order every iteration: indices sorted by ``contour_names``
+            lexicographically (``numpy.argsort(..., kind='stable')``), matching typical
+            MATLAB ``sort(names)`` behaviour for reproducing runs without per-iteration shuffle.
         verbose: Whether to print progress information
         recat_single_categories: If True, run MATLAB ``ARTwarp_Recat_Single_Cats`` after each
             iteration's sample loop (reassign lone-category contours when another category
@@ -128,6 +155,7 @@ class ARTwarp:
         max_iterations: int = 50,
         warp_factor_level: int = 3,
         random_seed: Optional[int] = None,
+        randomize_sample_order: bool = True,
         verbose: bool = True,
         recat_single_categories: bool = False,
         compare_warped: bool = False,
@@ -156,6 +184,7 @@ class ARTwarp:
         self.warp_factor_level = warp_factor_level
         self.verbose = verbose
         self._random_seed = random_seed
+        self.randomize_sample_order = randomize_sample_order
         self.recat_single_categories = recat_single_categories
         self.compare_warped = compare_warped
         self.deprioritize_lone_category_search = deprioritize_lone_category_search
@@ -171,7 +200,10 @@ class ARTwarp:
         self.max_features: int = 0
 
     def fit(
-        self, contours: List[NDArray[np.float64]], contour_names: Optional[List[str]] = None
+        self,
+        contours: List[NDArray[np.float64]],
+        contour_names: Optional[List[str]] = None,
+        snapshot_iterations: Optional[List[int]] = None,
     ) -> TrainingResults:
         """
         Train the ARTwarp network on a set of frequency contours.
@@ -180,14 +212,19 @@ class ARTwarp:
             contours: List of frequency contour arrays
                 Each contour should be a 1D array of frequency values
             contour_names: Optional list of names for each contour
+            snapshot_iterations: If given, capture ``IterationSnapshot`` records
+                at the end of each listed iteration (after recat/purge). Useful
+                for parity tests against MATLAB per-iteration exports.
 
         Returns:
             TrainingResults object containing category assignments and network state
 
         Algorithm:
             For each iteration:
-                Randomize sample order
-                For each sample:
+                Choose sample order: either a fresh random permutation (default), or
+                the same lexicographic order of `contour_names` every iteration (when
+                ``randomize_sample_order`` is False).
+                For each sample in that order:
                     1. Activate all categories (bottom-up)
                     2. Sort categories by activation
                     3. Search for resonance:
@@ -213,7 +250,10 @@ class ARTwarp:
                 f"number of contours ({num_samples})"
             )
 
-        # init network
+        name_sorted_indices: NDArray[np.int_] = np.argsort(
+            np.array(contour_names, dtype=object),
+            kind="stable",
+        )
         self.max_features = max(len(c) for c in contours)
         self.weight_matrix = initialize_weight_matrix(self.max_features)
         self.num_categories = 0
@@ -222,6 +262,8 @@ class ARTwarp:
         categories: NDArray[np.float64] = np.full(num_samples, np.nan, dtype=np.float64)
         matches: NDArray[np.float64] = np.zeros(num_samples, dtype=np.float64)
         iteration_history = []
+        snapshot_iters: Set[int] = set(snapshot_iterations or [])
+        iteration_snapshots: Dict[int, IterationSnapshot] = {}
 
         if self.verbose:
             print("ARTwarp Training")
@@ -238,6 +280,13 @@ class ARTwarp:
             print(f"Compare warped:    {self.compare_warped}")
             print(f"Deprioritize lone: {self.deprioritize_lone_category_search}")
             print(f"Purge empty cats:  {self.purge_empty_categories}")
+            if self.randomize_sample_order:
+                print("Sample order:      random permutation (each iteration)")
+            else:
+                print(
+                    "Sample order:      alphabetical by contour name "
+                    "(stable sort; identical order every iteration)"
+                )
             if self._random_seed is not None:
                 print(f"Random seed:     {self._random_seed}")
             print()
@@ -249,8 +298,10 @@ class ARTwarp:
         categories_at_iter_start = self.num_categories
 
         for iteration in range(1, self.max_iterations + 1):
-            # shuffle sample order
-            sample_order = np.random.permutation(num_samples)
+            if self.randomize_sample_order:
+                sample_order = np.random.permutation(num_samples)
+            else:
+                sample_order = name_sorted_indices
             num_reclassifications = 0
 
             for sample_idx in sample_order:
@@ -385,6 +436,16 @@ class ARTwarp:
                 )
             categories_at_iter_start = self.num_categories
 
+            if iteration in snapshot_iters and self.weight_matrix is not None:
+                iteration_snapshots[iteration] = IterationSnapshot(
+                    iteration=iteration,
+                    categories=categories.copy(),
+                    matches=matches.copy(),
+                    weight_matrix=self.weight_matrix.copy(),
+                    num_categories=self.num_categories,
+                    num_reclassifications=num_reclassifications,
+                )
+
             # converged?
             if num_reclassifications == 0:
                 if self.verbose:
@@ -424,6 +485,7 @@ class ARTwarp:
             iteration_history=iteration_history,
             training_time=training_time,
             category_parent_names=category_parent_names,
+            iteration_snapshots=iteration_snapshots,
         )
 
     def predict(

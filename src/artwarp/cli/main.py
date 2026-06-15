@@ -87,6 +87,7 @@ def command_train(args: argparse.Namespace) -> None:
         max_iterations=args.max_iterations,
         warp_factor_level=args.warp_factor,
         random_seed=args.seed,
+        randomize_sample_order=not args.no_rand,
         verbose=not args.quiet,
         recat_single_categories=args.recat_single_categories,
         compare_warped=args.compare_warped,
@@ -318,6 +319,15 @@ def create_parser() -> argparse.ArgumentParser:
     )
     train_parser.add_argument(
         "--seed", type=int, default=None, help="Random seed for reproducibility"
+    )
+    train_parser.add_argument(
+        "--no-rand",
+        action="store_true",
+        help=(
+            "Disable per-iteration shuffle: process contours in stable lexicographic order of "
+            "contour names every iteration (like MATLAB sort on names), for run-to-run parity with "
+            "MATLAB when file order matches. Default: shuffle each iteration."
+        ),
     )
     train_parser.add_argument(
         "--export-refs", action="store_true", help="Export reference contours to CSV files"
