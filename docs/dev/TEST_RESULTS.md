@@ -1,6 +1,6 @@
 # ARTwarp-py Test Results
 
-**Date**: March, 2026  
+**Date**: June, 2026  
 **Version**: 1.0.1
 **Environment**: Linux, Python 3.14.2 (miniconda sig-process)  
 **Status**: ALL TESTS PASSING :D
@@ -16,16 +16,16 @@ cachedir: .pytest_cache
 rootdir: /home/pedroggbm/Documents/vp4038-dolphin-acoustics/ARTWarp/artwarp-py
 configfile: pyproject.toml
 plugins: cov-7.0.0
-collected 196 items
-============================= 196 passed in 10.87s =============================
+collected 200 items
+============================= 200 passed in 7.62s =============================
 ```
 
 ### Overall Statistics
-- **Total Tests**: 196
-- **Passed**: 196 (100%)
+- **Total Tests**: 200
+- **Passed**: 200 (100%)
 - **Failed**: 0
 - **Skipped**: 0
-- **Duration**: ~10.9 seconds
+- **Duration**: ~7.6 seconds
 
 ---
 
@@ -164,24 +164,26 @@ collected 196 items
 ---
 
 ### 5. Network Tests (`test_network.py`)
-**Status**: 26/26 passed
+**Status**: 29/29 passed
 
 #### Initialization (6 tests)
-- `test_default_initialization` - Default parameter values
+- `test_default_initialization` - Default parameter values (includes `randomize_sample_order is True`)
 - `test_custom_parameters` - Custom parameter setting
 - `test_invalid_vigilance` - Vigilance validation
 - `test_invalid_learning_rate` - Learning rate validation
 - `test_invalid_bias` - Bias validation
 - `test_random_seed_reproducibility` - Reproducible results
 
-#### Training (9 tests)
+#### Training (12 tests)
 - `test_simple_training` - Basic training workflow
 - `test_identical_contours_one_category` - Single category formation
 - `test_max_categories_limit` - Maximum category enforcement
 - `test_convergence_detection` - Convergence criteria
 - `test_empty_contours_list` - Empty input handling
 - `test_contour_names` - Contour name tracking
-- `test_training_results_structure` - Results structure correctness
+- `test_training_results_structure` - Results structure correctness (`iteration_snapshots` defaults to `{}`)
+- `test_iteration_snapshots` - `fit(snapshot_iterations=[...])` captures `IterationSnapshot` per listed iteration (categories, matches, weight matrix, reclassifications)
+- `test_randomize_sample_order_false_no_permutation` / `test_randomize_sample_order_false_reproducible` - Deterministic name-ordered training (`randomize_sample_order=False` / CLI `--no-rand`)
 - `test_pr10_flags_training_smoke` - Marco's additional feature flags (`deprioritize_lone_category_search`, `purge_empty_categories`) complete `fit()` without error
 - `test_purge_empty_verbose_shows_purged_count` - Verbose iteration line includes `purged` when purge flag is on
 
@@ -195,6 +197,8 @@ collected 196 items
 - `test_get_uncategorized_count` - Uncategorized count
 - `test_category_parent_names_default_empty` - category_parent_names defaults to empty dict
 - `test_category_parent_names_explicit` - category_parent_names can be set explicitly
+
+**Note:** Per-iteration state capture (`IterationSnapshot`, `TrainingResults.iteration_snapshots`) is exercised by `test_iteration_snapshots` under Training; it is intended for MATLAB parity / convergence analysis via `fit(snapshot_iterations=...)` and `scripts/parity_matlab_norand.py` (`--snapshot-iters`), not exposed as a general CLI train flag.
 
 #### Category Parent Names / Provenance (4 tests)
 - `test_parent_names_populated_after_fit` - fit() populates category_parent_names with contour names
@@ -212,7 +216,10 @@ collected 196 items
 ---
 
 ### 6. Validation and Utils Tests (`test_validation.py`)
-**Status**: 39/39 passed (includes `TestCLITrainMatlabFlags`: CLI `--recat-single-categories` / `--compare-warped` / flags argparse)
+**Status**: 40/40 passed (includes `TestCLITrainMatlabFlags`: CLI `--recat-single-categories` / `--compare-warped` / `--no-rand` / flags argparse)
+
+#### CLI train flags (`TestCLITrainMatlabFlags`)
+- `test_recat_and_compare_warped_parse_to_true` / `test_defaults_false` / `test_pr10_cli_flags_parse_to_true` / `test_no_rand_flag_parses`
 
 #### Validate Contour (8 tests)
 - `test_valid_contour_passes` - Valid 1D positive numeric array
@@ -344,7 +351,7 @@ Then open `htmlcov/index.html` in a browser.
 - **DTW Algorithm**: High coverage (all paths tested)
 - **ART Network**: High coverage (all operations tested)
 - **Weight Management**: Covered via network tests
-- **Network Training**: High coverage
+- **Network Training**: High coverage (includes `--no-rand` / `randomize_sample_order`, optional PR #10 flags, `snapshot_iterations` / `IterationSnapshot`)
 - **Visualization**: High coverage
 - **Validation** (`utils/validation.py`): Covered by `test_validation.py` (validate_contour, validate_contours, validate_parameters)
 - **Numba check** (`utils/numba_check.py`): Covered by `test_validation.py` (numba_available, report_numba_status, check_numba; install prompt and pip/conda paths tested via mocks)
@@ -449,7 +456,7 @@ isort==7.0.0
 
 ## Conclusion
 
-**ARTwarp-py v1.0.1 passes all 196 tests with 100% success rate.**
+**ARTwarp-py v1.0.1 passes all 200 tests with 100% success rate.**
 
 ## Author Note
 
@@ -463,8 +470,8 @@ Thank you.
 
 ---
 
-_Test execution completed: March, 2026_  
-_All tests passed: 196/196 (100%)_  
+_Test execution completed: June, 2026_  
+_All tests passed: 200/200 (100%)_  
 _Status: READY FOR USE_
 
 ---

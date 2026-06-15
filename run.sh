@@ -5,7 +5,8 @@
 # Interactive (no args): menu to configure and run train / plot / predict / export
 #   with prompts for every CLI option, defaults, and validation (Train includes MATLAB
 #   parity for v2.0: recatSingleCats, compareWarped — same as artwarp-py --recat-single-categories / --compare-warped).
-#   Optional extensions: --deprioritize-lone-category-search, --purge-empty-categories.
+#   Optional extensions: --deprioritize-lone-category-search, --purge-empty-categories,
+#   --no-rand (alphabetical contour-name order each iteration).
 # Direct (with args): forwards to artwarp-py (e.g. ./run.sh train -i ./contours -o results.pkl).
 #
 # Usage:
@@ -286,6 +287,9 @@ run_train() {
   args+=(--warp-factor "$warp_factor")
   seed=$(prompt_with_default "Random seed (empty = none)" "" optional_int)
   [[ -n "$seed" ]] && args+=(--seed "$seed")
+  if prompt_yesno "No random shuffle: train in alphabetical contour-name order (MATLAB-style sort)?" "n"; then
+    args+=(--no-rand)
+  fi
 
   subheader "MATLAB ARTwarp v2.0 parity (optional)"
   if prompt_yesno "Recategorise single-whistle categories (SWCs)?" "n"; then

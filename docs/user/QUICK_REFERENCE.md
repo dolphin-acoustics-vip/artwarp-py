@@ -41,6 +41,9 @@ artwarp-py train --input-dir ./contours --output results.pkl --recat-single-cate
 artwarp-py train --input-dir ./contours --output results.pkl \
   --deprioritize-lone-category-search --purge-empty-categories
 
+# no per-iteration shuffle: same alphabetical contour-name order each iteration (MATLAB sort-style)
+artwarp-py train --input-dir ./contours --output results.pkl --no-rand
+
 # generate visualization report
 artwarp-py plot --results results.pkl --input-dir ./contours --output-dir ./report
 ```
@@ -62,7 +65,7 @@ Without activating, use the venv’s Python: `./venv/bin/python -m artwarp.cli.m
 | deprioritize_lone_category_search | on/off | off | Try other categories before current when sample is alone in its category |
 | purge_empty_categories | on/off | off | Each iteration, delete weight columns with zero assigned contours |
 
-**CLI-only (train)**: resample **on** by default (`--no-resample` to match MATLAB `resample=0`); `--sample-interval SEC` (default **0.01**), `--tempres SEC` (default **0.01**). **`--recat-single-categories`** and **`--compare-warped`** mirror MATLAB `ARTwarp_Run_Categorisation.m` optional steps (default off). **`--deprioritize-lone-category-search`** and **`--purge-empty-categories`** are optional behaviours (default off). Interactive `./run.sh` prompts for resampling (default yes), bias (default **1e-6**), MATLAB parity flags, then extensions.
+**CLI-only (train)**: resample **on** by default (`--no-resample` to match MATLAB `resample=0`); `--sample-interval SEC` (default **0.01**), `--tempres SEC` (default **0.01**). **`--recat-single-categories`** and **`--compare-warped`** mirror MATLAB `ARTwarp_Run_Categorisation.m` optional steps (default off). **`--no-rand`** turns off per-iteration shuffling (alphabetical contour-name order). **`--deprioritize-lone-category-search`** and **`--purge-empty-categories`** are optional behaviours (default off). Interactive `./run.sh` prompts for resampling (default yes), bias (default **1e-6**), MATLAB parity flags, then extensions.
 
 ## Common Use Cases
 

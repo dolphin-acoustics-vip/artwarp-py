@@ -6,6 +6,8 @@ Tests the main network training and prediction functionality.
 @author: Pedro Gronda Garrigues
 """
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -30,6 +32,7 @@ class TestARTwarpInitialization:
         assert network.compare_warped is False
         assert network.deprioritize_lone_category_search is False
         assert network.purge_empty_categories is False
+        assert network.randomize_sample_order is True
 
     def test_custom_parameters(self):
         """Test network with custom parameters."""
@@ -95,6 +98,38 @@ class TestARTwarpInitialization:
 
 class TestARTwarpTraining:
     """Tests for ARTwarp network training."""
+
+    def test_randomize_sample_order_false_no_permutation(self):
+        """Deterministic name order must not call np.random.permutation each iteration."""
+        contours = [
+            np.array([100.0, 200.0], dtype=np.float64),
+            np.array([300.0, 400.0], dtype=np.float64),
+        ]
+        names = ["zebra.ctr", "apple.ctr"]
+
+        with patch("artwarp.core.network.np.random.permutation") as mock_perm:
+            mock_perm.side_effect = AssertionError("permutation should not be used")
+            network = ARTwarp(vigilance=88.0, verbose=False, randomize_sample_order=False)
+            network.fit(contours, names)
+            mock_perm.assert_not_called()
+
+    def test_randomize_sample_order_false_reproducible(self):
+        """Two runs without shuffle and without recat randomness should match exactly."""
+        contours = [
+            np.array([100.0, 200.0, 250.0], dtype=np.float64),
+            np.array([105.0, 205.0, 255.0], dtype=np.float64),
+            np.array([500.0, 600.0], dtype=np.float64),
+        ]
+        names = ["c.csv", "a.csv", "b.csv"]
+
+        r1 = ARTwarp(vigilance=90.0, verbose=False, randomize_sample_order=False).fit(
+            contours, names
+        )
+        r2 = ARTwarp(vigilance=90.0, verbose=False, randomize_sample_order=False).fit(
+            contours, names
+        )
+        assert_array_equal(r1.categories, r2.categories)
+        assert_array_equal(r1.matches, r2.matches)
 
     def test_simple_training(self):
         """Test training on simple dataset."""
@@ -204,6 +239,33 @@ class TestARTwarpTraining:
         assert isinstance(results.converged, bool)
         assert len(results.iteration_history) > 0
         assert results.training_time >= 0
+        assert results.iteration_snapshots == {}
+
+    def test_iteration_snapshots(self):
+        """fit(snapshot_iterations=...) captures state at listed iterations."""
+        contours = [
+            np.array([100.0, 200.0, 300.0, 400.0]),
+            np.array([105.0, 205.0, 305.0, 405.0]),
+            np.array([500.0, 600.0, 700.0, 800.0]),
+        ]
+        network = ARTwarp(
+            vigilance=85.0,
+            max_iterations=5,
+            verbose=False,
+            random_seed=42,
+            randomize_sample_order=False,
+        )
+        results = network.fit(contours, snapshot_iterations=[1, 2])
+
+        assert 1 in results.iteration_snapshots
+        assert 2 in results.iteration_snapshots
+        snap1 = results.iteration_snapshots[1]
+        assert snap1.iteration == 1
+        assert len(snap1.categories) == len(contours)
+        assert snap1.weight_matrix.shape[1] == snap1.num_categories
+        snap2 = results.iteration_snapshots[2]
+        assert snap2.iteration == 2
+        assert snap2.num_reclassifications >= 0
 
     def test_pr10_flags_training_smoke(self):
         """Marco's PR optional extensions complete fit without error."""
@@ -260,7 +322,7 @@ class TestARTwarpPrediction:
 
         # train
         network = ARTwarp(vigilance=85.0, verbose=False, random_seed=42)
-        train_results = network.fit(train_contours)
+        network.fit(train_contours)
 
         # predict
         categories, matches = network.predict(test_contours)

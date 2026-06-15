@@ -17,6 +17,7 @@ network = ARTwarp(
     max_iterations=50,
     warp_factor_level=3,
     random_seed=None,
+    randomize_sample_order=True,
     verbose=True,
     recat_single_categories=False,
     compare_warped=False,
@@ -56,7 +57,10 @@ network = ARTwarp(
 - **random_seed** (int, optional): Random seed for reproducibility
   - Set to integer for deterministic results
   - Leave None for different results each run
-  
+  - Still affects **`recat_single_categories`** (lone-contour processing order uses randomness) when that flag is on
+
+- **randomize_sample_order** (bool, default=True): If True, the training loop draws a fresh **`numpy.random.permutation`** of sample indices at the **start of each iteration** (default Python/ARTwarp-py behaviour). If False, the same order is used every iteration: indices sorted by **`contour_names`** with a **stable lexicographic** sort (`numpy.argsort(..., kind="stable")`), which matches using **MATLAB `sort` on contour names** when names align. Use CLI **`--no-rand`** to disable shuffling for run-to-run alignment with MATLAB sorted-name runs. [!!!] Does **not** remove randomness inside **`recat_single_categories`**.
+
 - **verbose** (bool, default=True): Whether to print progress information
 
 - **recat_single_categories** (bool, default=False): If True, after each training iteration’s sample loop, run the same post-pass as MATLAB `ARTwarp_Recat_Single_Cats` (GUI/CLI `recatSingleCats`). Lone-category contours may be reassigned and empty categories removed via `ARTwarp_Delete_Category`. Default False matches MATLAB with this option off.
@@ -79,7 +83,7 @@ results = network.fit(contours, contour_names=None)
 
 **Parameters**:
 - `contours` (List[NDArray]): List of frequency contour arrays
-- `contour_names` (List[str], optional): Names for each contour
+- `contour_names` (List[str], optional): Names for each contour (file stems when loaded from disk). Used for **stable alphabetical presentation order** when `randomize_sample_order=False` (`ARTwarp(..., randomize_sample_order=False)` or CLI **`--no-rand`**).
 
 **Returns**:
 - `TrainingResults`: Object containing training results
@@ -359,9 +363,9 @@ Ensure the `artwarp-py` command is on your PATH (activate your virtual environme
 
 ### train
 
-Train a network on contour files. Parameters that affect the **ARTwarp network** (vigilance, learning_rate, bias, max_categories, max_iterations, warp_factor_level, random_seed, verbose, recat_single_categories, compare_warped, deprioritize_lone_category_search, purge_empty_categories) are passed into the `ARTwarp` constructor. **Preprocessing:** by default, contours are **resampled** like MATLAB **`ARTwarp_cli_mode.m`** (`resample=1`, `sampleInterval=0.01`); pass **`--no-resample`** to match `resample=0`. **`--tempres`** only applies when resampling is on. The Python class `ARTwarp(..., bias=0.0)` still defaults bias to zero for direct API use; **`train`** passes **`--bias`** (default **1e-6**) into the constructor so CLI matches MATLAB CLI.
+Train a network on contour files. Parameters that affect the **ARTwarp network** (vigilance, learning_rate, bias, max_categories, max_iterations, warp_factor_level, random_seed, **randomize_sample_order**, verbose, recat_single_categories, compare_warped, deprioritize_lone_category_search, purge_empty_categories) are passed into the `ARTwarp` constructor. **`--no-rand`** sets **`randomize_sample_order=False`**: every iteration processes contours in **stable alphabetical order of contour names** (parallel to MATLAB **`sort`** on names), instead of shuffling each iteration.
 
-If you wish to preprocess in a separate Python script, call the functions listed in the example code cells above.
+The **`train`** command loads and optionally resamples contours before fitting. **Preprocessing:** by default, contours are **resampled** like MATLAB **`ARTwarp_cli_mode.m`** (`resample=1`, `sampleInterval=0.01`); pass **`--no-resample`** to match `resample=0`. **`--tempres`** only applies when resampling is on. The Python class `ARTwarp(..., bias=0.0)` still defaults bias to zero for direct API use; **`train`** passes **`--bias`** (default **1e-6**) into the constructor so CLI matches MATLAB CLI.
 
 **Full option list**:
 
@@ -378,6 +382,7 @@ If you wish to preprocess in a separate Python script, call the functions listed
 | `--max-iterations` | 50 | Max iterations → `ARTwarp(max_iterations=...)` |
 | `--warp-factor` | 3 | DTW warping factor → `ARTwarp(warp_factor_level=...)` |
 | `--seed` | None | Random seed → `ARTwarp(random_seed=...)` |
+| `--no-rand` | false | Alphabetical contour-name order each iteration → `ARTwarp(randomize_sample_order=False)` (MATLAB `sort(names)`-style; default is shuffle) |
 | `--recat-single-categories` | false | MATLAB `recatSingleCats` → `ARTwarp(recat_single_categories=True)` |
 | `--compare-warped` | false | MATLAB `compareWarped` → `ARTwarp(compare_warped=True)` |
 | `--deprioritize-lone-category-search` | false | Non-MATLAB PR: lone-category search order → `ARTwarp(deprioritize_lone_category_search=True)` |

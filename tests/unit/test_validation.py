@@ -8,7 +8,6 @@ and numba_available, report_numba_status, check_numba (artwarp.utils.numba_check
 """
 
 import io
-import sys
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -175,7 +174,7 @@ class TestNumbaCheck:
         assert isinstance(numba_available(), bool)
 
     def test_report_numba_status_numba_available_returns_true(self):
-        """When Numba is available, report_numba_status returns True and prints installed message."""
+        """Numba present: report_numba_status returns True and prints the installed message."""
         from artwarp.utils.numba_check import report_numba_status
 
         stream = io.StringIO()
@@ -228,7 +227,7 @@ class TestNumbaCheck:
         assert "Install Numba now" not in stream.getvalue()
 
     def test_check_numba_numba_not_available_no_pip_no_conda_returns_false(self):
-        """When Numba not available, TTY, but no pip/conda, prints manual message and returns False."""
+        """No Numba, TTY, and no pip/conda: print a manual install message and return False."""
         from artwarp.utils.numba_check import check_numba
 
         stream = io.StringIO()
@@ -340,6 +339,7 @@ class TestCLITrainMatlabFlags:
         assert a.sample_interval == 0.01
         assert a.deprioritize_lone_category_search is False
         assert a.purge_empty_categories is False
+        assert a.no_rand is False
 
     def test_pr10_cli_flags_parse_to_true(self):
         from artwarp.cli.main import create_parser
@@ -359,3 +359,11 @@ class TestCLITrainMatlabFlags:
         assert a.command == "train"
         assert a.deprioritize_lone_category_search is True
         assert a.purge_empty_categories is True
+
+    def test_no_rand_flag_parses(self):
+        from artwarp.cli.main import create_parser
+
+        p = create_parser()
+        a = p.parse_args(["train", "-i", "./c", "-o", "out.pkl", "--no-rand"])
+        assert a.command == "train"
+        assert a.no_rand is True

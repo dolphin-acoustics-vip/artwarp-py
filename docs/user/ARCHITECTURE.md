@@ -137,6 +137,7 @@ Constructor parameters (all passed from CLI `train` where applicable):
 - `max_iterations` (int, default 50): Maximum training iterations
 - `warp_factor_level` (int, default 3): DTW warping factor (CLI `--warp-factor`)
 - `random_seed` (int, optional): Reproducibility (CLI `--seed`)
+- `randomize_sample_order` (bool, default True): If False, each iteration uses **stable lexicographic order of contour names** (like MATLAB **`sort`** on names); if True, **shuffle** each iteration (CLI **`--no-rand`** sets False)
 - `verbose` (bool, default True): Progress output (CLI `-q`/`--quiet` inverts)
 - `recat_single_categories` (bool, default False): MATLAB `recatSingleCats` (CLI `--recat-single-categories`)
 - `compare_warped` (bool, default False): MATLAB `compareWarped` (CLI `--compare-warped`)
@@ -152,7 +153,7 @@ Resampling is **not** a network parameter: the **`train`** CLI applies resamplin
 **Training Algorithm**:
 ```python
 for iteration in range(max_iterations):
-    shuffle(samples)
+    shuffle(samples)  # or stable lexicographic order of contour names if not randomize_sample_order
     num_changes = 0
     
     for sample in samples:

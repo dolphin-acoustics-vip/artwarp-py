@@ -110,7 +110,7 @@ Status: Fully functional
 - **test_loaders.py**: Data loaders and exporters tests -> load_ctr_file (incl. provenance fields), load_csv_file, load_txt_file, load_contours, load_mat_categorization, export_reference_contour_metadata (32 tests)
 - **test_validation.py**: Validation utilities tests — validate_contour, validate_contours, validate_parameters, numba, CLI train MATLAB flags and extension flags (39 tests)
 
-**Total**: **196 tests** covering:
+**Total**: **199+ tests** covering:
 - Mathematical correctness
 - Edge cases
 - Error handling
@@ -180,7 +180,7 @@ tests/
 └── __init__.py
 
 ```
-**196 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
+**199+ unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
 
 ### Documentation
 ```
@@ -287,7 +287,7 @@ The Python implementation maintains exact mathematical equivalence with the orig
 ## Testing Verification
 
 The implementation includes:
-- **196 unit tests** covering all core functions, I/O loaders/exporters, validation (including CLI `--recat-single-categories` / `--compare-warped` and optional `--deprioritize-lone-category-search` / `--purge-empty-categories` parsing), `purge_empty_category_columns` and training with extension flags, visualization (including discovery curve and additional algorithm/diagnostics/reporting plots), DTW Python fallback (for coverage), and provenance tracking
+- **199+ unit tests** covering all core functions, I/O loaders/exporters, validation (including CLI `--recat-single-categories` / `--compare-warped`, optional `--deprioritize-lone-category-search` / `--purge-empty-categories`, **`--no-rand`** parsing), `purge_empty_category_columns` and training with extension flags, visualization (including discovery curve and additional algorithm/diagnostics/reporting plots), DTW Python fallback (for coverage), and provenance tracking
 - **test_validation.py** (25 tests): validate_contour, validate_contours, validate_parameters (all branches and error messages)
 - **test_loaders.py** (32 tests): load_ctr_file (incl. provenance fields `id`/`parent_ids`), load_csv_file, load_txt_file, load_contours (formats, return_tempres, errors), load_mat_categorization extended cases, export_reference_contour_metadata (CSV format, UUID generation, one-based option, etc.)
 - **test_dtw.py** (28 tests): core DTW/unwarp plus Python-path tests (NUMBA_AVAILABLE=False) for full coverage of dtw.py fallback

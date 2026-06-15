@@ -60,13 +60,13 @@ ARTwarp-py is a complete rewrite of the original MATLAB ARTwarp software, combin
 
 ```bash
 # install from PyPI
-pip install artwarp-py
+> pip install artwarp-py
 
 # optional: install with Numba JIT acceleration
-pip install artwarp-py[accelerate]
+> pip install artwarp-py[accelerate]
 
 # install from source (development)
-pip install -e .
+> pip install -e .
 ```
 
 For environment setup and virtualenv details, see **[user/INSTALLATION.md](docs/user/INSTALLATION.md)** (end-user) and **[dev/ENVIRONMENT_SETUP.md](docs/dev/ENVIRONMENT_SETUP.md)** (developers) within **[docs/](docs/)**.
@@ -122,6 +122,8 @@ Optional training extensions (not in MATLAB `stable`; same behaviour as merged b
 > artwarp-py train --input-dir ./contours --output results.pkl \
     --deprioritize-lone-category-search --purge-empty-categories
 ```
+
+**Contour order:** **`--no-rand`** uses **stable alphabetical order of contour names** every iteration (like MATLAB **`sort`** on names); the default is a **random permutation** each iteration. This is primarily used to compare run-for-run metrics on Python versus MATLAB versions.
 
 Generate visualizations:
 
