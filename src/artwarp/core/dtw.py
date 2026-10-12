@@ -14,7 +14,7 @@ warp.m function while providing significant performance improvements.
 @author: Pedro Gronda Garrigues
 """
 
-from typing import Any, Tuple
+from typing import Any, Callable, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -23,20 +23,25 @@ from numpy.typing import NDArray
 # ~50e6 float64 ≈ 400 MB for M; N, p, k add more; keep total per-DTW call reasonable.
 DTW_MAX_MATRIX_ELEMENTS = 50_000_000
 
+
+def _jit_unavailable(*args: object, **kwargs: object) -> Callable[..., Any]:
+    """No-op stand-in for ``numba.jit`` when Numba is not installed."""
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        return func
+
+    return decorator
+
+
 # optional numba for JIT (status and install prompt are in artwarp.utils.numba_check, used by CLI)
 try:
-    from numba import jit
+    from numba import jit as _numba_jit
 
     NUMBA_AVAILABLE = True
+    jit = _numba_jit
 except ImportError:
     NUMBA_AVAILABLE = False
-
-    # no-op decorator when numba missing
-    def jit(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
-        def decorator(func: object) -> object:
-            return func
-
-        return decorator
+    jit = _jit_unavailable
 
 
 @jit(nopython=True, cache=True)  # pragma: no cover
@@ -173,7 +178,7 @@ def compute_similarity_matrix(
 
     similarity = (numerator / denominator) * 100.0
 
-    return similarity
+    return cast(NDArray[np.float64], similarity)
 
 
 def dynamic_time_warp(
@@ -501,7 +506,7 @@ def unwarp(warp_function: NDArray[np.int32]) -> NDArray[np.int32]:
     if len(warp_function) == 0:
         return np.array([], dtype=np.int32)
     if NUMBA_AVAILABLE:
-        return _unwarp_numba(warp_function)
+        return cast(NDArray[np.int32], _unwarp_numba(warp_function))
     n = warp_function[-1] + 1
     unwarp_function = np.zeros(n, dtype=np.int32)
     for i in range(n):
