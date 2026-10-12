@@ -1480,7 +1480,7 @@ def _classical_mds(D: NDArray[np.float64], n_components: int = 2) -> NDArray[np.
     B = -0.5 * (H @ D2 @ H)
     w, v = np.linalg.eigh(B)
     idx = np.argsort(w)[::-1][:n_components]
-    return v[:, idx] * np.sqrt(np.maximum(w[idx], 0))
+    return cast(NDArray[np.float64], v[:, idx] * np.sqrt(np.maximum(w[idx], 0)))
 
 
 def plot_category_embedding(

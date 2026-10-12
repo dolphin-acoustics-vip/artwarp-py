@@ -10,7 +10,7 @@ This module handles:
 @author: Pedro Gronda Garrigues
 """
 
-from typing import Tuple
+from typing import Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -219,7 +219,7 @@ def average_weights(
         new_weight = np.interp(x_new, x_old, i.astype(np.float64, copy=False))
         weight[:, cat] = np.nan
         weight[:new_length, cat] = new_weight
-    return weight
+    return cast(NDArray[np.float64], weight)
 
 
 def update_weights(
@@ -329,7 +329,7 @@ def update_weights(
     updated_matrix[:, category_index] = np.nan  # clear old weight
     updated_matrix[:new_length, category_index] = final_weight
 
-    return updated_matrix
+    return cast(NDArray[np.float64], updated_matrix)
 
 
 def get_weight_contour(
@@ -347,7 +347,7 @@ def get_weight_contour(
     """
     weight_vector = weight_matrix[:, category_index]
     valid_mask = (weight_vector > 0) & np.isfinite(weight_vector)
-    return weight_vector[valid_mask]
+    return cast(NDArray[np.float64], weight_vector[valid_mask])
 
 
 def count_active_categories(weight_matrix: NDArray[np.float64]) -> int:
