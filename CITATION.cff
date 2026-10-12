@@ -1,0 +1,59 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: artwarp-py
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Pedro
+    family-names: Gronda Garrigues
+    email: pgg6@st-andrews.ac.uk
+    affiliation: University of St Andrews
+    orcid: 'https://orcid.org/0009-0007-0102-7394'
+  - given-names: Marco
+    family-names: Scully
+    email: ms620@st-andrews.ac.uk
+    affiliation: University of St Andrews
+    orcid: 'https://orcid.org/0009-0007-3680-224X'
+  - given-names: Olexandr
+    family-names: Konovalov
+    email: obk1@st-andrews.ac.uk
+    affiliation: University of St Andrews
+    orcid: 'https://orcid.org/0000-0001-5299-3292'
+  - given-names: Julie
+    family-names: Oswald
+    affiliation: University of St Andrews
+    orcid: 'https://orcid.org/0000-0002-1524-9592'
+    email: jno@st-andrews.ac.uk
+  - given-names: Vincent
+    family-names: Janik
+    email: vj@st-andrews.ac.uk
+    orcid: 'https://orcid.org/0000-0001-7894-0121'
+    affiliation: University of St Andrews
+  - given-names: Volker
+    family-names: Deecke
+    email: volker.deecke@cumbria.ac.uk
+    orcid: 'https://orcid.org/0000-0003-2781-5915'
+    affiliation: University of Cumbria
+identifiers:
+  - type: url
+    value: 'https://pypi.org/project/artwarp-py/1.0.1/'
+repository-code: 'https://github.com/dolphin-acoustics-vip/artwarp-py'
+url: >-
+  https://dolphinacousticsvip.wixsite.com/dolphinacousticsvip
+repository: 'https://github.com/dolphin-acoustics-vip/artwarp'
+abstract: >-
+  High-performance Python implementation of ARTwarp for
+  bioacoustic signal categorization.
+keywords:
+  - Dynamic Time Warping
+  - Adaptive Resonance Theory
+  - Bioacoustics
+  - Neural Network
+  - Python
+license: LGPL-3.0
+version: v1.0.1
+date-released: '2026-04-22'

@@ -23,10 +23,10 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 
-
 # ---------------------------------------------------------------------------
 # Helpers — minimal in-memory WAV builder
 # ---------------------------------------------------------------------------
+
 
 def _make_wav_bytes(num_samples: int = 512, sample_rate: int = 44100) -> bytes:
     """Return a minimal valid WAV file as bytes (mono, 16-bit, sine wave)."""
@@ -39,13 +39,13 @@ def _make_wav_bytes(num_samples: int = 512, sample_rate: int = 44100) -> bytes:
     buf.write(struct.pack("<I", 36 + len(data_bytes)))
     buf.write(b"WAVE")
     buf.write(b"fmt ")
-    buf.write(struct.pack("<I", 16))      # chunk size
-    buf.write(struct.pack("<H", 1))       # PCM
-    buf.write(struct.pack("<H", 1))       # mono
+    buf.write(struct.pack("<I", 16))  # chunk size
+    buf.write(struct.pack("<H", 1))  # PCM
+    buf.write(struct.pack("<H", 1))  # mono
     buf.write(struct.pack("<I", sample_rate))
     buf.write(struct.pack("<I", sample_rate * 2))
-    buf.write(struct.pack("<H", 2))       # block align
-    buf.write(struct.pack("<H", 16))      # bits per sample
+    buf.write(struct.pack("<H", 2))  # block align
+    buf.write(struct.pack("<H", 16))  # bits per sample
     buf.write(b"data")
     buf.write(struct.pack("<I", len(data_bytes)))
     buf.write(data_bytes)
@@ -73,15 +73,18 @@ def _mock_response(
 # auth.py tests
 # ---------------------------------------------------------------------------
 
+
 class TestGetBaseUrl(unittest.TestCase):
     def test_default_production(self):
         from artwarp.oceans.auth import DEFAULT_BASE_URL, get_base_url
+
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("OCEAN_BASE_URL", None)
             self.assertEqual(get_base_url(), DEFAULT_BASE_URL)
 
     def test_env_override_strips_slash(self):
         from artwarp.oceans.auth import get_base_url
+
         with patch.dict(os.environ, {"OCEAN_BASE_URL": "https://test.example.com/api/"}):
             self.assertEqual(get_base_url(), "https://test.example.com/api")
 
@@ -89,16 +92,19 @@ class TestGetBaseUrl(unittest.TestCase):
 class TestGetTokenFromEnv(unittest.TestCase):
     def test_returns_token_when_set(self):
         from artwarp.oceans.auth import get_token_from_env
+
         with patch.dict(os.environ, {"OCEAN_ACCESS_TOKEN": "mytoken123"}):
             self.assertEqual(get_token_from_env(), "mytoken123")
 
     def test_returns_none_when_empty(self):
         from artwarp.oceans.auth import get_token_from_env
+
         with patch.dict(os.environ, {"OCEAN_ACCESS_TOKEN": "  "}):
             self.assertIsNone(get_token_from_env())
 
     def test_returns_none_when_unset(self):
         from artwarp.oceans.auth import get_token_from_env
+
         env = {k: v for k, v in os.environ.items() if k != "OCEAN_ACCESS_TOKEN"}
         with patch.dict(os.environ, env, clear=True):
             self.assertIsNone(get_token_from_env())
@@ -107,6 +113,7 @@ class TestGetTokenFromEnv(unittest.TestCase):
 class TestGetCredentialsFromEnv(unittest.TestCase):
     def test_both_set(self):
         from artwarp.oceans.auth import get_credentials_from_env
+
         with patch.dict(os.environ, {"OCEAN_USERNAME": "u@ex.com", "OCEAN_PASSWORD": "pass"}):
             u, p = get_credentials_from_env()
             self.assertEqual(u, "u@ex.com")
@@ -114,8 +121,8 @@ class TestGetCredentialsFromEnv(unittest.TestCase):
 
     def test_both_unset(self):
         from artwarp.oceans.auth import get_credentials_from_env
-        env = {k: v for k, v in os.environ.items()
-               if k not in ("OCEAN_USERNAME", "OCEAN_PASSWORD")}
+
+        env = {k: v for k, v in os.environ.items() if k not in ("OCEAN_USERNAME", "OCEAN_PASSWORD")}
         with patch.dict(os.environ, env, clear=True):
             u, p = get_credentials_from_env()
             self.assertIsNone(u)
@@ -125,6 +132,7 @@ class TestGetCredentialsFromEnv(unittest.TestCase):
 class TestPromptCredentials(unittest.TestCase):
     def test_raises_when_not_tty(self):
         from artwarp.oceans.auth import prompt_credentials
+
         with patch("sys.stdin") as mock_stdin:
             mock_stdin.isatty.return_value = False
             with self.assertRaises(ValueError):
@@ -132,6 +140,7 @@ class TestPromptCredentials(unittest.TestCase):
 
     def test_prompts_when_tty(self):
         from artwarp.oceans.auth import prompt_credentials
+
         with patch("sys.stdin") as mock_stdin:
             mock_stdin.isatty.return_value = True
             with patch("builtins.input", return_value="u@ex.com"):
@@ -142,6 +151,7 @@ class TestPromptCredentials(unittest.TestCase):
 
     def test_raises_on_empty_username(self):
         from artwarp.oceans.auth import prompt_credentials
+
         with patch("sys.stdin") as mock_stdin:
             mock_stdin.isatty.return_value = True
             with patch("builtins.input", return_value=""):
@@ -152,6 +162,7 @@ class TestPromptCredentials(unittest.TestCase):
 class TestResolveAuth(unittest.TestCase):
     def test_explicit_token_wins(self):
         from artwarp.oceans.auth import resolve_auth
+
         tok, u, p = resolve_auth(access_token="explicit_token")
         self.assertEqual(tok, "explicit_token")
         self.assertIsNone(u)
@@ -159,14 +170,19 @@ class TestResolveAuth(unittest.TestCase):
 
     def test_env_token_wins_over_credentials(self):
         from artwarp.oceans.auth import resolve_auth
+
         with patch.dict(os.environ, {"OCEAN_ACCESS_TOKEN": "env_token"}):
             tok, u, p = resolve_auth(username="u", password="p")
             self.assertEqual(tok, "env_token")
 
     def test_explicit_credentials(self):
         from artwarp.oceans.auth import resolve_auth
-        env = {k: v for k, v in os.environ.items()
-               if k not in ("OCEAN_ACCESS_TOKEN", "OCEAN_USERNAME", "OCEAN_PASSWORD")}
+
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in ("OCEAN_ACCESS_TOKEN", "OCEAN_USERNAME", "OCEAN_PASSWORD")
+        }
         with patch.dict(os.environ, env, clear=True):
             tok, u, p = resolve_auth(username="user@ex.com", password="pw")
             self.assertIsNone(tok)
@@ -175,6 +191,7 @@ class TestResolveAuth(unittest.TestCase):
 
     def test_env_credentials(self):
         from artwarp.oceans.auth import resolve_auth
+
         env = {k: v for k, v in os.environ.items() if k != "OCEAN_ACCESS_TOKEN"}
         env["OCEAN_USERNAME"] = "env@ex.com"
         env["OCEAN_PASSWORD"] = "envpw"
@@ -189,19 +206,23 @@ class TestResolveAuth(unittest.TestCase):
 # api.py tests — OceansClient
 # ---------------------------------------------------------------------------
 
+
 class TestOceansClientLogin(unittest.TestCase):
     def _make_client(self, **kwargs):
         from artwarp.oceans.api import OceansClient
+
         # Provide an env token so __init__ does not try to resolve creds.
         return OceansClient(access_token="dummy", **kwargs)
 
     def test_login_success(self):
         from artwarp.oceans.api import OceansClient
+
         client = OceansClient.__new__(OceansClient)
         client._base_url = "https://example.com/api"
         client.verbose = False
         client._token = None
         import requests as _r
+
         client._session = _r.Session()
 
         resp = _mock_response(200, {"access_token": "tok123"})
@@ -212,11 +233,13 @@ class TestOceansClientLogin(unittest.TestCase):
 
     def test_login_wrong_password(self):
         from artwarp.oceans.api import OceansAuthError, OceansClient
+
         client = OceansClient.__new__(OceansClient)
         client._base_url = "https://example.com/api"
         client.verbose = False
         client._token = None
         import requests as _r
+
         client._session = _r.Session()
 
         resp = _mock_response(400, {"message": "Incorrect password"})
@@ -227,11 +250,13 @@ class TestOceansClientLogin(unittest.TestCase):
 
     def test_login_unexpected_error(self):
         from artwarp.oceans.api import OceansAPIError, OceansClient
+
         client = OceansClient.__new__(OceansClient)
         client._base_url = "https://example.com/api"
         client.verbose = False
         client._token = None
         import requests as _r
+
         client._session = _r.Session()
 
         resp = _mock_response(500)
@@ -244,6 +269,7 @@ class TestOceansClientLogin(unittest.TestCase):
 class TestOceansClientMetadata(unittest.TestCase):
     def _client_with_token(self):
         from artwarp.oceans.api import OceansClient
+
         client = OceansClient.__new__(OceansClient)
         client._base_url = "https://example.com/api"
         client._token = "tok123"
@@ -252,6 +278,7 @@ class TestOceansClientMetadata(unittest.TestCase):
         client._password = None
         client._initial_token = "tok123"
         import requests as _r
+
         client._session = _r.Session()
         return client
 
@@ -273,6 +300,7 @@ class TestOceansClientMetadata(unittest.TestCase):
 
     def test_get_encounters_api_error(self):
         from artwarp.oceans.api import OceansAPIError
+
         client = self._client_with_token()
         resp = _mock_response(500)
         resp.text = "Server error"
@@ -299,6 +327,7 @@ class TestOceansClientMetadata(unittest.TestCase):
     def test_401_triggers_reauth(self):
         """A 401 response should cause the client to re-authenticate."""
         from artwarp.oceans.api import OceansAPIError
+
         client = self._client_with_token()
 
         resp_401 = _mock_response(401)
@@ -315,6 +344,7 @@ class TestOceansClientMetadata(unittest.TestCase):
 class TestOceansClientFileDownload(unittest.TestCase):
     def _client_with_token(self):
         from artwarp.oceans.api import OceansClient
+
         client = OceansClient.__new__(OceansClient)
         client._base_url = "https://example.com/api"
         client._token = "tok123"
@@ -323,6 +353,7 @@ class TestOceansClientFileDownload(unittest.TestCase):
         client._password = None
         client._initial_token = "tok123"
         import requests as _r
+
         client._session = _r.Session()
         return client
 
@@ -344,6 +375,7 @@ class TestOceansClientFileDownload(unittest.TestCase):
 
     def test_download_wav_wrong_content_type(self):
         from artwarp.oceans.api import OceansAPIError
+
         client = self._client_with_token()
         resp = _mock_response(
             200,
@@ -372,6 +404,7 @@ class TestOceansClientFileDownload(unittest.TestCase):
 
     def test_download_spectrogram_not_found(self):
         from artwarp.oceans.api import OceansAPIError
+
         client = self._client_with_token()
         resp = _mock_response(404)
         resp.text = "Not found"
@@ -384,9 +417,11 @@ class TestOceansClientFileDownload(unittest.TestCase):
 # contours.py tests
 # ---------------------------------------------------------------------------
 
+
 class TestExtractContourFromWavBytes(unittest.TestCase):
     def test_basic_extraction_returns_array(self):
         from artwarp.oceans.contours import extract_contour_from_wav_bytes
+
         wav = _make_wav_bytes(num_samples=1024)
         contour = extract_contour_from_wav_bytes(wav, nperseg=64, peak_quantile=0.0)
         self.assertIsInstance(contour, np.ndarray)
@@ -395,6 +430,7 @@ class TestExtractContourFromWavBytes(unittest.TestCase):
 
     def test_contour_values_are_positive_frequencies(self):
         from artwarp.oceans.contours import extract_contour_from_wav_bytes
+
         wav = _make_wav_bytes(num_samples=1024)
         contour = extract_contour_from_wav_bytes(wav, nperseg=64, peak_quantile=0.0)
         self.assertTrue(np.all(contour >= 0))
@@ -402,6 +438,7 @@ class TestExtractContourFromWavBytes(unittest.TestCase):
     def test_denoising_quantile_applied(self):
         """With peak_quantile=0.9, output should be same dtype and valid."""
         from artwarp.oceans.contours import extract_contour_from_wav_bytes
+
         wav = _make_wav_bytes(num_samples=2048)
         c0 = extract_contour_from_wav_bytes(wav, nperseg=128, peak_quantile=0.0)
         c9 = extract_contour_from_wav_bytes(wav, nperseg=128, peak_quantile=0.9)
@@ -436,6 +473,7 @@ class TestExtractContourFromWavBytes(unittest.TestCase):
 
     def test_invalid_bytes_raise(self):
         from artwarp.oceans.contours import extract_contour_from_wav_bytes
+
         with self.assertRaises(ValueError):
             extract_contour_from_wav_bytes(b"not a wav file at all", peak_quantile=0.0)
 
@@ -457,7 +495,9 @@ class TestFetchContoursToDir(unittest.TestCase):
 
     def test_writes_csvs(self):
         import tempfile
+
         from artwarp.oceans.contours import fetch_contours_to_dir
+
         client = self._make_mock_client()
         with tempfile.TemporaryDirectory() as tmpdir:
             n = fetch_contours_to_dir(
@@ -470,7 +510,9 @@ class TestFetchContoursToDir(unittest.TestCase):
 
     def test_max_per_species_respected(self):
         import tempfile
+
         from artwarp.oceans.contours import fetch_contours_to_dir
+
         client = self._make_mock_client()
         with tempfile.TemporaryDirectory() as tmpdir:
             n = fetch_contours_to_dir(
@@ -484,7 +526,9 @@ class TestFetchContoursToDir(unittest.TestCase):
 
     def test_skips_selection_without_file_id(self):
         import tempfile
+
         from artwarp.oceans.contours import fetch_contours_to_dir
+
         client = self._make_mock_client()
         client.get_selections.return_value = [
             {"id": "sel-no-file"},  # no selection_file_id
@@ -501,33 +545,35 @@ class TestFetchContoursToDir(unittest.TestCase):
 
     def test_handles_api_error_gracefully(self):
         import tempfile
+
         from artwarp.oceans.api import OceansAPIError
         from artwarp.oceans.contours import fetch_contours_to_dir
+
         client = MagicMock()
         client.get_encounters.side_effect = OceansAPIError("Connection refused")
         with tempfile.TemporaryDirectory() as tmpdir:
-            n = fetch_contours_to_dir(
-                tmpdir, species_ids=["sp-fail"], client=client, verbose=False
-            )
+            n = fetch_contours_to_dir(tmpdir, species_ids=["sp-fail"], client=client, verbose=False)
         self.assertEqual(n, 0)
 
     def test_creates_output_dir(self):
         import tempfile
+
         from artwarp.oceans.contours import fetch_contours_to_dir
+
         client = self._make_mock_client()
         client.get_selections.return_value = []
         with tempfile.TemporaryDirectory() as tmpdir:
             outdir = os.path.join(tmpdir, "new_subdir")
-            fetch_contours_to_dir(
-                outdir, species_ids=["sp-1"], client=client, verbose=False
-            )
+            fetch_contours_to_dir(outdir, species_ids=["sp-1"], client=client, verbose=False)
             # check inside the with-block -> tmpdir is deleted on exit
             self.assertTrue(os.path.isdir(outdir))
 
     def test_uses_default_species_when_none_given(self):
         import tempfile
+
         from artwarp.oceans.api import DEFAULT_SPECIES_IDS
         from artwarp.oceans.contours import fetch_contours_to_dir
+
         client = self._make_mock_client()
         with tempfile.TemporaryDirectory() as tmpdir:
             fetch_contours_to_dir(tmpdir, client=client, verbose=False)
@@ -539,15 +585,18 @@ class TestFetchContoursToDir(unittest.TestCase):
 # cli.py tests — argument parser
 # ---------------------------------------------------------------------------
 
+
 class TestAddOceansParser(unittest.TestCase):
     def _root_parser(self):
         import argparse
+
         parser = argparse.ArgumentParser()
         sub = parser.add_subparsers(dest="command")
         return parser, sub
 
     def test_parser_registered(self):
         from artwarp.oceans.cli import add_oceans_parser
+
         parser, sub = self._root_parser()
         add_oceans_parser(sub)
         args = parser.parse_args(["oceans", "fetch", "-o", "/tmp/out"])
@@ -557,6 +606,7 @@ class TestAddOceansParser(unittest.TestCase):
 
     def test_fetch_defaults(self):
         from artwarp.oceans.cli import add_oceans_parser
+
         parser, sub = self._root_parser()
         add_oceans_parser(sub)
         args = parser.parse_args(["oceans", "fetch", "-o", "/tmp/out"])
@@ -570,18 +620,28 @@ class TestAddOceansParser(unittest.TestCase):
 
     def test_fetch_with_all_options(self):
         from artwarp.oceans.cli import add_oceans_parser
+
         parser, sub = self._root_parser()
         add_oceans_parser(sub)
-        args = parser.parse_args([
-            "oceans", "fetch",
-            "-o", "/tmp/out",
-            "--species-id", "uuid-1",
-            "--species-id", "uuid-2",
-            "--max-per-species", "5",
-            "--nperseg", "512",
-            "--peak-quantile", "0.8",
-            "--quiet",
-        ])
+        args = parser.parse_args(
+            [
+                "oceans",
+                "fetch",
+                "-o",
+                "/tmp/out",
+                "--species-id",
+                "uuid-1",
+                "--species-id",
+                "uuid-2",
+                "--max-per-species",
+                "5",
+                "--nperseg",
+                "512",
+                "--peak-quantile",
+                "0.8",
+                "--quiet",
+            ]
+        )
         self.assertEqual(args.species_ids, ["uuid-1", "uuid-2"])
         self.assertEqual(args.max_per_species, 5)
         self.assertEqual(args.nperseg, 512)
@@ -590,6 +650,7 @@ class TestAddOceansParser(unittest.TestCase):
 
     def test_count_subcommand_registered(self):
         from artwarp.oceans.cli import add_oceans_parser
+
         parser, sub = self._root_parser()
         add_oceans_parser(sub)
         args = parser.parse_args(["oceans", "count"])
@@ -600,6 +661,7 @@ class TestAddOceansParser(unittest.TestCase):
 class TestCommandOceansFetch(unittest.TestCase):
     def _args(self, **kwargs):
         import argparse
+
         defaults = dict(
             oceans_command="fetch",
             output_dir="/tmp/test_out",
@@ -616,6 +678,7 @@ class TestCommandOceansFetch(unittest.TestCase):
 
     def test_calls_fetch_and_prints_summary(self, capsys=None):
         from artwarp.oceans.cli import command_oceans_fetch
+
         with patch("artwarp.oceans.contours.fetch_contours_to_dir", return_value=5) as mock_f:
             with patch("builtins.print"):  # suppress output
                 command_oceans_fetch(self._args())
@@ -623,6 +686,7 @@ class TestCommandOceansFetch(unittest.TestCase):
 
     def test_exits_1_on_zero_writes(self):
         from artwarp.oceans.cli import command_oceans_fetch
+
         with patch("artwarp.oceans.contours.fetch_contours_to_dir", return_value=0):
             with self.assertRaises(SystemExit) as cm:
                 command_oceans_fetch(self._args())
@@ -630,6 +694,7 @@ class TestCommandOceansFetch(unittest.TestCase):
 
     def test_exits_1_on_value_error(self):
         from artwarp.oceans.cli import command_oceans_fetch
+
         with patch(
             "artwarp.oceans.contours.fetch_contours_to_dir",
             side_effect=ValueError("bad creds"),
@@ -642,12 +707,14 @@ class TestCommandOceansFetch(unittest.TestCase):
 class TestCommandOceansCount(unittest.TestCase):
     def _args(self, **kwargs):
         import argparse
+
         defaults = dict(oceans_command="count", species_ids=None)
         defaults.update(kwargs)
         return argparse.Namespace(**defaults)
 
     def test_calls_count_and_prints(self):
         from artwarp.oceans.cli import command_oceans_count
+
         mock_result = {"total": 42}
         with patch(
             "artwarp.oceans.contours.count_available_selections",
@@ -660,7 +727,9 @@ class TestCommandOceansCount(unittest.TestCase):
 class TestCommandOceansDispatch(unittest.TestCase):
     def test_no_subcommand_exits_1(self):
         import argparse
+
         from artwarp.oceans.cli import command_oceans
+
         args = argparse.Namespace(oceans_command=None)
         with self.assertRaises(SystemExit) as cm:
             command_oceans(args)
@@ -668,7 +737,9 @@ class TestCommandOceansDispatch(unittest.TestCase):
 
     def test_unknown_subcommand_exits_1(self):
         import argparse
+
         from artwarp.oceans.cli import command_oceans
+
         args = argparse.Namespace(oceans_command="nonexistent")
         with self.assertRaises(SystemExit) as cm:
             command_oceans(args)
@@ -679,6 +750,7 @@ class TestCommandOceansDispatch(unittest.TestCase):
 # __init__.py / public API surface
 # ---------------------------------------------------------------------------
 
+
 class TestOceansPublicAPI(unittest.TestCase):
     def test_public_symbols_importable(self):
         from artwarp.oceans import (
@@ -688,14 +760,17 @@ class TestOceansPublicAPI(unittest.TestCase):
             OceansClient,
             fetch_contours_to_dir,
         )
+
         self.assertIsNotNone(OceansClient)
         self.assertIsNotNone(fetch_contours_to_dir)
         self.assertIsInstance(DEFAULT_SPECIES_IDS, list)
         self.assertGreater(len(DEFAULT_SPECIES_IDS), 0)
 
     def test_default_species_ids_are_uuids(self):
-        from artwarp.oceans import DEFAULT_SPECIES_IDS
         import re
+
+        from artwarp.oceans import DEFAULT_SPECIES_IDS
+
         uuid_re = re.compile(
             r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
             re.IGNORECASE,

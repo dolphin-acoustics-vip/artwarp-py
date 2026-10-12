@@ -86,7 +86,7 @@ Status: Fully functional
 
 #### Resampling (`src/artwarp/utils/resample.py`)
 - Resample contours to a uniform temporal resolution (seconds per point)
-- Used by `train --resample` and optionally via `load_contours(..., return_tempres=True)` + `resample_contours()`
+- Used by `train` when resampling is on (default, MATLAB `resample=1`) and via `load_contours(..., return_tempres=True)` + `resample_contours()`
 
 ### 4. OCEANS Integration (`src/artwarp/oceans/`)
 
@@ -132,14 +132,15 @@ directly into the ARTwarp-py training pipeline.
 #### Unit Tests
 - **test_dtw.py**: DTW algorithm tests (29 tests: core DTW/unwarp + Python-path tests for coverage when Numba disabled)
 - **test_art.py**: ART component tests (18 tests)
-- **test_network.py**: Network training and prediction tests (24 tests: includes `TestCategoryParentNames` for provenance tracking)
+- **test_network.py**: Network training and prediction tests (29 tests: includes `TestCategoryParentNames` for provenance tracking, optional training flags, `--no-rand`, and iteration snapshots)
+- **test_weights.py**: Weight matrix helpers (8 tests: average/delete/purge/update)
 - **test_visualization.py**: Plotting and report tests (35 tests: core plots, discovery curve, DTW/ART schematic, diagnostics, reporting)
 - **test_matlab_compat.py**: MATLAB file and behavior compatibility tests (9 tests)
 - **test_loaders.py**: Data loaders and exporters tests -> load_ctr_file (incl. provenance fields), load_csv_file, load_txt_file, load_contours, load_mat_categorization, export_reference_contour_metadata (32 tests)
-- **test_validation.py**: Validation utilities tests — validate_contour, validate_contours, validate_parameters, numba (36 tests)
+- **test_validation.py**: Validation utilities tests — validate_contour, validate_contours, validate_parameters, numba, CLI train MATLAB flags, extension flags, and `--no-rand` (40 tests)
 - **test_oceans.py**: OCEANS integration tests (50 tests: auth/credential resolution, OceansClient login/metadata/file endpoints, WAV→contour extraction, fetch_contours_to_dir pipeline, CLI parser and dispatch — all offline/mocked)
 
-**Total**: **233 tests** covering:
+**Total**: **250 tests** covering:
 - Mathematical correctness
 - Edge cases
 - Error handling
@@ -209,6 +210,7 @@ tests/
 │   ├── test_dtw.py
 │   ├── test_art.py
 │   ├── test_network.py
+│   ├── test_weights.py
 │   ├── test_loaders.py
 │   ├── test_validation.py
 │   ├── test_matlab_compat.py
@@ -217,7 +219,7 @@ tests/
 └── __init__.py
 
 ```
-**233 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
+**250 unit tests** in total (see docs/dev/TEST_RESULTS.md for full breakdown).
 
 ### Documentation
 ```
@@ -301,7 +303,7 @@ examples/
 ### ✓ Code Quality
 - [x] Complete type hints
 - [x] Comprehensive docstrings
-- [x] Unit tests (164 test cases; see docs/dev/TEST_RESULTS.md)
+- [x] Unit tests (see docs/dev/TEST_RESULTS.md)
 - [x] Integration tests
 - [x] Code formatting (Black)
 - [x] Linting configuration
@@ -339,7 +341,7 @@ The Python implementation maintains exact mathematical equivalence with the orig
 ## Testing Verification
 
 The implementation includes:
-- **233 unit tests** covering all core functions, I/O loaders/exporters, validation, visualization (including discovery curve and additional algorithm/diagnostics/reporting plots), DTW Python fallback (for coverage), provenance tracking, and OCEANS integration (all offline/mocked)
+- **250 unit tests** covering all core functions, I/O loaders/exporters, validation (including CLI `--recat-single-categories` / `--compare-warped`, optional `--deprioritize-lone-category-search` / `--purge-empty-categories`, **`--no-rand`** parsing), `purge_empty_category_columns` and training with extension flags, visualization (including discovery curve and additional algorithm/diagnostics/reporting plots), DTW Python fallback (for coverage), provenance tracking, and OCEANS integration (all offline/mocked)
 - **test_validation.py** (25 tests): validate_contour, validate_contours, validate_parameters (all branches and error messages)
 - **test_loaders.py** (32 tests): load_ctr_file (incl. provenance fields `id`/`parent_ids`), load_csv_file, load_txt_file, load_contours (formats, return_tempres, errors), load_mat_categorization extended cases, export_reference_contour_metadata (CSV format, UUID generation, one-based option, etc.)
 - **test_dtw.py** (28 tests): core DTW/unwarp plus Python-path tests (NUMBA_AVAILABLE=False) for full coverage of dtw.py fallback

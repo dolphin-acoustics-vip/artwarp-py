@@ -5,7 +5,7 @@ This directory contains detailed internal documentation for end-users, developer
 ## Contents
 
 ### Test Documentation
-- **docs/dev/TEST_RESULTS.md** - Complete test report with all 164 tests documented
+- **docs/dev/TEST_RESULTS.md** - Complete test report with full test suite documented
   - Test execution results
   - Bug fixes applied during testing
   - Performance benchmarks
@@ -127,7 +127,6 @@ The **GitHub Wiki** for this repo is synced from this `docs/` directory. When yo
 | `docs/dev/PERFORMANCE_OPTIMIZATIONS.md` | Dev-PERFORMANCE_OPTIMIZATIONS |
 | `docs/user/OCEANS.md` | User-OCEANS |
 | `docs/dev/OCEANS_DEV.md` | Dev-OCEANS_DEV |
-
 ---
 
 @author: Pedro Gronda Garrigues

@@ -36,10 +36,9 @@ Quick start::
 
 import io
 import math
-import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -59,8 +58,7 @@ except ImportError:  # pragma: no cover
 def _require_scipy() -> None:
     if not _HAS_SCIPY:
         raise ImportError(
-            "scipy is required for WAV→contour extraction.\n"
-            "Install with: pip install scipy"
+            "scipy is required for WAV→contour extraction.\n" "Install with: pip install scipy"
         )
 
 
