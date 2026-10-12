@@ -14,11 +14,12 @@ to import argparse, and so the CLI module stays focused on args parsing.
 
 import argparse
 import sys
+from typing import Any, cast
 
 from artwarp.oceans.api import DEFAULT_SPECIES_IDS
 
 
-def add_oceans_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:  # type: ignore[type-arg]
+def add_oceans_parser(subparsers: Any) -> argparse.ArgumentParser:
     """
     Register the ``oceans`` command group with an existing subparsers action.
 
@@ -161,7 +162,7 @@ def add_oceans_parser(subparsers: argparse._SubParsersAction) -> argparse.Argume
         help="OCEANS species UUID to count.  May be repeated.  Default: built-in species IDs.",
     )
 
-    return oceans_parser
+    return cast(argparse.ArgumentParser, oceans_parser)
 
 
 def command_oceans_fetch(args: argparse.Namespace) -> None:
@@ -189,8 +190,12 @@ def command_oceans_fetch(args: argparse.Namespace) -> None:
         nperseg_display = args.nperseg if args.nperseg is not None else "auto (≈50 Hz/bin)"
         print(f"Spectrogram nperseg : {nperseg_display}")
         print(f"Peak quantile       : {args.peak_quantile}")
-        freq_lo_display = f"{args.freq_low} Hz" if args.freq_low is not None else "from OCEANS selection table"
-        freq_hi_display = f"{args.freq_high} Hz" if args.freq_high is not None else "from OCEANS selection table"
+        freq_lo_display = (
+            f"{args.freq_low} Hz" if args.freq_low is not None else "from OCEANS selection table"
+        )
+        freq_hi_display = (
+            f"{args.freq_high} Hz" if args.freq_high is not None else "from OCEANS selection table"
+        )
         print(f"Freq low            : {freq_lo_display}")
         print(f"Freq high           : {freq_hi_display}")
         print()
@@ -225,7 +230,7 @@ def command_oceans_fetch(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     print(f"\nDone. Wrote {n} contour CSV(s) to '{args.output_dir}'.")
-    print(f"Ready for training:")
+    print("Ready for training:")
     print(f"  artwarp-py train --input-dir {args.output_dir} --format csv")
 
 

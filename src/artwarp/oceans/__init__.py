@@ -33,9 +33,9 @@ Credentials — never commit to source control:
 
 from artwarp.oceans.api import (
     DEFAULT_SPECIES_IDS,
-    OceansClient,
-    OceansAuthError,
     OceansAPIError,
+    OceansAuthError,
+    OceansClient,
 )
 from artwarp.oceans.contours import fetch_contours_to_dir
 

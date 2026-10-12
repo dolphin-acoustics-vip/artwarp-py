@@ -10,7 +10,7 @@ categorization algorithm, combining DTW and ART components.
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -23,10 +23,31 @@ from artwarp.core.art import (
 )
 from artwarp.core.weights import (
     add_new_category,
+    average_weights,
+    delete_category_reindex_assignments,
     get_weight_contour,
     initialize_weight_matrix,
+    purge_empty_category_columns,
     update_weights,
 )
+
+
+@dataclass
+class IterationSnapshot:
+    """
+    Network state captured at a specific training iteration (after the full
+    sample loop and any post-iteration steps such as recat or purge).
+
+    Used for parity testing against MATLAB per-iteration ``.mat`` / CSV exports.
+    Not implemented as an actual flag throughout because it's a reason why MATLAB is slow.
+    """
+
+    iteration: int
+    categories: NDArray[np.float64]
+    matches: NDArray[np.float64]
+    weight_matrix: NDArray[np.float64]
+    num_categories: int
+    num_reclassifications: int
 
 
 @dataclass
@@ -48,6 +69,8 @@ class TrainingResults:
             contour names assigned to that category after final convergence
             Mirrors REFCONTOURS.parent_ids from ARTwarp (MATLAB) stable-1
             Empty dict when not populated (e.g. results loaded from an older pickle)
+        iteration_snapshots: Optional map ``iteration -> IterationSnapshot`` when
+            ``fit(snapshot_iterations=...)`` was used. Empty when not requested.
     """
 
     categories: NDArray[np.float64]
@@ -59,6 +82,7 @@ class TrainingResults:
     iteration_history: List[tuple] = field(default_factory=list)
     training_time: float = 0.0
     category_parent_names: Dict[int, List[str]] = field(default_factory=dict)
+    iteration_snapshots: Dict[int, IterationSnapshot] = field(default_factory=dict)
 
     def get_category_sizes(self) -> Dict[int, int]:
         """Get the number of samples in each category."""
@@ -91,8 +115,30 @@ class ARTwarp:
         max_categories: Maximum number of categories to create
         max_iterations: Maximum number of training iterations
         warp_factor_level: Maximum DTW warping factor (default: 3)
-        random_seed: Random seed for reproducibility (optional)
+        random_seed: Random seed for reproducibility (optional). Still affects
+            ``recat_single_categories`` lone-index shuffling when that feature is on.
+        randomize_sample_order: If True (default), shuffle the contour presentation order
+            with ``numpy.random.permutation`` at the start of each training iteration.
+            If False, use the same order every iteration: indices sorted by ``contour_names``
+            lexicographically (``numpy.argsort(..., kind='stable')``), matching typical
+            MATLAB ``sort(names)`` behaviour for reproducing runs without per-iteration shuffle.
         verbose: Whether to print progress information
+        recat_single_categories: If True, run MATLAB ``ARTwarp_Recat_Single_Cats`` after each
+            iteration's sample loop (reassign lone-category contours when another category
+            resonates). Default False matches MATLAB with ``recatSingleCats`` off.
+        compare_warped: If True, use MATLAB ``compareWarped == 1`` weight updates (fixed
+            reference length) and, after each iteration, ``ARTwarp_Average_Weights``.
+            Default False matches MATLAB with ``compareWarped`` off.
+        deprioritize_lone_category_search: If True, when the current sample is the **only**
+            contour assigned to its category, try **other** categories in activation order
+            **before** its current category (experimental behaviour from PR
+            deleted_unused_categories
+            ``delete_unused_categories`` / ``f671e5a``). **Not** in MATLAB ``stable``.
+            Default False.
+        purge_empty_categories: If True, after each iteration (after optional recat /
+            ``compare_warped``), remove weight columns with **zero** assigned contours and
+            reindex assignments (same PR deleted_unused_categories cleanup). **Not** in
+            MATLAB ``stable``. Default False.
 
     Example:
         >>> network = ARTwarp(vigilance=85.0, learning_rate=0.1)
@@ -109,7 +155,12 @@ class ARTwarp:
         max_iterations: int = 50,
         warp_factor_level: int = 3,
         random_seed: Optional[int] = None,
+        randomize_sample_order: bool = True,
         verbose: bool = True,
+        recat_single_categories: bool = False,
+        compare_warped: bool = False,
+        deprioritize_lone_category_search: bool = False,
+        purge_empty_categories: bool = False,
     ):
         # validate params
         if not 1 <= vigilance <= 99:
@@ -133,6 +184,11 @@ class ARTwarp:
         self.warp_factor_level = warp_factor_level
         self.verbose = verbose
         self._random_seed = random_seed
+        self.randomize_sample_order = randomize_sample_order
+        self.recat_single_categories = recat_single_categories
+        self.compare_warped = compare_warped
+        self.deprioritize_lone_category_search = deprioritize_lone_category_search
+        self.purge_empty_categories = purge_empty_categories
 
         # optional random seed
         if random_seed is not None:
@@ -144,7 +200,10 @@ class ARTwarp:
         self.max_features: int = 0
 
     def fit(
-        self, contours: List[NDArray[np.float64]], contour_names: Optional[List[str]] = None
+        self,
+        contours: List[NDArray[np.float64]],
+        contour_names: Optional[List[str]] = None,
+        snapshot_iterations: Optional[List[int]] = None,
     ) -> TrainingResults:
         """
         Train the ARTwarp network on a set of frequency contours.
@@ -153,18 +212,23 @@ class ARTwarp:
             contours: List of frequency contour arrays
                 Each contour should be a 1D array of frequency values
             contour_names: Optional list of names for each contour
+            snapshot_iterations: If given, capture ``IterationSnapshot`` records
+                at the end of each listed iteration (after recat/purge). Useful
+                for parity tests against MATLAB per-iteration exports.
 
         Returns:
             TrainingResults object containing category assignments and network state
 
         Algorithm:
             For each iteration:
-                Randomize sample order
-                For each sample:
+                Choose sample order: either a fresh random permutation (default), or
+                the same lexicographic order of `contour_names` every iteration (when
+                ``randomize_sample_order`` is False).
+                For each sample in that order:
                     1. Activate all categories (bottom-up)
                     2. Sort categories by activation
                     3. Search for resonance:
-                        - Calculate match with top category
+                        - Calculate match with sorted categories in order
                         - If match > vigilance: assign and update weights
                         - Else: try next category
                         - If all fail: create new category (if allowed)
@@ -186,7 +250,10 @@ class ARTwarp:
                 f"number of contours ({num_samples})"
             )
 
-        # init network
+        name_sorted_indices: NDArray[np.int_] = np.argsort(
+            np.array(contour_names, dtype=object),
+            kind="stable",
+        )
         self.max_features = max(len(c) for c in contours)
         self.weight_matrix = initialize_weight_matrix(self.max_features)
         self.num_categories = 0
@@ -195,6 +262,8 @@ class ARTwarp:
         categories: NDArray[np.float64] = np.full(num_samples, np.nan, dtype=np.float64)
         matches: NDArray[np.float64] = np.zeros(num_samples, dtype=np.float64)
         iteration_history = []
+        snapshot_iters: Set[int] = set(snapshot_iterations or [])
+        iteration_snapshots: Dict[int, IterationSnapshot] = {}
 
         if self.verbose:
             print("ARTwarp Training")
@@ -207,6 +276,17 @@ class ARTwarp:
             print(f"Max categories:  {self.max_categories}")
             print(f"Max iterations:  {self.max_iterations}")
             print(f"Warp factor:     {self.warp_factor_level}")
+            print(f"Recat single cats: {self.recat_single_categories}")
+            print(f"Compare warped:    {self.compare_warped}")
+            print(f"Deprioritize lone: {self.deprioritize_lone_category_search}")
+            print(f"Purge empty cats:  {self.purge_empty_categories}")
+            if self.randomize_sample_order:
+                print("Sample order:      random permutation (each iteration)")
+            else:
+                print(
+                    "Sample order:      alphabetical by contour name "
+                    "(stable sort; identical order every iteration)"
+                )
             if self._random_seed is not None:
                 print(f"Random seed:     {self._random_seed}")
             print()
@@ -218,13 +298,20 @@ class ARTwarp:
         categories_at_iter_start = self.num_categories
 
         for iteration in range(1, self.max_iterations + 1):
-            # shuffle sample order
-            sample_order = np.random.permutation(num_samples)
+            if self.randomize_sample_order:
+                sample_order = np.random.permutation(num_samples)
+            else:
+                sample_order = name_sorted_indices
             num_reclassifications = 0
 
             for sample_idx in sample_order:
                 old_category = categories[sample_idx]
                 current_contour = contours[sample_idx]
+
+                if np.isnan(old_category):
+                    num_in_old_category = 0
+                else:
+                    num_in_old_category = int((categories == old_category).sum())
 
                 # activate categories (bottom-up)
                 if self.num_categories > 0:
@@ -238,11 +325,23 @@ class ARTwarp:
                     # no categories yet
                     sorted_indices = np.array([], dtype=np.int32)
 
-                # search for resonance
                 resonance = False
                 max_match = 0.0
 
+                # PR deleted_unused_categories (martion2007): if lone in category
+                # try other prototypes first
+                if (
+                    self.deprioritize_lone_category_search
+                    and num_in_old_category == 1
+                    and sorted_indices.size > 0
+                ):
+                    oc = int(old_category)
+                    if 0 <= oc < self.num_categories and np.any(sorted_indices == oc):
+                        others = sorted_indices[sorted_indices != oc]
+                        sorted_indices = np.append(others, oc).astype(np.int32)
+
                 for cat_rank in range(len(sorted_indices)):
+
                     cat_idx = sorted_indices[cat_rank]
 
                     # weight contour + warp func
@@ -268,6 +367,7 @@ class ARTwarp:
                             cat_idx,
                             self.learning_rate,
                             warp_func,
+                            compare_warped=self.compare_warped,
                         )
                         categories[sample_idx] = cat_idx
                         matches[sample_idx] = match
@@ -294,7 +394,25 @@ class ARTwarp:
                     if not (np.isnan(old_category) and np.isnan(categories[sample_idx])):
                         num_reclassifications += 1
 
-            # record iteration
+            # MATLAB ARTwarp_Run_Categorisation.m: optional post-iteration recat, then average
+            if self.recat_single_categories:
+                categories, matches, self.weight_matrix, self.num_categories = (
+                    self._recat_single_categories(contours, categories, matches)
+                )
+
+            if self.compare_warped:
+                contour_lengths = np.array([len(c) for c in contours], dtype=np.int64)
+                self.weight_matrix = average_weights(
+                    self.weight_matrix, contour_lengths, categories
+                )
+
+            num_purged_empty = 0
+            if self.purge_empty_categories and self.weight_matrix is not None:
+                self.weight_matrix, categories, num_purged_empty = purge_empty_category_columns(
+                    self.weight_matrix, categories
+                )
+                self.num_categories = int(self.weight_matrix.shape[1])
+
             iteration_history.append((iteration, num_reclassifications))
             new_cats_this_round = self.num_categories - categories_at_iter_start
             pct_reclass = (num_reclassifications / num_samples * 100) if num_samples else 0
@@ -305,12 +423,28 @@ class ARTwarp:
                     f"reclassified {num_reclassifications:4d} / {num_samples} "
                     f"({pct_reclass:5.1f}%){_reset}"
                 )
+                purge_str = (
+                    f"  │  purged {num_purged_empty:2d} empty categories"
+                    if self.purge_empty_categories
+                    else ""
+                )
                 print(
                     f"  {color}iter {iteration:3d}{_reset}  │  "
                     f"categories {self.num_categories:3d}  "
                     f"(+{new_cats_this_round:2d} this round)  │  {reclass_str}"
+                    f"{purge_str}"
                 )
             categories_at_iter_start = self.num_categories
+
+            if iteration in snapshot_iters and self.weight_matrix is not None:
+                iteration_snapshots[iteration] = IterationSnapshot(
+                    iteration=iteration,
+                    categories=categories.copy(),
+                    matches=matches.copy(),
+                    weight_matrix=self.weight_matrix.copy(),
+                    num_categories=self.num_categories,
+                    num_reclassifications=num_reclassifications,
+                )
 
             # converged?
             if num_reclassifications == 0:
@@ -351,6 +485,7 @@ class ARTwarp:
             iteration_history=iteration_history,
             training_time=training_time,
             category_parent_names=category_parent_names,
+            iteration_snapshots=iteration_snapshots,
         )
 
     def predict(
@@ -402,3 +537,84 @@ class ARTwarp:
                 matches[idx] = 0.0
 
         return categories, matches
+
+    def _recat_single_categories(
+        self,
+        contours: List[NDArray[np.float64]],
+        categories: NDArray[np.float64],
+        matches: NDArray[np.float64],
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], int]:
+        """
+        MATLAB ARTwarp_Recat_Single_Cats.m — reassign lone contours when a better match exists.
+
+        Operates on the same data layout as the MATLAB ``categories`` / ``matches`` vectors
+        (0-based category indices; NaN for unassigned).
+        """
+        weight = self.weight_matrix
+        if weight is None:
+            raise RuntimeError("Weight matrix must be initialized before recat")
+        num_samples = len(contours)
+        num_categories = weight.shape[1]
+
+        lone_mask: NDArray[np.bool_] = np.ones(num_samples, dtype=np.bool_)
+        lone_mask[np.isnan(categories)] = False
+        for cat in range(num_categories):
+            cat_mask = categories == cat
+            if np.sum(cat_mask) != 1:
+                lone_mask[cat_mask] = False
+        lone_indices = np.flatnonzero(lone_mask)
+        num_lone = int(lone_indices.size)
+        single_cats_moved = 0
+
+        if num_lone == 0:
+            return categories, matches, weight, num_categories
+
+        order = np.argsort(np.random.randn(num_lone))
+        cats = categories.copy()
+        mats = matches.copy()
+
+        for step in range(num_lone):
+            k = int(order[step])
+            idx = int(lone_indices[k])
+            current_data = contours[idx]
+            old_category = int(cats[idx])
+
+            activations, warp_functions = activate_categories(
+                current_data, weight, self.bias, self.warp_factor_level
+            )
+            activations = activations.astype(np.float64, copy=True)
+            activations[old_category] = np.nan
+            if np.all(np.isnan(activations)):
+                continue
+            best_match_idx = int(np.nanargmax(activations))
+            warp_func = warp_functions[best_match_idx]
+            weight_contour = get_weight_contour(weight, best_match_idx)
+            if len(warp_func) == 0:
+                continue
+            warped_input = current_data[warp_func]
+            match_val = float(calculate_match(warped_input, weight_contour))
+
+            if check_resonance(match_val, self.vigilance):
+                weight = update_weights(
+                    current_data,
+                    weight,
+                    best_match_idx,
+                    self.learning_rate,
+                    warp_func,
+                    compare_warped=self.compare_warped,
+                )
+                old_cat_mask = cats == old_category
+                mats[old_cat_mask] = match_val
+                cats[old_cat_mask] = best_match_idx
+                weight, cats = delete_category_reindex_assignments(old_category, weight, cats)
+                num_categories = weight.shape[1]
+                single_cats_moved += 1
+
+        if self.verbose:
+            print(
+                f"Number of single-contour-category contours reclassified "
+                f"{single_cats_moved:2d}"
+            )
+
+        self.weight_matrix = weight
+        return cats, mats, weight, num_categories

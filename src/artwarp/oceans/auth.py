@@ -34,7 +34,7 @@ from typing import Optional, Tuple
 # default production base URL; override with OCEAN_BASE_URL env var
 DEFAULT_BASE_URL = "https://research.st-andrews.ac.uk/ocean/api"
 
-# test server base URL (no API-privileges gate on accounts, but not sure how extensive the test server is...):
+# test server (no API-privileges gate; coverage of this server is still unclear):
 TEST_BASE_URL = "https://rescomp-test-2.st-andrews.ac.uk/ocean/api"
 
 

@@ -313,7 +313,7 @@ OS: Linux 6.19.9-arch1-1
 Python: 3.14.2 (miniconda sig-process)
 Conda: 25.11.0
 Virtual Environment: sig-process (conda)
-Test Results: 233/233 passed (100%) (as of March 2026)
+Test Results: 250/250 passed (100%) (as of October 2026)
 ```
 
 ---

@@ -97,9 +97,8 @@ try:
 except ImportError:  # pragma: no cover
     _HAS_MPL = False
 
-from artwarp import ARTwarp, load_contours
-from artwarp.utils.resample import resample_contours
-
+from artwarp import ARTwarp, load_contours  # noqa: E402
+from artwarp.utils.resample import resample_contours  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Ground truth from filenames
@@ -159,9 +158,7 @@ def _purity(labels_true: np.ndarray, labels_pred: np.ndarray) -> float:
     return score / total
 
 
-def supervised_clustering_metrics(
-    y_true: np.ndarray, categories: np.ndarray
-) -> Dict[str, Any]:
+def supervised_clustering_metrics(y_true: np.ndarray, categories: np.ndarray) -> Dict[str, Any]:
     """categories: float array from TrainingResults; may contain NaN."""
     valid = np.isfinite(categories)
     yt = y_true[valid]
@@ -294,9 +291,7 @@ def _save_run_figure(
 
     sizes = sorted(results.get_category_sizes().values(), reverse=True)
     top_n = min(40, len(sizes))
-    ax_sizes.bar(
-        range(top_n), sizes[:top_n], color="steelblue", edgecolor="none", width=0.8
-    )
+    ax_sizes.bar(range(top_n), sizes[:top_n], color="steelblue", edgecolor="none", width=0.8)
     ax_sizes.set_xlabel("Category rank (by size, descending)")
     ax_sizes.set_ylabel("Contour count")
     ax_sizes.set_title(f"Cluster sizes  ({results.num_categories} total categories)")
@@ -333,9 +328,7 @@ def _save_run_figure(
     )
     ax_metrics.set_title("Metrics")
 
-    fig.suptitle(
-        f"ARTwarp tuning run  —  v={v:g}, w={w}", fontsize=13, fontweight="bold"
-    )
+    fig.suptitle(f"ARTwarp tuning run  —  v={v:g}, w={w}", fontsize=13, fontweight="bold")
     fig.tight_layout()
     fig.savefig(path, dpi=120, bbox_inches="tight")
     plt.close(fig)
@@ -401,9 +394,7 @@ def _save_summary_figure(path: Path, df_runs: pd.DataFrame) -> None:
         )
     best_idx = df_runs["nmi"].idxmax()
     best = df_runs.loc[best_idx]
-    ax_conv.axvline(
-        best["run_index"], linestyle="--", color="crimson", linewidth=1, alpha=0.7
-    )
+    ax_conv.axvline(best["run_index"], linestyle="--", color="crimson", linewidth=1, alpha=0.7)
     ax_conv.annotate(
         f"best  NMI={best['nmi']:.4f}\nv={best['vigilance']:g}, w={int(best['warp_factor'])}",
         xy=(best["run_index"], best["nmi"]),
@@ -481,9 +472,7 @@ def sweep_tune(
         runs_dir.mkdir(parents=True, exist_ok=True)
 
     n_new = len(indexed_pairs)
-    n_workers = 1 if n_jobs == 1 else min(
-        (os.cpu_count() or 1) if n_jobs < 0 else n_jobs, n_new
-    )
+    n_workers = 1 if n_jobs == 1 else min((os.cpu_count() or 1) if n_jobs < 0 else n_jobs, n_new)
 
     print(f"  {n_new} run(s) to evaluate  |  {n_workers} parallel worker(s)")
     print("  Queue:")
@@ -493,8 +482,16 @@ def sweep_tune(
 
     worker_args: Dict[int, tuple] = {
         idx: (
-            contours, names, v, w,
-            max_categories, max_iterations, learning_rate, bias, seed, verbose_train,
+            contours,
+            names,
+            v,
+            w,
+            max_categories,
+            max_iterations,
+            learning_rate,
+            bias,
+            seed,
+            verbose_train,
         )
         for idx, v, w in indexed_pairs
     }
@@ -530,8 +527,7 @@ def sweep_tune(
     else:
         with ProcessPoolExecutor(max_workers=n_workers) as pool:
             future_to_idx = {
-                pool.submit(_train_worker, args): idx
-                for idx, args in worker_args.items()
+                pool.submit(_train_worker, args): idx for idx, args in worker_args.items()
             }
             print(f"\n  All {n_new} job(s) queued — waiting for results ...\n", flush=True)
             for future in as_completed(future_to_idx):
@@ -631,8 +627,10 @@ def coordinate_ascent_tune(
             return
 
         label = "  ".join(f"v={v:g}/w={w}" for v, w in pairs)
-        n_par = 1 if (n_jobs == 1 or len(pairs) == 1) else min(
-            (os.cpu_count() or 1) if n_jobs < 0 else n_jobs, len(pairs)
+        n_par = (
+            1
+            if (n_jobs == 1 or len(pairs) == 1)
+            else min((os.cpu_count() or 1) if n_jobs < 0 else n_jobs, len(pairs))
         )
         print(
             f"\n  ┌─ launching {len(pairs)} run(s) on {n_par} core(s): {label}",
@@ -669,7 +667,7 @@ def coordinate_ascent_tune(
             for a, (v, w) in zip(worker_args, pairs):
                 print(f"  │  queued    v={v:g}  w={w}", flush=True)
                 future_to_pair[pool.submit(_train_worker, a)] = (v, w)
-            print(f"  │  (waiting for results ...)", flush=True)
+            print("  │  (waiting for results ...)", flush=True)
             for future in as_completed(future_to_pair):
                 try:
                     rv, rw, res, elapsed = future.result()
@@ -704,11 +702,7 @@ def coordinate_ascent_tune(
                 candidates.append((current_v, nw))
 
         # eval only uncached candidates, respecting budget
-        uncached = [
-            (nv, nw)
-            for nv, nw in candidates
-            if (round(nv, 4), nw) not in cache_d
-        ]
+        uncached = [(nv, nw) for nv, nw in candidates if (round(nv, 4), nw) not in cache_d]
         _eval_batch(uncached[: eval_budget - eval_count])
 
         # select best neighbour (including any previously cached)
@@ -786,7 +780,9 @@ def main() -> None:
     p.add_argument("--start-warp", type=int, default=3)
     p.add_argument("--warp-min", type=int, default=2)
     p.add_argument("--warp-max", type=int, default=3)
-    p.add_argument("--vigilance-step", type=float, default=0.25, help="Initial ± step for vigilance")
+    p.add_argument(
+        "--vigilance-step", type=float, default=0.25, help="Initial ± step for vigilance"
+    )
     p.add_argument("--vigilance-step-min", type=float, default=0.25)
     p.add_argument("--eval-budget", type=int, default=20, help="Max training runs")
     p.add_argument(
@@ -922,9 +918,7 @@ def main() -> None:
         warp_values = list(range(args.warp_min, args.warp_max + 1))
         all_indexed: List[Tuple[int, float, int]] = [
             (idx, v, w)
-            for idx, (w, v) in enumerate(
-                [(w, v) for w in sorted(warp_values) for v in v_values], 1
-            )
+            for idx, (w, v) in enumerate([(w, v) for w in sorted(warp_values) for v in v_values], 1)
         ]
         n_total = len(all_indexed)
         v_step_display = round(v_values[1] - v_values[0], 6) if len(v_values) > 1 else 0.0

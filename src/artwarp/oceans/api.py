@@ -73,7 +73,7 @@ from artwarp.oceans.auth import get_base_url, resolve_auth
 
 # Guard against missing requests at import time — keep error message friendly.
 try:
-    import requests as _requests
+    import requests as _requests  # type: ignore[import-untyped, unused-ignore]
 
     _HAS_REQUESTS = True
 except ImportError:
@@ -272,8 +272,8 @@ class OceansClient:
                 raise OceansAuthError("Login succeeded but response contained no access_token.")
             preview = token[:10] + f"...({len(token) - 10} chars)"
             self._log(f"Token obtained: {preview}")
-            self._token = token
-            return token
+            self._token = str(token)
+            return str(token)
 
         if response.status_code in (400, 401, 403):
             raise OceansAuthError(
