@@ -34,6 +34,8 @@ def _jit_unavailable(*args: object, **kwargs: object) -> Callable[..., Any]:
 
 
 # optional numba for JIT (status and install prompt are in artwarp.utils.numba_check, used by CLI)
+# Typed as Any so the Numba overload and the no-op fallback can share one name.
+jit: Any
 try:
     from numba import jit as _numba_jit
 
@@ -178,7 +180,7 @@ def compute_similarity_matrix(
 
     similarity = (numerator / denominator) * 100.0
 
-    return cast(NDArray[np.float64], similarity)
+    return similarity  # type: ignore[no-any-return, unused-ignore]
 
 
 def dynamic_time_warp(

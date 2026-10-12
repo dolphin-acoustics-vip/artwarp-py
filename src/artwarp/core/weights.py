@@ -347,7 +347,7 @@ def get_weight_contour(
     """
     weight_vector = weight_matrix[:, category_index]
     valid_mask = (weight_vector > 0) & np.isfinite(weight_vector)
-    return cast(NDArray[np.float64], weight_vector[valid_mask])
+    return weight_vector[valid_mask]  # type: ignore[no-any-return, unused-ignore]
 
 
 def count_active_categories(weight_matrix: NDArray[np.float64]) -> int:
