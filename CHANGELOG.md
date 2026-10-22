@@ -12,7 +12,7 @@ the CHANGELOG every time*
 
 ### Added
 
-- Zenodo DOI citation metadata in README and CITATION.cff for the PyPI release.
+- Zenodo DOI `10.5281/zenodo.23551892` in README and CITATION.cff for the PyPI release.
 
 ### Changed
 
