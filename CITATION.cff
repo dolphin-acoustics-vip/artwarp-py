@@ -43,6 +43,8 @@ authors:
     orcid: 'https://orcid.org/0000-0003-2781-5915'
     affiliation: University of Cumbria
 identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23551892
   - type: url
     value: 'https://pypi.org/project/artwarp-py/1.0.2/'
 repository-code: 'https://github.com/dolphin-acoustics-vip/artwarp-py'
