@@ -177,6 +177,7 @@ plot_training_summary(results)
 | [**docs/user/ARCHITECTURE.md**](docs/user/ARCHITECTURE.md) | (User Guide) Code layout and design |
 | [**docs/user/VISUALIZATION.md**](docs/user/VISUALIZATION.md) | (User Guide) Plotting and report generation |
 | [**CHANGELOG.md**](CHANGELOG.md) | Version history |
+| [**CONTRIBUTING.md**](CONTRIBUTING.md) | Branch model, PRs, and commit format |
 | [**docs/README.md**](docs/README.md) | Docs index and overview |
 | [**docs/dev/ENVIRONMENT_SETUP.md**](docs/dev/ENVIRONMENT_SETUP.md) | (Developers) Detailed environment and tooling |
 | [**docs/dev/PROJECT_SUMMARY.md**](docs/dev/PROJECT_SUMMARY.md) | (Developers) Project summary and goals |
