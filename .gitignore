@@ -102,5 +102,8 @@ scripts/**/*.csv
 examples/artwarp_demo_report/*
 examples/artwarp_demo_output/*
 
+# Lab-only notes (not for GitHub / PyPI / Zenodo)
+SARASOTA_DATA_DISCLAIMER.md
+
 # Manim experimentation
 manim/*
