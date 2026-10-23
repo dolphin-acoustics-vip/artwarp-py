@@ -6,7 +6,7 @@
 **A high-performance Python implementation of ARTwarp for automated categorization of tonal animal sounds.**
 
 <p align="center">
-  <a href="https://pypi.org/project/artwarp-py/1.0.1/">
+  <a href="https://pypi.org/project/artwarp-py/1.0.2/">
     <img src="https://img.shields.io/pypi/v/artwarp-py?color=blue&label=PyPI&logo=pypi&logoColor=white" alt="PyPI version"/>
   </a>
   <a href="https://pypi.org/project/artwarp-py/">
@@ -17,6 +17,9 @@
   </a>
   <a href="https://codecov.io/gh/dolphin-acoustics-vip/artwarp-py" >
     <img src="https://codecov.io/gh/dolphin-acoustics-vip/artwarp-py/graph/badge.svg?token=ECX390IRI9"/>
+  </a>
+  <a href="https://doi.org/10.5281/zenodo.23551892">
+    <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.23551892.svg" alt="DOI"/>
   </a>
 </p>
 
@@ -219,6 +222,7 @@ See **[docs/user/OCEANS.md](docs/user/OCEANS.md)** for the full guide.
 | [**docs/user/VISUALIZATION.md**](docs/user/VISUALIZATION.md) | (User Guide) Plotting and report generation |
 | [**docs/user/OCEANS.md**](docs/user/OCEANS.md) | (User Guide) OCEANS data-fetch integration |
 | [**CHANGELOG.md**](CHANGELOG.md) | Version history |
+| [**CONTRIBUTING.md**](CONTRIBUTING.md) | Branch model, PRs, and commit format |
 | [**docs/README.md**](docs/README.md) | Docs index and overview |
 | [**docs/dev/ENVIRONMENT_SETUP.md**](docs/dev/ENVIRONMENT_SETUP.md) | (Developers) Detailed environment and tooling |
 | [**docs/dev/PROJECT_SUMMARY.md**](docs/dev/PROJECT_SUMMARY.md) | (Developers) Project summary and goals |
@@ -304,7 +308,7 @@ With coverage (CI requires ≥80%):
 
 If you use this software in your research, please cite:
 
-1. **This implementation:** [DOI to be assigned]
+1. **This implementation:** Gronda Garrigues, P. et al. (2026). artwarp-py (v1.0.2). Zenodo. https://doi.org/10.5281/zenodo.23551892
 2. **Buck, J. R. & Tyack, P. L. (1993).** A quantitative measure of similarity for *Tursiops truncatus* signature whistles. *J. Acoust. Soc. Am.* **94**, 2497–2506. https://doi.org/10.1121/1.407385
 3. **Deecke, V. B., Ford, J. K. B. & Spong, P. (1999).** Quantifying complex patterns of bioacoustic variation: Use of a neural network to compare killer whale (*Orcinus orca*) dialects. *J. Acoust. Soc. Am.* **105**, 2499–2507. https://doi.org/10.1121/1.426853
 4. **Deecke, V. B. & Janik, V. M. (2006).** Automated categorization of bioacoustic signals: Avoiding perceptual pitfalls. *J. Acoust. Soc. Am.* **119**, 645–653. https://doi.org/10.1121/1.2139067

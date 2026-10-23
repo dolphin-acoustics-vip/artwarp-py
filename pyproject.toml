@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "artwarp-py"
-version = "1.0.1"
+version = "1.0.2"
 description = "High-performance Python implementation of ARTwarp for bioacoustic signal categorization"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -89,7 +89,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
