@@ -38,6 +38,7 @@ If you're looking for user-facing documentation, see the docs/user/ directory:
 
 - **README.md**                    - Project overview and quick start
 - **CHANGELOG.md**                 - Version history
+- **CONTRIBUTING.md**              - Branch model, PRs, and commit format
 - **docs/user/INSTALLATION.md**    - Installation instructions
 - **docs/user/API.md**             - Complete API reference
 - **docs/user/VISUALIZATION.md**   - Visualization guide
@@ -69,6 +70,7 @@ This `docs/dev/` directory contains:
 artwarp-py/
 ├── README.md                          # main project documentation
 ├── CHANGELOG.md                       # version history
+├── CONTRIBUTING.md                    # branch model, PRs, commit format
 ├── run.sh                             # interactive launcher (Train / Plot / Predict / Export)
 ├── docs/                              # internal documentation (this dir)
 │   ├── README.md                          # this file
