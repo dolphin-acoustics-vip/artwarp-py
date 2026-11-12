@@ -10,7 +10,7 @@ categorization algorithm, combining DTW and ART components.
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Callable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -204,6 +204,7 @@ class ARTwarp:
         contours: List[NDArray[np.float64]],
         contour_names: Optional[List[str]] = None,
         snapshot_iterations: Optional[List[int]] = None,
+        on_iteration: Optional[Callable[[IterationSnapshot], None]] = None,
     ) -> TrainingResults:
         """
         Train the ARTwarp network on a set of frequency contours.
@@ -215,6 +216,15 @@ class ARTwarp:
             snapshot_iterations: If given, capture ``IterationSnapshot`` records
                 at the end of each listed iteration (after recat/purge). Useful
                 for parity tests against MATLAB per-iteration exports.
+            on_iteration: If given, a callable function called once per iteration
+                (after recat/purge), including final converged iteration. Receives
+                ``IterationSnapshot``. Arrays received are copies (modifiable).
+                Runs inside training, a slow callback results in slow training.
+
+        Example:
+            >>> def print_snapshot(snap):
+            ...     print(f"Num of cat for iteration {snap.iteration}: {snap.num_categories}")
+            >>> network.fit(contours, on_iteration=print_snapshot)
 
         Returns:
             TrainingResults object containing category assignments and network state
@@ -445,6 +455,18 @@ class ARTwarp:
                     num_categories=self.num_categories,
                     num_reclassifications=num_reclassifications,
                 )
+
+            # callback on each iteration
+            if on_iteration is not None and self.weight_matrix is not None:
+                snapshot = IterationSnapshot(
+                    iteration=iteration,
+                    categories=categories.copy(),
+                    matches=matches.copy(),
+                    weight_matrix=self.weight_matrix.copy(),
+                    num_categories=self.num_categories,
+                    num_reclassifications=num_reclassifications,
+                )
+                on_iteration(snapshot)
 
             # converged?
             if num_reclassifications == 0:

@@ -22,9 +22,9 @@ class RunItem(QWidget):
         name.setText(name.fontMetrics().elidedText(run["name"], Qt.ElideRight, LIST_WIDTH - 50))
         name.setToolTip(run["name"])
         created = datetime.fromisoformat(run["created"]).strftime("%d %b, %H:%M")
-        meta = f"{created}  ·  {run['duration_s']} s"
+        meta = f"{created}  ·  {run['summary']['training_time']} s"
         if "summary" in run:
-            meta += f"  ·  {run['summary']['best_val_acc'] * 100:.1f}%"
+            meta += f"  ·  {run['summary']['number_categories']} categories · {'converged' if run['summary']['converged'] else 'did not converge'}"
         lay.addWidget(name)
         lay.addWidget(label(meta, "Muted"))
 

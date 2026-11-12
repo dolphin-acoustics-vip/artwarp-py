@@ -1,7 +1,6 @@
 """
 Runs the training on a Worker thread, allows training and GUI be on separate threads.
 """
-import time
 from datetime import datetime
 from pathlib import Path
 from functools import partial
@@ -12,22 +11,19 @@ from artwarp.io.exporters import export_results
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from artwarp import ARTwarp, load_contours
 
-from . import charts, mock_data, runs
-
-LIVE_KEYS = ("train_loss", "val_loss", "train_acc", "val_acc")
+from . import charts, runs
 
 
 class _Worker(QObject):
     tick = Signal(float)        # seconds elapsed
-    epoch_done = Signal(int)    # 1-based epoch
+    iteration_done = Signal(object)
     done = Signal(bool, object, object)         # True = completed, False = stopped
     failed = Signal(str)
 
-    def __init__(self, duration, epochs, data):
+    def __init__(self, duration, data):
         super().__init__()
         self.duration = duration
         self.data = data
-        self.epochs = epochs
         self._stop = False
 
     @Slot()
@@ -35,10 +31,13 @@ class _Worker(QObject):
         try:
             contours, names = load_contours(self.data)
             network = ARTwarp()
-            results = network.fit(contours, names)
+            results = network.fit(contours, names, on_iteration=self.callback)
             self.done.emit(True, results, names)
         except Exception as e:
             self.failed.emit(str(e))
+
+    def callback(self, snapshot):
+        self.iteration_done.emit(snapshot)
 
     def stop(self):
         self._stop = True
@@ -47,7 +46,7 @@ class _Worker(QObject):
 class Trainer(QObject):
     started = Signal(dict)            # run metadata (no charts yet)
     progress = Signal(float, float)   # fraction done, seconds elapsed
-    epoch = Signal(int, dict)         # epoch, live metrics for that epoch
+    iteration = Signal(int, dict)         # iteration, live metrics for that iteration
     finished = Signal(dict)           # saved run, with charts
     stopped = Signal()
     failed = Signal(str)
@@ -58,7 +57,6 @@ class Trainer(QObject):
         self._thread = None
         self._worker = None
         self._run = None
-        self._curves = None
 
     @property
     def running(self):
@@ -71,26 +69,21 @@ class Trainer(QObject):
             self._thread.wait()
 
         now = datetime.now()
-        seed = int(now.timestamp() * 1000) % 2**31
-        epochs = max(5, min(50, round(duration)))
-        self._curves = mock_data.make_curves(seed, epochs)
         self._run = {
             "id": now.strftime("%Y%m%d-%H%M%S"),
             "name": now.strftime("%Y-%m-%d %H:%M:%S"),
             "created": now.isoformat(timespec="seconds"),
             "duration_s": duration,
-            "epochs": epochs,
-            "seed": seed,
             "input_path": self.state.config.input_path,
             "output_path": self.state.config.output_path,
         }
 
         thread = QThread(self)
-        worker = _Worker(duration, epochs, self.state.config.input_path)
+        worker = _Worker(duration, self.state.config.input_path)
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
         worker.tick.connect(self._on_tick)
-        worker.epoch_done.connect(self._on_epoch)
+        worker.iteration_done.connect(self._on_iteration)
         worker.done.connect(self._on_done)
         worker.done.connect(thread.quit)
         worker.failed.connect(self._on_fail)
@@ -115,10 +108,11 @@ class Trainer(QObject):
         if self._run:
             self.progress.emit(min(1.0, elapsed / self._run["duration_s"]), elapsed)
 
-    @Slot(int)
-    def _on_epoch(self, epoch):
+    @Slot(object)
+    def _on_iteration(self, snapshot):
         if self._run:
-            self.epoch.emit(epoch, {k: self._curves[k][epoch - 1] for k in LIVE_KEYS})
+            dic = { "num_reclassifications": snapshot.num_reclassifications, "num_categories": snapshot.num_categories}
+            self.iteration.emit(snapshot.iteration, dic)
 
     @Slot(bool, object, object)
     def _on_done(self, completed, results, names):
@@ -126,7 +120,10 @@ class Trainer(QObject):
         if not completed:
             self.stopped.emit()
             return
-        run["summary"] = mock_data.summarise(self._curves)
+        run["summary"] = {"number_categories": int(results.num_categories),
+                          "number_iterations": int(results.num_iterations),
+                          "converged": bool(results.converged),
+                          "training_time": float(results.training_time)}
         run["charts"] = charts.build_charts(results)
         try:
             runs.save(run, run["output_path"])

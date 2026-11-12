@@ -102,9 +102,9 @@ class RunHeader(QWidget):
         self._path = run.get("path")
         self.name.setText(self._name)
         created = datetime.fromisoformat(run["created"]).strftime("%d %b %Y, %H:%M")
-        parts = [f"Ran {created}", f"{run['duration_s']} s", f"{run['epochs']} epochs"]
+        parts = [f"Ran {created}", f"{run['summary']['training_time']:.1f} s", f"{run['summary']['number_iterations']} iterations"]
         if "summary" in run:
-            parts.append(f"best val acc {run['summary']['best_val_acc'] * 100:.1f}%")
+            parts.append(f"{run['summary']['number_categories']} Categories · {'Training Converged' if run['summary']['converged'] else 'Training did not converge'}")
         self.meta.setText("  ·  ".join(parts))
 
     def set_name(self, name):

@@ -23,7 +23,7 @@ def build_charts(results):
         "kind": "bar", 
         "title": "Category Sizes", 
         "desc": "Size of each category of contours", 
-        "categories": [str(cat+1) for cat in list(categories)],
+        "categories": [str(cat+1) for cat in categories],
         "x_label": "Categories", 
         "y_label": "Contours", 
         "y_format": "int",

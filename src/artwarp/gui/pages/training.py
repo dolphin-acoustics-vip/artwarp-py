@@ -4,7 +4,6 @@ from PySide6.QtWidgets import (QHBoxLayout, QLineEdit, QProgressBar, QPushButton
                                QVBoxLayout, QWidget)
 
 from .. import icons, runs
-from ..mock_data import TRAIN, VAL
 from ..widgets.chart import ChartWidget
 from ..widgets.common import Card, PageHeader, RunHeader, StatBlock, label
 from ..widgets.results import ResultsView
@@ -29,7 +28,6 @@ class TrainingPage(QWidget):
         self.state = state
         self.trainer = state.trainer
         self._run = None
-        self._epochs = 0
         self._live = {}
 
         root = QVBoxLayout(self)
@@ -57,7 +55,7 @@ class TrainingPage(QWidget):
 
         self.trainer.started.connect(self._on_started)
         self.trainer.progress.connect(self._on_progress)
-        self.trainer.epoch.connect(self._on_epoch)
+        self.trainer.iteration.connect(self._on_iteration)
         self.trainer.finished.connect(self._on_finished)
         self.trainer.stopped.connect(lambda: self._on_idle("Run stopped. Nothing was saved."))
         self.trainer.failed.connect(self._on_failed)
@@ -128,15 +126,15 @@ class TrainingPage(QWidget):
         stats = QHBoxLayout()
         stats.setSpacing(12)
         self.stats = {key: StatBlock(title) for key, title in
-                      (("epoch", "Epoch"), ("train_loss", "Train loss"), ("val_loss", "Val loss"), ("val_acc", "Val accuracy"))}
+                      (("num_reclassifications", "Reclassification"), ("num_categories", "Number Of Categories"))}
         for block in self.stats.values():
             stats.addWidget(block)
         lay.addLayout(stats)
 
         charts = QHBoxLayout()
         charts.setSpacing(12)
-        self.live_loss = self._live_chart(charts, "Loss")
-        self.live_acc = self._live_chart(charts, "Accuracy")
+        self.live_reclassification = self._live_chart(charts, "Reclassification")
+        self.live_categories = self._live_chart(charts, "Categories")
         lay.addLayout(charts, 1)
         return page
 
@@ -194,11 +192,10 @@ class TrainingPage(QWidget):
         self.progress_box.setVisible(running)
 
     def _on_started(self, run):
-        self._epochs = run["epochs"]
-        self._live = {"x": [], "train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
+        self._live = {"x": [], "num_reclassifications": [], "num_categories": []}
         self._set_running(True)
         self.progress.setValue(0)
-        self.progress_lbl.setText(f"Starting · {run['epochs']} epochs over {run['duration_s']} s")
+        self.progress_lbl.setText("Starting training")
         for block in self.stats.values():
             block.set_value("–")
         self._update_live_charts()
@@ -209,27 +206,24 @@ class TrainingPage(QWidget):
         done = len(self._live["x"])
         remaining = elapsed / fraction - elapsed if fraction > 0 else 0
         self.progress_lbl.setText(
-            f"Epoch {done} / {self._epochs}  ·  {elapsed:.0f} s elapsed  ·  ~{remaining:.0f} s left")
+            f"Iteration {done} ·  {elapsed:.0f} s elapsed  ·  ~{remaining:.0f} s left")
 
-    def _on_epoch(self, epoch, metrics):
-        self._live["x"].append(epoch)
+    def _on_iteration(self, iteration, metrics):
+        self._live["x"].append(iteration)
         for key, value in metrics.items():
             self._live[key].append(value)
-        self.stats["epoch"].set_value(f"{epoch} / {self._epochs}")
-        self.stats["train_loss"].set_value(f"{metrics['train_loss']:.3f}")
-        self.stats["val_loss"].set_value(f"{metrics['val_loss']:.3f}")
-        self.stats["val_acc"].set_value(f"{metrics['val_acc'] * 100:.1f}%")
+        self.stats["num_reclassifications"].set_value(f"{metrics['num_reclassifications']}")
+        self.stats["num_categories"].set_value(f"{metrics['num_categories']}")
         self._update_live_charts()
 
     def _update_live_charts(self):
         lv = self._live
-        for chart, key, title, fmt in ((self.live_loss, "loss", "Cross-entropy", "float"),
-                                       (self.live_acc, "acc", "Accuracy", "pct")):
+        for chart, key, title, fmt in ((self.live_reclassification, "num_reclassifications", "Number Of Reclassifications", "int"),
+                                       (self.live_categories, "num_categories", "Number Of Categories", "int")):
             chart.set_spec({
-                "kind": "line", "x": lv["x"], "x_max": self._epochs, "x_label": "Epoch",
-                "y_label": title, "y_format": fmt, "empty": "Waiting for the first epoch…",
-                "series": [{"name": "Train", "slot": TRAIN, "values": lv[f"train_{key}"]},
-                           {"name": "Validation", "slot": VAL, "values": lv[f"val_{key}"]}],
+                "kind": "line", "x": lv["x"], "x_label": "Iteration",
+                "y_label": title, "y_format": fmt, "empty": "Waiting for the first iteration…",
+                "series": [{"name": title, "slot": 0, "values": lv[key]}],
             })
 
     def _on_finished(self, run):
