@@ -84,8 +84,10 @@ dmypy.json
 *.mat
 results/
 plots/
+/data
 *.ctr
 test_output/
+.DS_Store
 
 # specific to artwarp-py
 category_assignments*
