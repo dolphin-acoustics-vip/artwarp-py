@@ -12,7 +12,7 @@ from artwarp.io.exporters import export_results
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from artwarp import ARTwarp, load_contours
 
-from . import mock_data, runs
+from . import charts, mock_data, runs
 
 LIVE_KEYS = ("train_loss", "val_loss", "train_acc", "val_acc")
 
@@ -127,7 +127,7 @@ class Trainer(QObject):
             self.stopped.emit()
             return
         run["summary"] = mock_data.summarise(self._curves)
-        run["charts"] = mock_data.build_charts(run["seed"], run["epochs"], self._curves)
+        run["charts"] = charts.build_charts(results)
         try:
             runs.save(run, run["output_path"])
             export_results(results, str(Path(run["path"])/runs.RESULTS_FILE), contour_names=names)
