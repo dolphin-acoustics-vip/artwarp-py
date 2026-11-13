@@ -65,6 +65,9 @@ QLineEdit {
 QLineEdit:hover { border-color: $BORDER_STRONG; }
 QLineEdit:focus { border-color: $ACCENT; }
 QLineEdit:disabled { color: $MUTED; }
+QAbstractSpinBox:disabled { color: $MUTED; }
+QCheckBox:disabled { color: $MUTED; }
+QLabel#FieldLabel:disabled { color: $MUTED; }
 QLineEdit#TitleEdit {
     background: transparent; border: 1px solid transparent;
     font-size: 18px; font-weight: 600; padding: 2px 6px;

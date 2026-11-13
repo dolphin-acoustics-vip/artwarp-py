@@ -17,12 +17,16 @@ def _path_label(title, parent):
     return value
 
 def _field(title, widget, parent):
-    box = QVBoxLayout()
+    container = QWidget()
+    box = QVBoxLayout(container)
+    box.setContentsMargins(0, 0, 0, 0)
     box.setSpacing(4)
-    box.addWidget(label(title, "FieldLabel"))
+    title_label = label(title, "FieldLabel")
+    box.addWidget(title_label)
+    container.title_label = title_label
     box.addWidget(widget)
-    parent.addLayout(box, 1)
-
+    parent.addWidget(container, 1)
+    return container
 
 class TrainingPage(QWidget):
     def __init__(self, state):
@@ -119,8 +123,6 @@ class TrainingPage(QWidget):
         self.sample_interval.setValue(0.01)
         self.resample = QCheckBox("Resample")
         self.resample.setChecked(True)
-        self.resample.toggled.connect(self.sample_interval.setEnabled)
-        self.resample.toggled.connect(self.tempres.setEnabled)
         self.max_contour_length = QSpinBox()
         self.max_contour_length.setRange(0,1e7)
         self.max_contour_length.setSpecialValueText("No Cap")
@@ -143,17 +145,25 @@ class TrainingPage(QWidget):
 
         data_fields = QHBoxLayout()
         data_fields.setSpacing(24)
-        _field("Temporal Resolution", self.tempres, data_fields)
-        _field("Sample Interval", self.sample_interval, data_fields)
+        tempres_field = _field("Temporal Resolution", self.tempres, data_fields)
+        interval_field = _field("Sample Interval", self.sample_interval, data_fields)
+        
+        def resample_toggled(on):
+            for field, title in ((tempres_field, "Temporal Resolution"),
+                                    (interval_field, "Sample Interval")):
+                field.setEnabled(on)
+                field.title_label.setText(title if on else f"{title} (needs Resample)")
+        self.resample.toggled.connect(resample_toggled)
+
         _field("Maximum Contour Length", self.max_contour_length, data_fields)
         form.addLayout(data_fields)
 
         checks_line1 = QHBoxLayout()
         checks_line1.setSpacing(24)
+        checks_line1.addWidget(self.resample)
         checks_line1.addWidget(self.randomize_sample_order)
         checks_line1.addWidget(self.verbose)
         checks_line1.addWidget(self.recat_single_categories)
-        checks_line1.addWidget(self.compare_warped)
         checks_line1.addStretch(1)
         form.addLayout(checks_line1)
 
@@ -161,7 +171,7 @@ class TrainingPage(QWidget):
         checks_line2.setSpacing(24)
         checks_line2.addWidget(self.deprioritize_lone_category_search)
         checks_line2.addWidget(self.purge_empty_categories)
-        checks_line2.addWidget(self.resample)
+        checks_line2.addWidget(self.compare_warped)
         checks_line2.addStretch(1)
         form.addLayout(checks_line2)
         
@@ -262,7 +272,7 @@ class TrainingPage(QWidget):
             "purge_empty_categories": self.purge_empty_categories.isChecked(),
         }
         data_params = {
-            "tempres": self.resample.isChecked(),
+            "tempres": self.tempres.value(),
             "resample": self.resample.isChecked(),
             "sample_interval": self.sample_interval.value(),
             "max_contour_length": self.max_contour_length.value(),
