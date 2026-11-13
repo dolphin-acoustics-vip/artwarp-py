@@ -204,7 +204,7 @@ class ARTwarp:
         contours: List[NDArray[np.float64]],
         contour_names: Optional[List[str]] = None,
         snapshot_iterations: Optional[List[int]] = None,
-        on_iteration: Optional[Callable[[IterationSnapshot], None]] = None,
+        on_iteration: Optional[Callable[[IterationSnapshot], bool]] = None,
     ) -> TrainingResults:
         """
         Train the ARTwarp network on a set of frequency contours.
@@ -220,6 +220,7 @@ class ARTwarp:
                 (after recat/purge), including final converged iteration. Receives
                 ``IterationSnapshot``. Arrays received are copies (modifiable).
                 Runs inside training, a slow callback results in slow training.
+                Returns True if user stopped training.
 
         Example:
             >>> def print_snapshot(snap):
@@ -466,7 +467,10 @@ class ARTwarp:
                     num_categories=self.num_categories,
                     num_reclassifications=num_reclassifications,
                 )
-                on_iteration(snapshot)
+                # User stopped training
+                if on_iteration(snapshot):
+                    converged = False
+                    break
 
             # converged?
             if num_reclassifications == 0:

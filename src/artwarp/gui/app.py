@@ -55,7 +55,6 @@ class StatusBox(QFrame):
         self.bar.setTextVisible(False)
         lay.addWidget(self.bar)
 
-        self._duration = 0
         trainer.started.connect(self._started)
         trainer.progress.connect(self._progress)
         trainer.finished.connect(lambda run: self._set(theme.GOOD, "Run finished", run["name"]))
@@ -70,13 +69,12 @@ class StatusBox(QFrame):
         self.bar.setVisible(busy)
 
     def _started(self, run):
-        self._duration = run["duration_s"]
         self.bar.setValue(0)
         self._set(theme.ACCENT, "Training", "Starting…", busy=True)
 
-    def _progress(self, fraction, elapsed):
+    def _progress(self, fraction):
         self.bar.setValue(round(fraction * 1000))
-        self.sub.setText(f"{fraction:.0%}  ·  {max(0, self._duration - elapsed):.0f} s left")
+        self.sub.setText(f"{fraction:.0%}  ·s left")
 
     def mouseReleaseEvent(self, e):
         if e.button() == Qt.LeftButton:

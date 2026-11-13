@@ -1,16 +1,11 @@
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIntValidator
-from PySide6.QtWidgets import (QHBoxLayout, QLineEdit, QProgressBar, QPushButton, QStackedWidget,
+from PySide6.QtWidgets import (QCheckBox, QDoubleSpinBox, QHBoxLayout, QProgressBar, QPushButton, QSpinBox, QStackedWidget,
                                QVBoxLayout, QWidget)
 
 from .. import icons, runs
 from ..widgets.chart import ChartWidget
 from ..widgets.common import Card, PageHeader, RunHeader, StatBlock, label
 from ..widgets.results import ResultsView
-
-MAX_SECONDS = 3600
-EMPTY, LIVE, RESULTS = range(3)
-
 
 def _path_label(title, parent):
     col = QVBoxLayout()
@@ -20,6 +15,13 @@ def _path_label(title, parent):
     col.addWidget(value)
     parent.addLayout(col, 1)
     return value
+
+def _field(title, widget, parent):
+    box = QVBoxLayout()
+    box.setSpacing(4)
+    box.addWidget(label(title, "FieldLabel"))
+    box.addWidget(widget)
+    parent.addLayout(box, 1)
 
 
 class TrainingPage(QWidget):
@@ -37,9 +39,6 @@ class TrainingPage(QWidget):
         root.addWidget(self._build_controls())
 
         self.body = QStackedWidget()
-        self.empty = label("No run yet. Enter a duration and press Start; results show up here and in Graphs.", "Empty")
-        self.empty.setAlignment(Qt.AlignCenter)
-        self.body.addWidget(self.empty)
         self.body.addWidget(self._build_live())
         results = QWidget()
         rl = QVBoxLayout(results)
@@ -71,16 +70,69 @@ class TrainingPage(QWidget):
 
         row = QHBoxLayout()
         row.setSpacing(24)
-        dur = QVBoxLayout()
-        dur.setSpacing(4)
-        dur.addWidget(label("Duration (seconds)", "FieldLabel"))
-        self.duration = QLineEdit()
-        self.duration.setPlaceholderText("e.g. 20")
-        self.duration.setValidator(QIntValidator(1, MAX_SECONDS, self))
-        self.duration.setFixedWidth(150)
-        self.duration.returnPressed.connect(self._start)
-        dur.addWidget(self.duration)
-        row.addLayout(dur)
+        
+        self.vigilance = QDoubleSpinBox()
+        self.vigilance.setRange(1, 99)
+        self.vigilance.setValue(85.0)
+        self.learning_rate = QDoubleSpinBox()
+        self.learning_rate.setRange(1e-2,1)
+        self.learning_rate.setDecimals(3)
+        self.learning_rate.setSingleStep(0.05)
+        self.learning_rate.setValue(0.1)
+        self.bias = QDoubleSpinBox()
+        self.bias.setRange(0,1)
+        self.bias.setDecimals(3)
+        self.bias.setSingleStep(0.05)
+        self.bias.setValue(0.0)
+        self.max_categories = QSpinBox()
+        self.max_categories.setRange(1,100)
+        self.max_categories.setValue(100)
+        self.max_iterations = QSpinBox()
+        self.max_iterations.setRange(1,99)
+        self.max_iterations.setValue(50)
+        self.warp_factor_level = QSpinBox()
+        self.warp_factor_level.setRange(2,10)
+        self.warp_factor_level.setValue(3)
+        self.random_seed = QSpinBox()
+        self.random_seed.setRange(0,1e7)
+        self.random_seed.setSpecialValueText("Random")
+        self.randomize_sample_order = QCheckBox("Randomise Sample Order")
+        self.randomize_sample_order.setChecked(True)
+        self.verbose = QCheckBox("Verbose (CLI - Terminal)")
+        self.recat_single_categories = QCheckBox("Recategorise Single Categories")
+        self.compare_warped = QCheckBox("Compare Warped")
+        self.deprioritize_lone_category_search = QCheckBox("Deprioritize Lone Category Search")
+        self.purge_empty_categories = QCheckBox("Purge Empty Categories")
+
+        self.param_box = QWidget()
+        form = QVBoxLayout(self.param_box)
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(10)
+
+        fields = QHBoxLayout()
+        fields.setSpacing(24)
+        _field("Vigilance", self.vigilance, fields)
+        _field("Learning rate", self.learning_rate, fields)
+        _field("Bias", self.bias, fields)
+        _field("Max categories", self.max_categories, fields)
+        _field("Max iterations", self.max_iterations, fields)
+        _field("Warp factor", self.warp_factor_level, fields)
+        _field("Random seed", self.random_seed, fields)
+        form.addLayout(fields)
+
+        checks = QHBoxLayout()
+        checks.setSpacing(24)
+        checks.addWidget(self.randomize_sample_order)
+        checks.addWidget(self.verbose)
+        checks.addWidget(self.recat_single_categories)
+        checks.addWidget(self.compare_warped)
+        checks.addWidget(self.deprioritize_lone_category_search)
+        checks.addWidget(self.purge_empty_categories)
+        checks.addStretch(1)
+        form.addLayout(checks)
+
+        lay.addWidget(self.param_box)
+
         self.input_lbl = _path_label("Input data", row)
         self.output_lbl = _path_label("Saves to", row)
 
@@ -159,13 +211,24 @@ class TrainingPage(QWidget):
     # ---- actions -----------------------------------------------------------
 
     def _start(self):
-        text = self.duration.text().strip()
-        if not text.isdigit() or not 1 <= int(text) <= MAX_SECONDS:
-            self.error.setText(f"Enter a whole number of seconds between 1 and {MAX_SECONDS}.")
-            self.error.show()
-            return
+        params = {"vigilance": self.vigilance.value(),
+                  "learning_rate": self.learning_rate.value(),
+                  "bias": self.bias.value(),
+                  "max_categories": self.max_categories.value(),
+                  "max_iterations": self.max_iterations.value(),
+                  "warp_factor_level": self.warp_factor_level.value(),
+                  "random_seed": self.random_seed.value(),
+                  "randomize_sample_order": self.randomize_sample_order.isChecked(),
+                  "verbose": self.verbose.isChecked(),
+                  "recat_single_categories": self.recat_single_categories.isChecked(),
+                  "compare_warped": self.compare_warped.isChecked(),
+                  "deprioritize_lone_category_search": self.deprioritize_lone_category_search.isChecked(),
+                  "purge_empty_categories": self.purge_empty_categories.isChecked(),
+                }
+        if params["random_seed"] == 0:
+            params["random_seed"] = None
         self.error.hide()
-        self.trainer.start(int(text))
+        self.trainer.start(params)
 
     def _rename(self, name):
         if self._run:
@@ -188,7 +251,7 @@ class TrainingPage(QWidget):
     def _set_running(self, running):
         self.start_btn.setVisible(not running)
         self.stop_btn.setVisible(running)
-        self.duration.setEnabled(not running)
+        self.param_box.setEnabled(not running)
         self.progress_box.setVisible(running)
 
     def _on_started(self, run):
@@ -199,14 +262,9 @@ class TrainingPage(QWidget):
         for block in self.stats.values():
             block.set_value("–")
         self._update_live_charts()
-        self.body.setCurrentIndex(LIVE)
 
-    def _on_progress(self, fraction, elapsed):
+    def _on_progress(self, fraction):
         self.progress.setValue(round(fraction * 1000))
-        done = len(self._live["x"])
-        remaining = elapsed / fraction - elapsed if fraction > 0 else 0
-        self.progress_lbl.setText(
-            f"Iteration {done} ·  {elapsed:.0f} s elapsed  ·  ~{remaining:.0f} s left")
 
     def _on_iteration(self, iteration, metrics):
         self._live["x"].append(iteration)
@@ -231,12 +289,10 @@ class TrainingPage(QWidget):
         self._run = run
         self.header.set_run(run)
         self.results.set_charts(run["charts"])
-        self.body.setCurrentIndex(RESULTS)
 
     def _on_idle(self, message):
         self._set_running(False)
         self.empty.setText(message)
-        self.body.setCurrentIndex(EMPTY)
 
     def _on_failed(self, message):
         self._on_idle("Run failed.")

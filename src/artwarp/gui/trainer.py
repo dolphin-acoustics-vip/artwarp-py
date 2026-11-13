@@ -5,8 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from functools import partial
 from artwarp.io.exporters import export_results
-
-
+import threading
 
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from artwarp import ARTwarp, load_contours
@@ -15,32 +14,35 @@ from . import charts, runs
 
 
 class _Worker(QObject):
-    tick = Signal(float)        # seconds elapsed
     iteration_done = Signal(object)
-    done = Signal(bool, object, object)         # True = completed, False = stopped
+    done = Signal(bool, object, object)
     failed = Signal(str)
 
-    def __init__(self, duration, data):
+    def __init__(self, params, data):
         super().__init__()
-        self.duration = duration
+        self.parameters = params
         self.data = data
-        self._stop = False
+        self._stop = threading.Event()
+        self._callback_stop = False
 
     @Slot()
     def run(self):
         try:
             contours, names = load_contours(self.data)
-            network = ARTwarp()
+            network = ARTwarp(**self.parameters)
             results = network.fit(contours, names, on_iteration=self.callback)
-            self.done.emit(True, results, names)
+            self.done.emit(not self._callback_stop, results, names)
         except Exception as e:
             self.failed.emit(str(e))
 
     def callback(self, snapshot):
         self.iteration_done.emit(snapshot)
+        if self._stop.is_set():
+            self._callback_stop = True
+            return True
 
     def stop(self):
-        self._stop = True
+        self._stop.set()
 
 
 class Trainer(QObject):
@@ -62,7 +64,7 @@ class Trainer(QObject):
     def running(self):
         return self._run is not None
 
-    def start(self, duration):
+    def start(self, params):
         if self.running:
             return
         if self._thread is not None:
@@ -73,16 +75,15 @@ class Trainer(QObject):
             "id": now.strftime("%Y%m%d-%H%M%S"),
             "name": now.strftime("%Y-%m-%d %H:%M:%S"),
             "created": now.isoformat(timespec="seconds"),
-            "duration_s": duration,
+            "parameters": params,
             "input_path": self.state.config.input_path,
             "output_path": self.state.config.output_path,
         }
 
         thread = QThread(self)
-        worker = _Worker(duration, self.state.config.input_path)
+        worker = _Worker(params, self.state.config.input_path)
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
-        worker.tick.connect(self._on_tick)
         worker.iteration_done.connect(self._on_iteration)
         worker.done.connect(self._on_done)
         worker.done.connect(thread.quit)
@@ -102,11 +103,6 @@ class Trainer(QObject):
         if self._thread is not None:
             self._thread.quit()
             self._thread.wait(3000)
-
-    @Slot(float)
-    def _on_tick(self, elapsed):
-        if self._run:
-            self.progress.emit(min(1.0, elapsed / self._run["duration_s"]), elapsed)
 
     @Slot(object)
     def _on_iteration(self, snapshot):
