@@ -4,11 +4,13 @@ Runs the training on a Worker thread, allows training and GUI be on separate thr
 from datetime import datetime
 from pathlib import Path
 from functools import partial
+from typing import Optional
 from artwarp.io.exporters import export_results
 import threading
 
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from artwarp import ARTwarp, load_contours
+from artwarp.utils.resample import cap_contour_lengths, resample_contours
 
 from . import charts, runs
 
@@ -18,9 +20,10 @@ class _Worker(QObject):
     done = Signal(bool, object, object)
     failed = Signal(str)
 
-    def __init__(self, params, data):
+    def __init__(self, network_params, data_params, data):
         super().__init__()
-        self.parameters = params
+        self.network_parameters = network_params
+        self.data_parameters = data_params
         self.data = data
         self._stop = threading.Event()
         self._callback_stop = False
@@ -28,8 +31,27 @@ class _Worker(QObject):
     @Slot()
     def run(self):
         try:
-            contours, names = load_contours(self.data)
-            network = ARTwarp(**self.parameters)
+            # Contour data preparation
+            if self.data_parameters["resample"]:
+                contours, names, tempres_list = load_contours(self.data, return_tempres=True)
+                default_tr = self.data_parameters["tempres"]
+                def _safe_tempres(t: Optional[float]) -> float:
+                    if t is None:
+                        return default_tr
+                    v = float(t)
+                    return default_tr if v <= 0 else v
+                tempres_floats = [_safe_tempres(t) for t in tempres_list]
+
+                contours = resample_contours(contours, tempres_floats, self.data_parameters["sample_interval"])
+                max_contour_length = self.data_parameters["max_contour_length"]
+    
+                if max_contour_length is not None:
+                    contours = cap_contour_lengths(contours, max_contour_length)
+            else:
+                contours, names = load_contours(self.data)
+
+            # ARTwarp call
+            network = ARTwarp(**self.network_parameters)
             results = network.fit(contours, names, on_iteration=self.callback)
             self.done.emit(not self._callback_stop, results, names)
         except Exception as e:
@@ -63,7 +85,7 @@ class Trainer(QObject):
     def running(self):
         return self._run is not None
 
-    def start(self, params):
+    def start(self, network_params, data_params):
         if self.running:
             return
         if self._thread is not None:
@@ -74,13 +96,14 @@ class Trainer(QObject):
             "id": now.strftime("%Y%m%d-%H%M%S"),
             "name": now.strftime("%Y-%m-%d %H:%M:%S"),
             "created": now.isoformat(timespec="seconds"),
-            "parameters": params,
+            "network_parameters": network_params,
+            "data_parameters": data_params,
             "input_path": self.state.config.input_path,
             "output_path": self.state.config.output_path,
         }
 
         thread = QThread(self)
-        worker = _Worker(params, self.state.config.input_path)
+        worker = _Worker(network_params, data_params, self.state.config.input_path)
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
         worker.iteration_done.connect(self._on_iteration)

@@ -107,6 +107,24 @@ class TrainingPage(QWidget):
         self.deprioritize_lone_category_search = QCheckBox("Deprioritize Lone Category Search")
         self.purge_empty_categories = QCheckBox("Purge Empty Categories")
 
+        self.tempres = QDoubleSpinBox()
+        self.tempres.setRange(0.01,1)
+        self.tempres.setDecimals(3)
+        self.tempres.setSingleStep(0.01)
+        self.tempres.setValue(0.01)
+        self.sample_interval = QDoubleSpinBox()
+        self.sample_interval.setRange(0.01,1)
+        self.sample_interval.setDecimals(3)
+        self.sample_interval.setSingleStep(0.01)
+        self.sample_interval.setValue(0.01)
+        self.resample = QCheckBox("Resample")
+        self.resample.setChecked(True)
+        self.resample.toggled.connect(self.sample_interval.setEnabled)
+        self.resample.toggled.connect(self.tempres.setEnabled)
+        self.max_contour_length = QSpinBox()
+        self.max_contour_length.setRange(0,1e7)
+        self.max_contour_length.setSpecialValueText("No Cap")
+
         self.param_box = QWidget()
         form = QVBoxLayout(self.param_box)
         form.setContentsMargins(0, 0, 0, 0)
@@ -123,16 +141,30 @@ class TrainingPage(QWidget):
         _field("Random seed", self.random_seed, fields)
         form.addLayout(fields)
 
-        checks = QHBoxLayout()
-        checks.setSpacing(24)
-        checks.addWidget(self.randomize_sample_order)
-        checks.addWidget(self.verbose)
-        checks.addWidget(self.recat_single_categories)
-        checks.addWidget(self.compare_warped)
-        checks.addWidget(self.deprioritize_lone_category_search)
-        checks.addWidget(self.purge_empty_categories)
-        checks.addStretch(1)
-        form.addLayout(checks)
+        data_fields = QHBoxLayout()
+        data_fields.setSpacing(24)
+        _field("Temporal Resolution", self.tempres, data_fields)
+        _field("Sample Interval", self.sample_interval, data_fields)
+        _field("Maximum Contour Length", self.max_contour_length, data_fields)
+        form.addLayout(data_fields)
+
+        checks_line1 = QHBoxLayout()
+        checks_line1.setSpacing(24)
+        checks_line1.addWidget(self.randomize_sample_order)
+        checks_line1.addWidget(self.verbose)
+        checks_line1.addWidget(self.recat_single_categories)
+        checks_line1.addWidget(self.compare_warped)
+        checks_line1.addStretch(1)
+        form.addLayout(checks_line1)
+
+        checks_line2 = QHBoxLayout()
+        checks_line2.setSpacing(24)
+        checks_line2.addWidget(self.deprioritize_lone_category_search)
+        checks_line2.addWidget(self.purge_empty_categories)
+        checks_line2.addWidget(self.resample)
+        checks_line2.addStretch(1)
+        form.addLayout(checks_line2)
+        
 
         lay.addWidget(self.param_box)
 
@@ -214,24 +246,33 @@ class TrainingPage(QWidget):
     # ---- actions -----------------------------------------------------------
 
     def _start(self):
-        params = {"vigilance": self.vigilance.value(),
-                  "learning_rate": self.learning_rate.value(),
-                  "bias": self.bias.value(),
-                  "max_categories": self.max_categories.value(),
-                  "max_iterations": self.max_iterations.value(),
-                  "warp_factor_level": self.warp_factor_level.value(),
-                  "random_seed": self.random_seed.value(),
-                  "randomize_sample_order": self.randomize_sample_order.isChecked(),
-                  "verbose": self.verbose.isChecked(),
-                  "recat_single_categories": self.recat_single_categories.isChecked(),
-                  "compare_warped": self.compare_warped.isChecked(),
-                  "deprioritize_lone_category_search": self.deprioritize_lone_category_search.isChecked(),
-                  "purge_empty_categories": self.purge_empty_categories.isChecked(),
-                }
-        if params["random_seed"] == 0:
-            params["random_seed"] = None
+        network_params = {
+            "vigilance": self.vigilance.value(),
+            "learning_rate": self.learning_rate.value(),
+            "bias": self.bias.value(),
+            "max_categories": self.max_categories.value(),
+            "max_iterations": self.max_iterations.value(),
+            "warp_factor_level": self.warp_factor_level.value(),
+            "random_seed": self.random_seed.value(),
+            "randomize_sample_order": self.randomize_sample_order.isChecked(),
+            "verbose": self.verbose.isChecked(),
+            "recat_single_categories": self.recat_single_categories.isChecked(),
+            "compare_warped": self.compare_warped.isChecked(),
+            "deprioritize_lone_category_search": self.deprioritize_lone_category_search.isChecked(),
+            "purge_empty_categories": self.purge_empty_categories.isChecked(),
+        }
+        data_params = {
+            "tempres": self.resample.isChecked(),
+            "resample": self.resample.isChecked(),
+            "sample_interval": self.sample_interval.value(),
+            "max_contour_length": self.max_contour_length.value(),
+        }
+        if network_params["random_seed"] == 0:
+            network_params["random_seed"] = None
+        if data_params["max_contour_length"] == 0:
+            data_params["max_contour_length"] = None
         self.error.hide()
-        self.trainer.start(params)
+        self.trainer.start(network_params, data_params)
 
     def _rename(self, name):
         if self._run:
@@ -264,7 +305,7 @@ class TrainingPage(QWidget):
         self.progress.setValue(0)
         self._timer.start()
         self._timer_ticker.start()
-        self.progress.setRange(0, run["parameters"]["max_iterations"])
+        self.progress.setRange(0, run["network_parameters"]["max_iterations"])
         self.progress_lbl.setText("Starting training")
         for block in self.stats.values():
             block.set_value("–")

@@ -69,7 +69,7 @@ class StatusBox(QFrame):
         self.bar.setVisible(busy)
 
     def _started(self, run):
-        self.bar.setRange(0, run["parameters"]["max_iterations"])
+        self.bar.setRange(0, run["network_parameters"]["max_iterations"])
         self.bar.setValue(0)
         self._set(theme.ACCENT, "Training", "Starting…", busy=True)
 
