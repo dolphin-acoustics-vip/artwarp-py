@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QElapsedTimer, QTimer, Qt
 from PySide6.QtWidgets import (QCheckBox, QDoubleSpinBox, QHBoxLayout, QProgressBar, QPushButton, QSpinBox, QStackedWidget,
                                QVBoxLayout, QWidget)
 
@@ -30,7 +30,10 @@ class TrainingPage(QWidget):
         self.state = state
         self.trainer = state.trainer
         self._run = None
-        self._live = {}
+        self._live_iteration = {}
+        self._timer = QElapsedTimer()
+        self._timer_ticker = QTimer()
+        self._timer_ticker.setInterval(1000)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(28, 24, 28, 24)
@@ -39,7 +42,7 @@ class TrainingPage(QWidget):
         root.addWidget(self._build_controls())
 
         self.body = QStackedWidget()
-        self.body.addWidget(self._build_live())
+        self.body.addWidget(self._build_live_iteration())
         results = QWidget()
         rl = QVBoxLayout(results)
         rl.setContentsMargins(0, 0, 0, 0)
@@ -52,8 +55,8 @@ class TrainingPage(QWidget):
         self.body.addWidget(results)
         root.addWidget(self.body, 1)
 
+        self._timer_ticker.timeout.connect(self._update_progress)
         self.trainer.started.connect(self._on_started)
-        self.trainer.progress.connect(self._on_progress)
         self.trainer.iteration.connect(self._on_iteration)
         self.trainer.finished.connect(self._on_finished)
         self.trainer.stopped.connect(lambda: self._on_idle("Run stopped. Nothing was saved."))
@@ -169,7 +172,7 @@ class TrainingPage(QWidget):
         lay.addWidget(self.progress_box)
         return card
 
-    def _build_live(self):
+    def _build_live_iteration(self):
         page = QWidget()
         lay = QVBoxLayout(page)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -185,13 +188,13 @@ class TrainingPage(QWidget):
 
         charts = QHBoxLayout()
         charts.setSpacing(12)
-        self.live_reclassification = self._live_chart(charts, "Reclassification")
-        self.live_categories = self._live_chart(charts, "Categories")
+        self.live_reclassification = self._live_iteration_chart(charts, "Reclassification")
+        self.live_categories = self._live_iteration_chart(charts, "Categories")
         lay.addLayout(charts, 1)
         return page
 
     @staticmethod
-    def _live_chart(parent, title):
+    def _live_iteration_chart(parent, title):
         card = Card()
         cl = QVBoxLayout(card)
         cl.setContentsMargins(16, 12, 16, 10)
@@ -253,29 +256,32 @@ class TrainingPage(QWidget):
         self.stop_btn.setVisible(running)
         self.param_box.setEnabled(not running)
         self.progress_box.setVisible(running)
+        if not running: self._timer_ticker.stop()
 
     def _on_started(self, run):
-        self._live = {"x": [], "num_reclassifications": [], "num_categories": []}
+        self._live_iteration = {"x": [], "num_reclassifications": [], "num_categories": []}
         self._set_running(True)
         self.progress.setValue(0)
+        self._timer.start()
+        self._timer_ticker.start()
+        self.progress.setRange(0, run["parameters"]["max_iterations"])
         self.progress_lbl.setText("Starting training")
         for block in self.stats.values():
             block.set_value("–")
-        self._update_live_charts()
-
-    def _on_progress(self, fraction):
-        self.progress.setValue(round(fraction * 1000))
+        self._update_live_iteration_charts()
 
     def _on_iteration(self, iteration, metrics):
-        self._live["x"].append(iteration)
+        self._live_iteration["x"].append(iteration)
+        self.progress.setValue(iteration)
         for key, value in metrics.items():
-            self._live[key].append(value)
+            self._live_iteration[key].append(value)
         self.stats["num_reclassifications"].set_value(f"{metrics['num_reclassifications']}")
         self.stats["num_categories"].set_value(f"{metrics['num_categories']}")
-        self._update_live_charts()
+        self._update_progress()
+        self._update_live_iteration_charts()
 
-    def _update_live_charts(self):
-        lv = self._live
+    def _update_live_iteration_charts(self):
+        lv = self._live_iteration
         for chart, key, title, fmt in ((self.live_reclassification, "num_reclassifications", "Number Of Reclassifications", "int"),
                                        (self.live_categories, "num_categories", "Number Of Categories", "int")):
             chart.set_spec({
@@ -283,6 +289,9 @@ class TrainingPage(QWidget):
                 "y_label": title, "y_format": fmt, "empty": "Waiting for the first iteration…",
                 "series": [{"name": title, "slot": 0, "values": lv[key]}],
             })
+
+    def _update_progress(self):
+        self.progress_lbl.setText(f"Training... · Iteration {len(self._live_iteration['x'])} · Elapsed time {self._timer.elapsed()/1000.0:.2f}s")
 
     def _on_finished(self, run):
         self._set_running(False)

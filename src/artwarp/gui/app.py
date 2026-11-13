@@ -51,12 +51,12 @@ class StatusBox(QFrame):
         self.sub = label("", "Muted")
         lay.addWidget(self.sub)
         self.bar = QProgressBar()
-        self.bar.setRange(0, 1000)
+        self.bar.setRange(0, 0)
         self.bar.setTextVisible(False)
         lay.addWidget(self.bar)
 
         trainer.started.connect(self._started)
-        trainer.progress.connect(self._progress)
+        trainer.iteration.connect(self._progress)
         trainer.finished.connect(lambda run: self._set(theme.GOOD, "Run finished", run["name"]))
         trainer.stopped.connect(lambda: self._set(theme.MUTED, "Run stopped", "Nothing saved"))
         trainer.failed.connect(lambda _: self._set(theme.DANGER, "Failed", "Not saved"))
@@ -69,12 +69,13 @@ class StatusBox(QFrame):
         self.bar.setVisible(busy)
 
     def _started(self, run):
+        self.bar.setRange(0, run["parameters"]["max_iterations"])
         self.bar.setValue(0)
         self._set(theme.ACCENT, "Training", "Starting…", busy=True)
 
-    def _progress(self, fraction):
-        self.bar.setValue(round(fraction * 1000))
-        self.sub.setText(f"{fraction:.0%}  ·s left")
+    def _progress(self, iteration, metrics):
+        self.bar.setValue(iteration)
+        self.sub.setText(f"Iteration {iteration} · Categories: {metrics['num_categories']}")
 
     def mouseReleaseEvent(self, e):
         if e.button() == Qt.LeftButton:

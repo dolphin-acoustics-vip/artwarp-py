@@ -47,7 +47,6 @@ class _Worker(QObject):
 
 class Trainer(QObject):
     started = Signal(dict)            # run metadata (no charts yet)
-    progress = Signal(float, float)   # fraction done, seconds elapsed
     iteration = Signal(int, dict)         # iteration, live metrics for that iteration
     finished = Signal(dict)           # saved run, with charts
     stopped = Signal()
