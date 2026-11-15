@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QHBoxLayout, QListWidget, QListWidgetItem, QStackedWidget, QVBoxLayout,
                                QWidget)
 
-from .. import runs
+from ...io import runs
 from ..widgets.common import Card, PageHeader, RunHeader, label
 from ..widgets.results import ResultsView
 

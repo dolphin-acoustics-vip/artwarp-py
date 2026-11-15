@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from .. import icons, theme
-from ..config import DEFAULTS, SETTINGS_FILE
+from ...io.config import DEFAULTS, SETTINGS_FILE
 from ..widgets.common import Card, PageHeader, label, open_folder, set_role
 
 

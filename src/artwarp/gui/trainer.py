@@ -1,18 +1,16 @@
 """
 Runs the training on a Worker thread, allows training and GUI be on separate threads.
 """
-from datetime import datetime
-from pathlib import Path
+
 from functools import partial
 from typing import Optional
-from artwarp.io.exporters import export_results
 import threading
 
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from artwarp import ARTwarp, load_contours
 from artwarp.utils.resample import cap_contour_lengths, resample_contours
 
-from . import charts, runs
+from ..io.runs import save_run, new_run
 
 
 class _Worker(QObject):
@@ -68,9 +66,9 @@ class _Worker(QObject):
 
 
 class Trainer(QObject):
-    started = Signal(dict)            # run metadata (no charts yet)
-    iteration = Signal(int, dict)         # iteration, live metrics for that iteration
-    finished = Signal(dict)           # saved run, with charts
+    started = Signal(dict)
+    iteration = Signal(int, dict)
+    finished = Signal(dict)
     stopped = Signal()
     failed = Signal(str)
 
@@ -91,16 +89,11 @@ class Trainer(QObject):
         if self._thread is not None:
             self._thread.wait()
 
-        now = datetime.now()
-        self._run = {
-            "id": now.strftime("%Y%m%d-%H%M%S"),
-            "name": now.strftime("%Y-%m-%d %H:%M:%S"),
-            "created": now.isoformat(timespec="seconds"),
-            "network_parameters": network_params,
-            "data_parameters": data_params,
-            "input_path": self.state.config.input_path,
-            "output_path": self.state.config.output_path,
-        }
+        self._run = new_run(
+            network_params,
+            data_params,
+            self.state.config.input_path,
+            self.state.config.output_path)
 
         thread = QThread(self)
         worker = _Worker(network_params, data_params, self.state.config.input_path)
@@ -138,14 +131,8 @@ class Trainer(QObject):
         if not completed:
             self.stopped.emit()
             return
-        run["summary"] = {"number_categories": int(results.num_categories),
-                          "number_iterations": int(results.num_iterations),
-                          "converged": bool(results.converged),
-                          "training_time": float(results.training_time)}
-        run["charts"] = charts.build_charts(results)
         try:
-            runs.save(run, run["output_path"])
-            export_results(results, str(Path(run["path"])/runs.RESULTS_FILE), contour_names=names)
+            save_run(run, results, names)
         except OSError as e:
             self.failed.emit(f"Couldn't save run to {run['output_path']}: {e.strerror or e}")
             return

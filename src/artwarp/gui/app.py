@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, 
                                QProgressBar, QPushButton, QStackedWidget, QVBoxLayout, QWidget)
 
 from . import icons, theme
-from .config import Config
+from ..io.config import Config
 from .pages.graphs import GraphsPage
 from .pages.settings import SettingsPage
 from .pages.training import TrainingPage

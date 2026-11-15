@@ -2,7 +2,8 @@ from PySide6.QtCore import QElapsedTimer, QTimer, Qt
 from PySide6.QtWidgets import (QCheckBox, QDoubleSpinBox, QHBoxLayout, QProgressBar, QPushButton, QSpinBox, QStackedWidget,
                                QVBoxLayout, QWidget)
 
-from .. import icons, runs
+from .. import icons
+from ...io import runs
 from ..widgets.chart import ChartWidget
 from ..widgets.common import Card, PageHeader, RunHeader, StatBlock, label
 from ..widgets.results import ResultsView
