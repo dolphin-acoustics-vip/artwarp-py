@@ -11,8 +11,8 @@
 #
 # Usage:
 #   ./run.sh              # interactive menu
-#   ./run.sh train -i ./contours -o results.pkl --vigilance 85
-#   ./run.sh plot -r results.pkl -i ./contours -o ./report
+#   ./run.sh train -i ./contours -o <dir> --vigilance 85
+#   ./run.sh plot -r ./data/runs/<id>/results.pkl -i ./contours -o ./report
 #
 # Run from repo root or anywhere. Uses artwarp-py on PATH or python -m artwarp.cli.main.
 #
@@ -144,26 +144,6 @@ prompt_input_dir() {
   done
 }
 
-# prompt -> for output .pkl; if file exists, ask overwrite; reprompt if they decline
-prompt_output_pkl() {
-  local label="$1" default="$2"
-  local val
-  while true; do
-    val=$(prompt_with_default "$label" "$default" path)
-    [[ -z "$val" ]] && { err "Output file required." >&2; continue; }
-    if [[ -f "$val" ]]; then
-      warn "File already exists: $val" >&2
-      if prompt_yesno "Overwrite?" "n"; then
-        echo "$val"
-        return 0
-      fi
-      continue
-    fi
-    echo "$val"
-    return 0
-  done
-}
-
 # prompt -> for existing .pkl file (results/model); reprompt until it exists
 prompt_results_pkl() {
   local label="$1" default="$2"
@@ -264,7 +244,9 @@ run_train() {
 
   subheader "Paths"
   input_dir=$(prompt_input_dir "Input directory (contour files)" "./contours")
-  output=$(prompt_output_pkl "Output model file (.pkl)" "results.pkl")
+  output=$(prompt_with_default "Output directory (run saved to <dir>/<id>)" "./data/runs")
+  name=$(prompt_with_default "Name for run (Empty = timestamp)" "" path)
+  [[ -n "$name" ]] && args+=(--name "$name")
   args+=(-i "$input_dir" -o "$output")
 
   subheader "Input format"

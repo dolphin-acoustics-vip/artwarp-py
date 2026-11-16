@@ -399,7 +399,7 @@ The **`train`** command loads and optionally resamples contours before fitting. 
 ```bash
 artwarp-py train \
     --input-dir ./contours \
-    --output results.pkl \
+    --output ./data/runs \
     --format csv \
     --freq-column 1 \
     --vigilance 85 \
@@ -413,25 +413,25 @@ artwarp-py train \
 **Example (explicit resample interval / tempres; resampling is already on by default)**:
 
 ```bash
-artwarp-py train -i ./contours -o results.pkl --sample-interval 0.01 --tempres 0.01
+artwarp-py train -i ./contours -o ./data/runs --sample-interval 0.01 --tempres 0.01
 ```
 
 **Example (skip resampling, MATLAB `resample=0`)**:
 
 ```bash
-artwarp-py train -i ./contours -o results.pkl --no-resample
+artwarp-py train -i ./contours -o ./data/runs --no-resample
 ```
 
 **Example (MATLAB optional training flags, same order of effect as `ARTwarp_Run_Categorisation.m`)**:
 
 ```bash
-artwarp-py train -i ./contours -o results.pkl --recat-single-categories --compare-warped
+artwarp-py train -i ./contours -o ./data/runs --recat-single-categories --compare-warped
 ```
 
 **Example (optional Marco's extensions — not in MATLAB `stable`)**:
 
 ```bash
-artwarp-py train -i ./contours -o results.pkl \
+artwarp-py train -i ./contours -o ./data/runs \
   --deprioritize-lone-category-search \
   --purge-empty-categories
 ```
@@ -444,7 +444,7 @@ Predict categories for new contours.
 
 ```bash
 artwarp-py predict \
-    --model results.pkl \
+    --model ./data/runs \
     --input-dir ./new_contours \
     --output predictions.csv
 ```
@@ -455,7 +455,7 @@ Export results to various formats.
 
 ```bash
 artwarp-py export \
-    --results results.pkl \
+    --results ./data/runs/<id>/results.pkl \
     --output-dir ./output \
     --export-type all
 ```
@@ -468,7 +468,7 @@ Requires the same contour directory and format as used for training.
 
 ```bash
 artwarp-py plot \
-    --results results.pkl \
+    --results ./data/runs/<id>/results.pkl \
     --input-dir ./contours \
     --output-dir ./report \
     --format csv \
