@@ -1,5 +1,12 @@
+"""
+Chart specifications, actual charts drawn by gui/widgets/chart.py.
+
+@author: Jaime Barquero Cebrian
+"""
+
 
 def build_charts(results):
+    """One dictionary per chart"""
     iterations, reclassified = zip(*results.iteration_history)
     cat_size_dic = results.get_category_sizes()
     categories = cat_size_dic.keys()

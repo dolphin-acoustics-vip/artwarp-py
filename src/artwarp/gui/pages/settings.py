@@ -1,14 +1,21 @@
+"""
+User specified settings. Shows current input and output path.
+Edits state.config and persists to SETTINGS_FILE, setting CLI and GUI defaults.
+
+@author: Jaime Barquero Cebrian
+"""
+
 from pathlib import Path
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-from .. import icons, theme
-from ...io.config import DEFAULTS, SETTINGS_FILE
-from ..widgets.common import Card, PageHeader, label, open_folder, set_role
+from artwarp.gui import icons, theme
+from artwarp.io.config import DEFAULTS, SETTINGS_FILE
+from artwarp.gui.widgets.common import Card, PageHeader, label, open_folder, set_role
 
 
 class SettingsPage(QWidget):
+    """ Emits config_changed. Only emits runs_changed if output folder changed"""
     def __init__(self, state):
         super().__init__()
         self.state = state
@@ -30,7 +37,7 @@ class SettingsPage(QWidget):
         divider.setFixedHeight(1)
         cl.addWidget(divider)
         self.output = self._path_row(cl, "Output folder",
-                                     "Each run is saved here as artwarp-py/data/runs/. Graphs lists the runs in this folder.")
+                                     "Each run is saved here as <folder>/<id>. Graphs lists the runs in this folder.")
 
         footer = QHBoxLayout()
         self.status = label("", "Muted")
@@ -51,6 +58,12 @@ class SettingsPage(QWidget):
         self._load()
 
     def _path_row(self, parent, title, desc):
+        """
+        Builds title, description and row of QLineEdit. Includes Browse and Reveal.
+        Returns QLineEdit.
+        """
+
+        # Negative spacing pulls description up under the title
         parent.addWidget(label(title, "FieldTitle"))
         parent.addSpacing(-12)
         parent.addWidget(label(desc, "Muted", wrap=True))
@@ -65,6 +78,7 @@ class SettingsPage(QWidget):
         reveal.setObjectName("Ghost")
         reveal.setToolTip("Open in Finder")
         reveal.setIcon(icons.icon("folder", theme.TEXT_2))
+        # Reveal only when the folder exists
         reveal.clicked.connect(lambda: Path(edit.text()).is_dir() and open_folder(edit.text()))
         row.addWidget(edit, 1)
         row.addWidget(browse)
@@ -83,14 +97,18 @@ class SettingsPage(QWidget):
             edit.setText(folder)
 
     def _reset(self):
+        """Only fills fields, does not save anything"""
         self.input.setText(DEFAULTS["input_path"])
         self.output.setText(DEFAULTS["output_path"])
 
     def _values(self):
+        """Grabs current input and output paths"""
+        # Expanduser allows ~ for Paths
         return (str(Path(self.input.text().strip()).expanduser()) if self.input.text().strip() else "",
                 str(Path(self.output.text().strip()).expanduser()) if self.output.text().strip() else "")
 
     def _on_edit(self):
+        """Saved only enabled when both input and output fields are filled and different from saved config"""
         inp, out = self._values()
         cfg = self.state.config
         self.save_btn.setEnabled(bool(inp and out) and (inp, out) != (cfg.input_path, cfg.output_path))
@@ -101,6 +119,10 @@ class SettingsPage(QWidget):
         self.status.setText(text)
 
     def _save(self):
+        """
+        Output dir created first (aborts on failure), config object changed and saved
+        Allows current run to keep own paths and new run use edited ones.
+        """
         inp, out = self._values()
         try:
             Path(out).mkdir(parents=True, exist_ok=True)

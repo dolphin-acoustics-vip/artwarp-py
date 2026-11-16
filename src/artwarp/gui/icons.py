@@ -1,4 +1,9 @@
-"""Small line icons (Lucide-style SVG paths) tinted at runtime."""
+"""
+Small line icons tinted at run-time.
+
+@author: Jaime Barquero Cebrian
+"""
+
 from PySide6.QtCore import QByteArray, Qt
 from PySide6.QtGui import QIcon, QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
@@ -31,6 +36,7 @@ _PATHS = {
 
 
 def pixmap(name, color, size=16):
+    """Render icon's name at specific size and color"""
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{color}" '
         f'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{_PATHS[name]}</svg>'
@@ -46,7 +52,7 @@ def pixmap(name, color, size=16):
 
 
 def icon(name, color, checked_color=None, size=16):
-    """checked_color tints the icon when its button is checked (e.g. active nav item)."""
+    """checked_color tints the icon when its button is checked"""
     ic = QIcon()
     ic.addPixmap(pixmap(name, color, size), QIcon.Normal, QIcon.Off)
     ic.addPixmap(pixmap(name, checked_color or color, size), QIcon.Normal, QIcon.On)

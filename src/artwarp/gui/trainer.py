@@ -1,5 +1,10 @@
 """
 Runs the training on a Worker thread, allows training and GUI be on separate threads.
+Two classes: 
+    _Worker - on a QThread during load, resample and network fit
+    Trainer - on GUI thread signals _Worker to keep GUI responsive while training
+
+@author: Jaime Barquero Cebrian
 """
 
 from functools import partial
@@ -10,10 +15,11 @@ from PySide6.QtCore import QObject, QThread, Signal, Slot
 from artwarp import ARTwarp, load_contours
 from artwarp.utils.resample import cap_contour_lengths, resample_contours
 
-from ..io.runs import save_run, new_run
+from artwarp.io.runs import save_run, new_run
 
 
 class _Worker(QObject):
+    """Runs on QThread and does load, resample and fit."""
     iteration_done = Signal(object)
     done = Signal(bool, object, object)
     failed = Signal(str)
@@ -24,10 +30,12 @@ class _Worker(QObject):
         self.data_parameters = data_params
         self.data = data
         self._stop = threading.Event()
+        # Records that the stop came from user
         self._callback_stop = False
 
     @Slot()
     def run(self):
+        """ Mirrors command_train CLI - TODO: create utils .py to have GUI and CLI call this"""
         try:
             # Contour data preparation
             if self.data_parameters["resample"]:
@@ -56,6 +64,7 @@ class _Worker(QObject):
             self.failed.emit(str(e))
 
     def callback(self, snapshot):
+        """Called by fit every iteration from _Worker thread. Emits snapshot and returns True if fit() should stop"""
         self.iteration_done.emit(snapshot)
         if self._stop.is_set():
             self._callback_stop = True
@@ -66,6 +75,16 @@ class _Worker(QObject):
 
 
 class Trainer(QObject):
+    """
+    Runs on GUI thread signals _Worker to keep GUI responsive while training.
+    Signals:
+        started: carries full new_run dictionary.
+        iteration: iteration number and metrics dic (num_reclassifications, num_categories)
+        finished: dic of saved run (all metrics in run.json)
+        stopped: empty signal
+        failed: message
+
+    """
     started = Signal(dict)
     iteration = Signal(int, dict)
     finished = Signal(dict)
@@ -84,6 +103,10 @@ class Trainer(QObject):
         return self._run is not None
 
     def start(self, network_params, data_params):
+        """
+        Builds _run via new_run before thread starts so run has initial information.
+        Creates new QThread per run, connects done/failed to thread.quit
+        """
         if self.running:
             return
         if self._thread is not None:
@@ -110,6 +133,7 @@ class Trainer(QObject):
         self.started.emit(dict(self._run))
 
     def stop(self):
+        """Sets event, takes effect next iteration"""
         if self._worker is not None:
             self._worker.stop()
 
@@ -127,6 +151,8 @@ class Trainer(QObject):
 
     @Slot(bool, object, object)
     def _on_done(self, completed, results, names):
+        """ If completed is false run is stopped otherwise calls save_run. TODO: Nothing saved, review to add partial run save
+        """
         run, self._run = self._run, None
         if not completed:
             self.stopped.emit()
@@ -145,6 +171,7 @@ class Trainer(QObject):
         self.failed.emit(f"{msg}")
 
     def _on_thread_finished(self, thread):
+        """A new run may have replaced references. Only clear references if thread is still current one"""
         # a newer run may already own self._thread, so only clear our own refs
         thread.deleteLater()
         if thread is self._thread:

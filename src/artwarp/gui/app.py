@@ -1,3 +1,8 @@
+"""
+Application entry. Connects all GUI parts in one place.
+
+@author: Jaime Barquero Cebrian
+"""
 import sys
 from pathlib import Path
 
@@ -6,30 +11,37 @@ from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, QLabel, QMainWindow,
                                QProgressBar, QPushButton, QStackedWidget, QVBoxLayout, QWidget)
 
-from . import icons, theme
-from ..io.config import Config
-from .pages.graphs import GraphsPage
-from .pages.settings import SettingsPage
-from .pages.training import TrainingPage
-from .trainer import Trainer
-from .widgets.common import label
+from artwarp.gui import icons, theme
+from artwarp.io.config import Config
+from artwarp.gui.pages.graphs import GraphsPage
+from artwarp.gui.pages.settings import SettingsPage
+from artwarp.gui.pages.training import TrainingPage
+from artwarp.gui.trainer import Trainer
+from artwarp.gui.widgets.common import label
 
 TRAINING, GRAPHS, SETTINGS = range(3)
 
 
 class AppState(QObject):
-    runs_changed = Signal()     # a run was saved/renamed, or the output folder changed
+    """Shared object handed to every page,loaded Config and Trainer.
+
+    Signals:
+        runs_changed: run saved/renamed, or output folder changed (Graphs reloads).
+        config_changed: paths were saved on the Settings page (Training refreshes labels).
+    """
+    runs_changed = Signal()
     config_changed = Signal()
 
     def __init__(self):
         super().__init__()
         self.config = Config.load()
+        # Create input path if it doesn't exist as browse needs to open a folder
         Path(self.config.input_path).mkdir(parents=True, exist_ok=True)
         self.trainer = Trainer(self)
 
 
 class StatusBox(QFrame):
-    """Bottom of the sidebar: what the trainer is doing, visible from every page."""
+    """Current trainer action, visible from every page."""
 
     def __init__(self, trainer, on_click):
         super().__init__()
@@ -63,6 +75,7 @@ class StatusBox(QFrame):
         self._set(theme.MUTED, "Idle", "No training running")
 
     def _set(self, color, title, sub, busy=False):
+        """Dot colour and text;. If busy, it shows progress bar."""
         self.dot.setStyleSheet(f"background: {color}; border-radius: 4px;")
         self.title.setText(title)
         self.sub.setText(sub)
@@ -78,11 +91,13 @@ class StatusBox(QFrame):
         self.sub.setText(f"Iteration {iteration} · Categories: {metrics['num_categories']}")
 
     def mouseReleaseEvent(self, e):
+        # whole box is clickable: jumps to the Training page
         if e.button() == Qt.LeftButton:
             self._on_click()
 
 
 class Sidebar(QFrame):
+    """Title of App and version. Pages and status box."""
     def __init__(self, state, pages):
         super().__init__()
         self.setObjectName("Sidebar")
@@ -124,12 +139,14 @@ class Sidebar(QFrame):
         layout.addWidget(btn)
 
     def select(self, index):
+        """Check the nav button and switch page."""
         self.group.button(index).setChecked(True)
         if hasattr(self, "_pages"):
             self._pages.setCurrentIndex(index)
 
 
 class MainWindow(QMainWindow):
+    """Sidebar on the left, QStackedWidget of pages on the right."""
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Dolphin Acoustics ARTwarp")
@@ -154,11 +171,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(root)
 
     def closeEvent(self, e):
+        # Stops _Worker if window is closed
         self.state.trainer.shutdown()
         super().closeEvent(e)
 
 
 def _dark_palette():
+    """Styling for the parts theme.py cant reach, uses theme.py colours."""
     pal = QPalette()
     for role, color in ((QPalette.Window, theme.BG), (QPalette.Base, theme.BG), (QPalette.AlternateBase, theme.SURFACE),
                         (QPalette.Text, theme.TEXT), (QPalette.WindowText, theme.TEXT), (QPalette.Button, theme.RAISED),
@@ -170,11 +189,15 @@ def _dark_palette():
 
 
 def main():
+    """Create the application, apply theme, start app and show the window"""
     app = QApplication(sys.argv)
     app.setApplicationName("Dolphin Acoustics ARTwarp")
+
     app.setStyle("Fusion")
+    # TODO: pick palette depending user settings. See theme.py and settings.py TODO.
     app.setPalette(_dark_palette())
     app.setStyleSheet(theme.QSS)
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

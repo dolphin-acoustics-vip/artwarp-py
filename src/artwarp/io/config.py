@@ -1,10 +1,17 @@
-"""User settings (input/output paths), stored as JSON inside the project."""
+"""
+User settings (input/output paths), stored as JSON inside the project.
+
+@author: Jaime Barquero Cebrian
+"""
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 SETTINGS_FILE = PROJECT_ROOT / "data" / "settings.json"
+# TODO: add "theme": "light" | "dark" | "system" (default "system") and a field on
+#   Config; Settings page gets a selector for it. See theme.py TODO.
+# TODO: add saved training-parameter defaults (see training.py "Set as defaults" TODO).
 DEFAULTS = {
     "input_path": str(PROJECT_ROOT / "examples" / "data"),
     "output_path": str(PROJECT_ROOT / "data" / "runs"),

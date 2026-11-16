@@ -1,17 +1,23 @@
 """
-Saved runs on disk: artwarp-py/data/runs/
+Saved runs on disk, shared by the CLI and the GUI.
+
+run.json      metadata, summary and chart specifications
+results.pkl   full TrainingResults
+
+@author: Jaime Barquero Cebrian
 """
 from datetime import datetime
 import json
 from pathlib import Path
 
-from .exporters import export_results
-from .charts import build_charts
+from artwarp.io.exporters import export_results
+from artwarp.io.charts import build_charts
 
 RUN_FILE = "run.json"
 RESULTS_FILE = "results.pkl"
 
 def list_runs(root):
+    """All runs under root, newest first. Invalid run.json are skipped."""
     root = Path(root)
     if not root.is_dir():
         return []
@@ -28,11 +34,20 @@ def list_runs(root):
 
 
 def load(path):
+    """Read a run.json"""
     run = json.loads((Path(path) / RUN_FILE).read_text())
+    # path added for callers
     run["path"] = str(path)
     return run
 
 def new_run(network_params, data_params, input_path, output_path, name=None):
+    """
+    Run dict before training
+
+    network_params: arguments for ARTwarp network.
+    data_params: tempres, resample, sample_interval, max_contour_length.
+    name defaults to the timestamp; id is the same in compact form.
+    """
     now = datetime.now()
     run = {
         "id": now.strftime("%Y%m%d-%H%M%S"),
@@ -47,6 +62,8 @@ def new_run(network_params, data_params, input_path, output_path, name=None):
 
 
 def save_run(run, results, names):
+    """ Adds remaining information to run dictionary"""
+
     run["summary"] = {"number_categories": int(results.num_categories),
                               "number_iterations": int(results.num_iterations),
                               "converged": bool(results.converged),
@@ -56,6 +73,7 @@ def save_run(run, results, names):
     root = Path(run["output_path"])
     root.mkdir(parents=True, exist_ok=True)
     folder, n = root / run["id"], 2
+    # Name of folder is id, or id-2, -3, ... if duplicate exists.
     while folder.exists():
         folder = root / f"{run['id']}-{n}"
         n += 1
@@ -68,11 +86,13 @@ def save_run(run, results, names):
 
 
 def rename(run, name):
+    """Changes name and run.json."""
     run["name"] = name
     _write(run)
 
 
 def _write(run):
+    """Write run.json; path is removed from run.json."""
     folder = Path(run["path"])
     folder.mkdir(parents=True, exist_ok=True)
     data = {k: v for k, v in run.items() if k != "path"}

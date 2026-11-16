@@ -1,6 +1,12 @@
-"""App-wide stylesheet."""
+"""
+App-wide colours and stylesheet. Colour constants are used here and in chart.py, app.py.
+
+@author: Jaime Barquero Cebrian
+"""
 from string import Template
 
+# TODO: light / dark / system themes. User should be able to change between modes.
+# system should read current system mode and switch automatically.
 BG = "#14161b"
 SIDEBAR = "#181a20"
 SURFACE = "#1c1f26"

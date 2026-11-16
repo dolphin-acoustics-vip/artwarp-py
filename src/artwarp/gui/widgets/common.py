@@ -1,14 +1,19 @@
-"""Helpers shared by the pages."""
+"""
+Small widgets and helpers shared by pages.
+
+@author: Jaime Barquero Cebrian
+"""
 from datetime import datetime
 
 from PySide6.QtCore import Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-from .. import icons, theme
+from artwarp.gui import icons, theme
 
 
 def label(text="", name=None, wrap=False):
+    """QLabel, objectName selects style from theme.py."""
     lbl = QLabel(text)
     if name:
         lbl.setObjectName(name)
@@ -17,13 +22,14 @@ def label(text="", name=None, wrap=False):
 
 
 def set_role(widget, name):
-    """Change objectName and re-apply the stylesheet (e.g. Muted -> Error)."""
+    """Change objectName and refresh style."""
     widget.setObjectName(name)
     widget.style().unpolish(widget)
     widget.style().polish(widget)
 
 
 def open_folder(path):
+    """Reveal a folder in Finder / Explorer."""
     QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
 
 
@@ -45,6 +51,7 @@ class PageHeader(QWidget):
 
 
 class StatBlock(Card):
+    """For live stats"""
     def __init__(self, title):
         super().__init__()
         lay = QVBoxLayout(self)
@@ -59,7 +66,7 @@ class StatBlock(Card):
 
 
 class RunHeader(QWidget):
-    """Editable run name + one line of metadata. Emits renamed(new_name)."""
+    """Editable run name with a line of data and open folder option"""
 
     renamed = Signal(str)
 
@@ -98,12 +105,15 @@ class RunHeader(QWidget):
         lay.addWidget(folder, 0, Qt.AlignTop)
 
     def set_run(self, run):
+        """Fill from a run dict"""
         self._name = run["name"]
         self._path = run.get("path")
         self.name.setText(self._name)
         created = datetime.fromisoformat(run["created"]).strftime("%d %b %Y, %H:%M")
-        parts = [f"Ran {created}", f"{run['summary']['training_time']:.1f} s", f"{run['summary']['number_iterations']} iterations"]
+        parts = [f"Ran {created}"]
         if "summary" in run:
+            parts.append(f"{run['summary']['training_time']:.1f} s")
+            parts.append(f"{run['summary']['number_iterations']} iterations")
             parts.append(f"{run['summary']['number_categories']} Categories · {'Training Converged' if run['summary']['converged'] else 'Training did not converge'}")
         self.meta.setText("  ·  ".join(parts))
 

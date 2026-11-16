@@ -1,14 +1,23 @@
+"""
+This page never touches the network (signals come from trainer.py).
+Shows parameters chosen, Start/Stop functionality, live per-iteration view while a run is going.
+
+@author: Jaime Barquero Cebrian
+"""
+
 from PySide6.QtCore import QElapsedTimer, QTimer, Qt
 from PySide6.QtWidgets import (QCheckBox, QDoubleSpinBox, QHBoxLayout, QProgressBar, QPushButton, QSpinBox, QStackedWidget,
                                QVBoxLayout, QWidget)
 
-from .. import icons
-from ...io import runs
-from ..widgets.chart import ChartWidget
-from ..widgets.common import Card, PageHeader, RunHeader, StatBlock, label
-from ..widgets.results import ResultsView
+from artwarp.gui import icons
+from artwarp.io import runs
+from artwarp.gui.widgets.chart import ChartWidget
+from artwarp.gui.widgets.common import Card, PageHeader, RunHeader, StatBlock, label, set_role
+from artwarp.gui.widgets.results import ResultsView
 
+# Layout helpers
 def _path_label(title, parent):
+    """Title + muted value label stacked vertically. Returns label widget so it can be updated."""
     col = QVBoxLayout()
     col.setSpacing(4)
     col.addWidget(label(title, "FieldLabel"))
@@ -18,6 +27,10 @@ def _path_label(title, parent):
     return value
 
 def _field(title, widget, parent):
+    """
+    Title above an input widget. Title fixed onto container so caller is able to rename it.
+    Returns the container.
+    """
     container = QWidget()
     box = QVBoxLayout(container)
     box.setContentsMargins(0, 0, 0, 0)
@@ -30,6 +43,13 @@ def _field(title, widget, parent):
     return container
 
 class TrainingPage(QWidget):
+    """
+    Fields:
+        _run - the saved run after completed training. Last saved run or None if none present.
+        _live_iteration - per-iteration lists (iteration number, number reclassifications and
+            number categories). Used for the two live charts. Reset on every start.
+        _timer / _timer_ticker - elapsed time, refreshed once per second.
+    """
     def __init__(self, state):
         super().__init__()
         self.state = state
@@ -71,6 +91,12 @@ class TrainingPage(QWidget):
         self._show_paths()
 
     def _build_controls(self):
+        """
+        Parameters, paths, Start/Stop, error line and progress bar widgets.
+        
+        TODO: It is not obv for a user to know that the lower boundary for seed and
+        max_contour_length is the "default" (None) in ARTwarp.
+        """
         card = Card()
         lay = QVBoxLayout(card)
         lay.setContentsMargins(18, 14, 18, 14)
@@ -103,6 +129,7 @@ class TrainingPage(QWidget):
         self.warp_factor_level.setValue(3)
         self.random_seed = QSpinBox()
         self.random_seed.setRange(0,1e7)
+        # 0 shows "Random" and becomes None in _start for artwarp to use
         self.random_seed.setSpecialValueText("Random")
         self.randomize_sample_order = QCheckBox("Randomise Sample Order")
         self.randomize_sample_order.setChecked(True)
@@ -126,8 +153,15 @@ class TrainingPage(QWidget):
         self.resample.setChecked(True)
         self.max_contour_length = QSpinBox()
         self.max_contour_length.setRange(0,1e7)
-        self.max_contour_length.setSpecialValueText("No Cap")
+        # 0 shows "No Max" and becomes None in _start
+        self.max_contour_length.setSpecialValueText("No Max")
 
+        # TODO: "Set as defaults" button next to the parameters. Saves the current parameter
+        #   values as app defaults (settings.json, use io/config.py). 
+        #   Greyed out until a value differs from the saved defaults
+        #   (same pattern as Save in settings.py _on_edit).
+        # TODO: "Load from run" option. Fill the current parameters using the ones from a previous run
+        #   (runs.json, use runs.list_runs / runs.load).
         self.param_box = QWidget()
         form = QVBoxLayout(self.param_box)
         form.setContentsMargins(0, 0, 0, 0)
@@ -149,6 +183,7 @@ class TrainingPage(QWidget):
         tempres_field = _field("Temporal Resolution", self.tempres, data_fields)
         interval_field = _field("Sample Interval", self.sample_interval, data_fields)
         
+        # Temporal Resolution and Sample Interval only used when resampling:
         def resample_toggled(on):
             for field, title in ((tempres_field, "Temporal Resolution"),
                                     (interval_field, "Sample Interval")):
@@ -216,6 +251,7 @@ class TrainingPage(QWidget):
         return card
 
     def _build_live_iteration(self):
+        """Whole live view, user parameters at the top and charts under. Shown while a run is in progress."""
         page = QWidget()
         lay = QVBoxLayout(page)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -249,14 +285,15 @@ class TrainingPage(QWidget):
         return chart
 
     def _show_paths(self):
+        """IO Paths from settings"""
         cfg = self.state.config
         for lbl, path in ((self.input_lbl, cfg.input_path), (self.output_lbl, cfg.output_path)):
             lbl.setToolTip(path)
             lbl.setText(lbl.fontMetrics().elidedText(path, Qt.ElideMiddle, 340))
 
-    # ---- actions -----------------------------------------------------------
-
+    # Actions
     def _start(self):
+        """Build two dictionaries from user chosen parameters and pass to trainer. One for artwarp network and another for contour processing."""
         network_params = {
             "vigilance": self.vigilance.value(),
             "learning_rate": self.learning_rate.value(),
@@ -278,6 +315,7 @@ class TrainingPage(QWidget):
             "sample_interval": self.sample_interval.value(),
             "max_contour_length": self.max_contour_length.value(),
         }
+        # Translating lower boundary value of a spinbox for parameters
         if network_params["random_seed"] == 0:
             network_params["random_seed"] = None
         if data_params["max_contour_length"] == 0:
@@ -286,12 +324,13 @@ class TrainingPage(QWidget):
         self.trainer.start(network_params, data_params)
 
     def _rename(self, name):
+        """Renaming header, changes run.json and graphs reload."""
         if self._run:
             runs.rename(self._run, name)
             self.state.runs_changed.emit()
 
     def _refresh_name(self):
-        # the run may have been renamed from the Graphs page
+        """Re-reads run.json in case run was renamed"""
         if self._run and self._run.get("path"):
             try:
                 name = runs.load(self._run["path"])["name"]
@@ -301,9 +340,9 @@ class TrainingPage(QWidget):
                 self._run["name"] = name
                 self.header.set_name(name)
 
-    # ---- trainer signals --------------------------------------------------
-
+    # Trainer Signals
     def _set_running(self, running):
+        """Switch between idle and running."""
         self.start_btn.setVisible(not running)
         self.stop_btn.setVisible(running)
         self.param_box.setEnabled(not running)
@@ -311,11 +350,13 @@ class TrainingPage(QWidget):
         if not running: self._timer_ticker.stop()
 
     def _on_started(self, run):
+        """Reset live metrics"""
         self._live_iteration = {"x": [], "num_reclassifications": [], "num_categories": []}
         self._set_running(True)
         self.progress.setValue(0)
         self._timer.start()
         self._timer_ticker.start()
+        # Max value of progress bar is the maximum iterations before training stops with converged=False.
         self.progress.setRange(0, run["network_parameters"]["max_iterations"])
         self.progress_lbl.setText("Starting training")
         for block in self.stats.values():
@@ -323,6 +364,7 @@ class TrainingPage(QWidget):
         self._update_live_iteration_charts()
 
     def _on_iteration(self, iteration, metrics):
+        """Append this iteration's metrics and update live metrics"""
         self._live_iteration["x"].append(iteration)
         self.progress.setValue(iteration)
         for key, value in metrics.items():
@@ -333,6 +375,10 @@ class TrainingPage(QWidget):
         self._update_live_iteration_charts()
 
     def _update_live_iteration_charts(self):
+        """Rebuild both charts from scratch every iteration.
+
+        TODO: Both charts repaint every point, can get slow so cache and redraw every N if needed.
+        """
         lv = self._live_iteration
         for chart, key, title, fmt in ((self.live_reclassification, "num_reclassifications", "Number Of Reclassifications", "int"),
                                        (self.live_categories, "num_categories", "Number Of Categories", "int")):
@@ -343,19 +389,26 @@ class TrainingPage(QWidget):
             })
 
     def _update_progress(self):
+        """Iteration count and elapsed time. Called every iteration and every second by ticker."""
         self.progress_lbl.setText(f"Training... · Iteration {len(self._live_iteration['x'])} · Elapsed time {self._timer.elapsed()/1000.0:.2f}s")
 
     def _on_finished(self, run):
+        """ When run is finished, shows header + charts below the chosen parameters."""
         self._set_running(False)
         self._run = run
         self.header.set_run(run)
         self.results.set_charts(run["charts"])
 
     def _on_idle(self, message):
+        """Back to idle with a muted status line (stop / nothing saved)."""
         self._set_running(False)
-        self.empty.setText(message)
+        set_role(self.error, "Muted")
+        self.error.setText(message)
+        self.error.show()
 
     def _on_failed(self, message):
-        self._on_idle("Run failed.")
+        """Back to idle after failure"""
+        self._set_running(False)
+        set_role(self.error, "Error")
         self.error.setText(message)
         self.error.show()

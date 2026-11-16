@@ -1,17 +1,22 @@
-"""4x5 chart grid and expanded chart, used by Training and Graphs."""
+"""
+Arranges and aligns charts in 4x5 grid and allows expanding single chart, used by Training and Graphs.
+
+@author: Jaime Barquero Cebrian
+"""
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                                QStackedWidget, QVBoxLayout, QWidget)
 
-from .. import icons, theme
-from .chart import ChartWidget
-from .common import Card, label
+from artwarp.gui import icons, theme
+from artwarp.gui.widgets.chart import ChartWidget
+from artwarp.gui.widgets.common import Card, label
 
 ROWS, COLUMNS = 4, 5
 
 
 class ChartCard(QFrame):
+    """One grid cell: title, compact chart, expand icon on hover. Emits clicked(index)"""
     clicked = Signal(int)
 
     def __init__(self, index):
@@ -34,6 +39,7 @@ class ChartCard(QFrame):
         top.addWidget(self.expand)
         lay.addLayout(top)
 
+        # compact charts are transparent to the mouse so the card gets the click
         self.chart = ChartWidget(compact=True)
         lay.addWidget(self.chart, 1)
 
@@ -50,6 +56,7 @@ class ChartCard(QFrame):
         super().leaveEvent(e)
 
     def mouseReleaseEvent(self, e):
+        # ignore a press that started here but was released outside
         if e.button() == Qt.LeftButton and self.rect().contains(e.position().toPoint()):
             self.clicked.emit(self.index)
 
@@ -109,10 +116,12 @@ class ExpandedView(QWidget):
         return btn
 
     def show_chart(self, charts, index):
+        """Take the full list so prev/next can cycle."""
         self.charts = charts
         self._go(index)
 
     def _go(self, index):
+        """Allows wraping by inputted index."""
         if not self.charts:
             return
         self.index = index % len(self.charts)
@@ -134,7 +143,7 @@ class ExpandedView(QWidget):
 
 
 class ResultsView(QStackedWidget):
-    """Page 0: scrollable grid of chart cards. Page 1: one chart, expanded."""
+    """Page 0: scrollable grid of chart cards. Page 1: expanded chart."""
 
     def __init__(self):
         super().__init__()
@@ -166,6 +175,7 @@ class ResultsView(QStackedWidget):
         self.addWidget(self.expanded)
 
     def set_charts(self, charts):
+        """Fills grid. cards after len(charts) get hidden. Always returns to the grid page."""
         self.charts = charts
         for i, card in enumerate(self.cards):
             card.setVisible(i < len(charts))

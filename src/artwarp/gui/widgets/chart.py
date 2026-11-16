@@ -1,4 +1,15 @@
 """A small QPainter chart: line, bar, hist, scatter and heatmap.
+
+Spec keys by kind, optional keys have defaults:
+  common: kind, title, desc, x_label, y_label, y_format ("int"|"float"|"pct"|"sci"), empty
+  line:    x [..], series [{name, slot, values [..]}], y_zero, x_max
+  bar:     categories [..], series [{name, slot, values}]
+  hist:    edges [n+1], values [n], x_format, slot
+  scatter: series [{name, slot, points [(x, y)..]}], x_format, diagonal
+  heatmap: labels [..], matrix [[..]]
+compact=True is the grid-cell version: smaller fonts, no axis titles, no mouse.
+
+@author: Jaime Barquero Cebrian
 """
 import math
 
@@ -6,10 +17,11 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetricsF, QLinearGradient, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
-from .. import theme
+from artwarp.gui import theme
 
 
 def nice_ticks(lo, hi, count):
+    """Round tick positions covering [lo, hi] with about `count` ticks (steps of 1, 2, 2.5, 5 x 10^n)."""
     if hi - lo < 1e-12:
         hi = lo + (abs(lo) * 0.1 or 1.0)
     raw = (hi - lo) / max(count - 1, 1)
@@ -22,6 +34,7 @@ def nice_ticks(lo, hi, count):
 
 
 def fmt_tick(v, fmt):
+    """Short axis-tick text: 85%, 1.2e3, 12k, 3.5."""
     if fmt == "pct":
         return f"{round(v * 100, 4):g}%"
     if fmt == "sci":
@@ -35,6 +48,7 @@ def fmt_tick(v, fmt):
 
 
 def fmt_value(v, fmt):
+    """Fuller tooltip text for a value in the given format."""
     if fmt == "pct":
         return f"{v * 100:.1f}%"
     if fmt == "int":
@@ -45,16 +59,19 @@ def fmt_value(v, fmt):
 
 
 def series_color(series, index=0):
+    """theme.SERIES colour for a series; "slot" in the spec pins it, else position in the list."""
     return QColor(theme.SERIES[series.get("slot", index) % len(theme.SERIES)])
 
 
 def _mix(a, b, t):
+    """Linear RGB blend of two colours, t in [0, 1]. Used for the heatmap ramp."""
     a, b = QColor(a), QColor(b)
     return QColor(*(round(x + (y - x) * t) for x, y in
                     ((a.red(), b.red()), (a.green(), b.green()), (a.blue(), b.blue()))))
 
 
 class ChartWidget(QWidget):
+    """Draws one spec. set_spec() stores it and schedules a repaint; nothing is cached."""
     def __init__(self, spec=None, compact=True, parent=None):
         super().__init__(parent)
         self.spec = spec
@@ -62,8 +79,10 @@ class ChartWidget(QWidget):
         self._mouse = None
         self.setMinimumHeight(80 if compact else 220)
         if compact:
+            # grid cells: let clicks fall through to the ChartCard
             self.setAttribute(Qt.WA_TransparentForMouseEvents)
         else:
+            # expanded: mouseMoveEvent without a button held, for hover tooltips
             self.setMouseTracking(True)
         self.tick_font = QFont()
         self.tick_font.setPixelSize(10 if compact else 11)
@@ -82,6 +101,7 @@ class ChartWidget(QWidget):
         self.update()
 
     def paintEvent(self, _):
+        """Dispatch to _paint_<kind>, or draw the spec's "empty" text when there is no data yet."""
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         p.setFont(self.tick_font)
@@ -95,6 +115,7 @@ class ChartWidget(QWidget):
 
     @staticmethod
     def _has_data(spec):
+        """True once the spec has something to plot; live charts start empty."""
         kind = spec["kind"]
         if kind == "line":
             return any(s["values"] for s in spec["series"])
@@ -109,6 +130,7 @@ class ChartWidget(QWidget):
     # ---- shared pieces -------------------------------------------------
 
     def _plot_rect(self, y_labels, legend=False):
+        """Inner plotting rectangle after reserving room for y tick labels, legend and axis titles."""
         fm = self.fm
         titles = not self.compact
         left = max((fm.horizontalAdvance(s) for s in y_labels), default=0) + 8 + (20 if titles else 0)
@@ -118,6 +140,7 @@ class ChartWidget(QWidget):
         return QRectF(left, top, max(1.0, self.width() - left - right), max(1.0, self.height() - top - bottom))
 
     def _y_axis(self, p, rect, ticks, ymap, fmt):
+        """Horizontal grid line + tick label per tick. The +0.5 keeps 1px lines crisp."""
         for t in ticks:
             y = round(ymap(t)) + 0.5
             p.setPen(QPen(QColor(theme.BORDER), 1))
@@ -144,6 +167,7 @@ class ChartWidget(QWidget):
             p.restore()
 
     def _legend(self, p, rect, series, dots=False):
+        """Top-left legend for multi-series charts; names are elided to share the width."""
         fm = self.fm
         x, mid = rect.left(), 4 + fm.height() / 2
         needed = sum(30 + fm.horizontalAdvance(s["name"]) for s in series)
@@ -180,6 +204,7 @@ class ChartWidget(QWidget):
         p.fillPath(path.united(base), color)
 
     def _tooltip(self, p, anchor, title, rows):
+        """Hover box next to `anchor`; flips to the left when it would overflow. rows = (color|None, label, value)."""
         font = QFont()
         font.setPixelSize(12)
         bold = QFont(font)
@@ -218,6 +243,7 @@ class ChartWidget(QWidget):
     # ---- chart kinds -----------------------------------------------------
 
     def _paint_line(self, p, spec):
+        """Line chart; single series gets an area fade. Hover snaps to the nearest x and shows all series."""
         series, xs = spec["series"], spec["x"]
         fmt = spec.get("y_format", "float")
         values = [v for s in series for v in s["values"]]
@@ -289,6 +315,7 @@ class ChartWidget(QWidget):
         self._tooltip(p, QPointF(x, m.y()), f"{spec.get('x_label', 'x')} {xs[i]:g}", rows)
 
     def _paint_bar(self, p, spec):
+        """Vertical bars, one series. Category labels are thinned so they never overlap."""
         cats = spec["categories"]
         s = spec["series"][0]
         vals, fmt, color = s["values"], spec.get("y_format", "float"), series_color(s)
@@ -326,6 +353,7 @@ class ChartWidget(QWidget):
             self._tooltip(p, m, title, [(color, s["name"], fmt_value(vals[hover], fmt))])
 
     def _paint_hist(self, p, spec):
+        """Histogram from bin edges (n+1) and counts (n); hover shows the bin range."""
         edges, vals = spec["edges"], spec["values"]
         fmt, xfmt = spec.get("y_format", "int"), spec.get("x_format", "float")
         color = QColor(theme.SERIES[spec.get("slot", 0)])
@@ -364,6 +392,7 @@ class ChartWidget(QWidget):
             self._tooltip(p, m, title, [(color, spec.get("y_label", "Count"), fmt_value(vals[hover], fmt))])
 
     def _paint_scatter(self, p, spec):
+        """Scatter; "diagonal" forces equal axes and draws y = x. Hover picks the nearest point within 14px."""
         series = spec["series"]
         xfmt, yfmt = spec.get("x_format", "float"), spec.get("y_format", "float")
         xs = [pt[0] for s in series for pt in s["points"]]
@@ -416,6 +445,7 @@ class ChartWidget(QWidget):
                                         (None, spec.get("y_label", "y"), fmt_value(y, yfmt))])
 
     def _paint_heatmap(self, p, spec):
+        """Square cells coloured on a sqrt ramp (so small counts stay visible); values drawn when cells are big enough."""
         labels, matrix = spec["labels"], spec["matrix"]
         n = len(labels)
         top_val = max(max(row) for row in matrix) or 1
