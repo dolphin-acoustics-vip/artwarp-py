@@ -90,39 +90,39 @@ Activate your virtual environment first (e.g. `source venv/bin/activate` or, in 
 > ./run.sh
 ```
 
-This opens a menu for **Train**, **Plot**, **Predict**, or **Export**, then prompts for every parameter (paths, vigilance, learning rate, bias default **1e-6**, resampling default **on** with sample interval **0.01** s, etc.) with defaults aligned to MATLAB **`ARTwarp_cli_mode.m`**. You can also call the CLI directly through the script: `./run.sh train -i ./contours -o results.pkl`.
+This opens a menu for **Train**, **Plot**, **Predict**, or **Export**, then prompts for every parameter (paths, vigilance, learning rate, bias default **1e-6**, resampling default **on** with sample interval **0.01** s, etc.) with defaults aligned to MATLAB **`ARTwarp_cli_mode.m`**. You can also call the CLI directly through the script: `./run.sh train -i ./contours -o ./data/runs.
 
 Basic commands:
 
 ```bash
 # train on a directory of contour files
-> artwarp-py train --input-dir ./contours --output results.pkl \
+> artwarp-py train --input-dir ./contours --output ./data/runs \
     --vigilance 85 --learning-rate 0.1 --max-iterations 50
 
 # export reference contours and category assignments
-> artwarp-py train --input-dir ./contours --output results.pkl --export-refs --export-categories
+> artwarp-py train --input-dir ./contours --output ./data/runs --export-refs --export-categories
 ```
 
 Resampling is **on** by default (MATLAB `resample=1`); sample interval defaults to **0.01** s (`sampleInterval` in **`ARTwarp_cli_mode.m`**).
 
 ```bash
 # same as default train (resample + 0.01 s); explicit flags optional
-> artwarp-py train --input-dir ./contours --output results.pkl --sample-interval 0.01 --tempres 0.01
+> artwarp-py train --input-dir ./contours --output ./data/runs --sample-interval 0.01 --tempres 0.01
 # skip resampling (MATLAB resample=0)
-> artwarp-py train --input-dir ./contours --output results.pkl --no-resample
+> artwarp-py train --input-dir ./contours --output ./data/runs --no-resample
 ```
 
 Altogether (resampling & exporting reference contours / category assignments):
 
 ```bash
 # full command
-> artwarp-py train --input-dir ./contours --output results.pkl --vigilance 85 --learning-rate 0.1 --max-iterations 50 --export-refs --export-categories
+> artwarp-py train --input-dir ./contours --output ./data/runs --vigilance 85 --learning-rate 0.1 --max-iterations 50 --export-refs --export-categories
 ```
 
 Optional training extensions (not in MATLAB `stable`; same behaviour as merged branch `martion2007/delete_unused_categories`):
 
 ```bash
-> artwarp-py train --input-dir ./contours --output results.pkl \
+> artwarp-py train --input-dir ./contours --output ./data/runs \
     --deprioritize-lone-category-search --purge-empty-categories
 ```
 
@@ -132,7 +132,7 @@ Generate visualizations:
 
 ```bash
 # generate visualizations from Pickle (.pkl) file
-> artwarp-py plot --results results.pkl --input-dir ./contours --output-dir ./report
+> artwarp-py plot --results .data/runs/<id>/results.pkl --input-dir ./contours --output-dir ./report
 ```
 
 ### Python API

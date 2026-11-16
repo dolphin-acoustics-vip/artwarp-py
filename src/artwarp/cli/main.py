@@ -23,9 +23,10 @@ from artwarp.io.exporters import (
     export_category_assignments,
     export_reference_contour_metadata,
     export_reference_contours,
-    export_results,
     load_results,
 )
+from artwarp.io.runs import new_run, save_run
+from artwarp.io.config import Config
 from artwarp.utils.numba_check import check_numba, numba_available
 from artwarp.utils.resample import cap_contour_lengths, resample_contours
 from artwarp.visualization import create_results_report
@@ -33,14 +34,20 @@ from artwarp.visualization import create_results_report
 
 def command_train(args: argparse.Namespace) -> None:
     """Execute the train command."""
-    print(f"Loading contours from: {args.input_dir}")
+    
+    cfg = Config.load()
+    input_dir = args.input_dir if args.input_dir is not None else cfg.input_path
+    output_dir = args.output if args.output is not None else cfg.output_path
+
+    print(f"Loading contours from: {input_dir}")
 
     need_tempres = getattr(args, "resample", True)
     tempres_floats: List[float] = []
+    
     try:
         if need_tempres:
             contours, names, tempres_list = load_contours(
-                args.input_dir,
+                input_dir,
                 file_format=args.format,
                 frequency_column=args.freq_column,
                 return_tempres=True,
@@ -57,7 +64,7 @@ def command_train(args: argparse.Namespace) -> None:
             tempres_floats = [_safe_tempres(t) for t in tempres_list]
         else:
             contours, names = load_contours(
-                args.input_dir,
+                input_dir,
                 file_format=args.format,
                 frequency_column=args.freq_column,
                 return_tempres=False,
@@ -79,34 +86,42 @@ def command_train(args: argparse.Namespace) -> None:
         print(f"Capped contour lengths to at most {max_len} points")
 
     # create network
-    network = ARTwarp(
-        vigilance=args.vigilance,
-        learning_rate=args.learning_rate,
-        bias=args.bias,
-        max_categories=args.max_categories,
-        max_iterations=args.max_iterations,
-        warp_factor_level=args.warp_factor,
-        random_seed=args.seed,
-        randomize_sample_order=not args.no_rand,
-        verbose=not args.quiet,
-        recat_single_categories=args.recat_single_categories,
-        compare_warped=args.compare_warped,
-        deprioritize_lone_category_search=args.deprioritize_lone_category_search,
-        purge_empty_categories=args.purge_empty_categories,
-    )
+    network_params = {
+        "vigilance": args.vigilance,
+        "learning_rate": args.learning_rate,
+        "bias": args.bias,
+        "max_categories": args.max_categories,
+        "max_iterations": args.max_iterations,
+        "warp_factor_level": args.warp_factor,
+        "random_seed": args.seed,
+        "randomize_sample_order": not args.no_rand,
+        "verbose": not args.quiet,
+        "recat_single_categories": args.recat_single_categories,
+        "compare_warped": args.compare_warped,
+        "deprioritize_lone_category_search": args.deprioritize_lone_category_search,
+        "purge_empty_categories": args.purge_empty_categories
+    }
+    data_params = {
+        "tempres": args.tempres,
+        "resample": args.resample,
+        "sample_interval": args.sample_interval,
+        "max_contour_length": args.max_contour_length
+    }
+    
+    network = ARTwarp(**network_params)
+    run = new_run(network_params, data_params, input_dir, output_dir, name=args.name)
 
     # train
     print("\nTraining network...")
     results = network.fit(contours, names)
 
     # save results
-    if args.output:
-        print(f"\nSaving results to: {args.output}")
-        export_results(results, args.output, contour_names=names)
+    run = save_run(run, results, names)
+    print(run["path"])
 
     # export ref contours if requested
     if args.export_refs:
-        ref_dir = Path(args.output).parent / "reference_contours"
+        ref_dir = Path(run["path"]) / "reference_contours"
         print(f"Exporting reference contours to: {ref_dir}")
         export_reference_contours(results.weight_matrix, str(ref_dir))
         meta_file = ref_dir / "metadata.csv"
@@ -115,7 +130,7 @@ def command_train(args: argparse.Namespace) -> None:
 
     # export category assignments if requested
     if args.export_categories:
-        cat_file = Path(args.output).parent / "category_assignments.csv"
+        cat_file = Path(run["path"]) / "category_assignments.csv"
         print(f"Exporting category assignments to: {cat_file}")
         export_category_assignments(results.categories, results.matches, names, str(cat_file))
 
@@ -278,10 +293,14 @@ def create_parser() -> argparse.ArgumentParser:
     # train command
     train_parser = subparsers.add_parser("train", help="Train ARTwarp network")
     train_parser.add_argument(
-        "-i", "--input-dir", required=True, help="Directory containing contour files"
+        "-i", "--input-dir", default=None, help="Directory containing contour files"
     )
     train_parser.add_argument(
-        "-o", "--output", required=True, help="Output file for trained model (.pkl)"
+        "-o", "--output", default=None, help="Choose root directory where output file for trained model (.pkl) \
+        and args chosen for network and contour processing (.json) should be saved."
+    )
+    train_parser.add_argument(
+        "-n", "--name", default=None, help="Choose a name for the run. Def: date"
     )
     train_parser.add_argument(
         "--format",

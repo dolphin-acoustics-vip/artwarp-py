@@ -28,24 +28,24 @@ Activate your virtual environment first so `artwarp-py` is on your PATH (e.g. `s
 Then, for direct commands:
 
 ```bash
-artwarp-py train --input-dir ./contours --output results.pkl --vigilance 85
+artwarp-py train --input-dir ./contours --output ./data/runs --vigilance 85
 
 # resampling is on by default (MATLAB ARTwarp_cli_mode); explicit interval / skip:
-artwarp-py train --input-dir ./contours --output results.pkl --sample-interval 0.01
-artwarp-py train --input-dir ./contours --output results.pkl --no-resample
+artwarp-py train --input-dir ./contours --output ./data/runs --sample-interval 0.01
+artwarp-py train --input-dir ./contours --output ./data/runs --no-resample
 
 # optional MATLAB training flags (same names as GUI: recatSingleCats, compareWarped)
-artwarp-py train --input-dir ./contours --output results.pkl --recat-single-categories --compare-warped
+artwarp-py train --input-dir ./contours --output ./data/runs --recat-single-categories --compare-warped
 
 # optional extensions (non-MATLAB stable; search reorder + orphan column purge)
-artwarp-py train --input-dir ./contours --output results.pkl \
+artwarp-py train --input-dir ./contours --output ./data/runs \
   --deprioritize-lone-category-search --purge-empty-categories
 
 # no per-iteration shuffle: same alphabetical contour-name order each iteration (MATLAB sort-style)
-artwarp-py train --input-dir ./contours --output results.pkl --no-rand
+artwarp-py train --input-dir ./contours --output ./data/runs --no-rand
 
 # generate visualization report
-artwarp-py plot --results results.pkl --input-dir ./contours --output-dir ./report
+artwarp-py plot --results ./data/runs/<id>/results.pkl --input-dir ./contours --output-dir ./report
 ```
 
 Without activating, use the venv’s Python: `./venv/bin/python -m artwarp.cli.main train ...` (or `... plot ...`).
@@ -118,9 +118,9 @@ contours, names, tempres = load_contours('./data', return_tempres=True)
 
 ### Resample Before Training (CLI or API)
 ```bash
-artwarp-py train -i ./contours -o results.pkl
+artwarp-py train -i ./contours -o ./data/runs
 # or custom interval (CLI default sample interval is 0.01 s)
-artwarp-py train -i ./contours -o results.pkl --sample-interval 0.02
+artwarp-py train -i ./contours -o ./data/runs --sample-interval 0.02
 ```
 ```python
 from artwarp.utils import resample_contours

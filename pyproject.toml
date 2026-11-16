@@ -39,6 +39,7 @@ dependencies = [
 
 [project.optional-dependencies]
 accelerate = ["numba>=0.54.0"]
+gui = ["PySide6-Essentials>=6.8; python_version >= '3.9'"]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
@@ -55,6 +56,7 @@ all = [
     "mypy>=0.950",
     "flake8>=4.0.0",
     "isort>=5.10.0",
+    "PySide6-Essentials>=6.8; python_version >= '3.9'",
 ]
 
 [project.urls]
