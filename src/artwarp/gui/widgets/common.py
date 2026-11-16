@@ -7,7 +7,7 @@ from datetime import datetime
 
 from PySide6.QtCore import Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QStyle, QVBoxLayout, QWidget
 
 from artwarp.gui import icons, theme
 
@@ -31,6 +31,32 @@ def set_role(widget, name):
 def open_folder(path):
     """Reveal a folder in Finder / Explorer."""
     QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+
+def warn_popup(parent, title, msg, icon=None):
+    """Popup warning. Default Icon is warning triangle"""
+    dlg = QDialog(parent)
+    dlg.setWindowTitle(title)
+    lay = QVBoxLayout(dlg)
+    lay.setSpacing(12)
+
+    if icon is None:
+        icon = QStyle.SP_MessageBoxWarning
+
+    icon_lbl = QLabel()
+    icon_lbl.setPixmap(dlg.style().standardIcon(icon).pixmap(48, 48))
+    icon_lbl.setAlignment(Qt.AlignCenter)
+    lay.addWidget(icon_lbl)
+
+    text = QLabel(msg)
+    text.setWordWrap(True)
+    text.setAlignment(Qt.AlignCenter)
+    text.setMinimumWidth(360)
+    lay.addWidget(text)
+
+    ok = QPushButton("OK")
+    ok.clicked.connect(dlg.accept)
+    lay.addWidget(ok, alignment=Qt.AlignCenter)
+    dlg.exec()
 
 
 class Card(QFrame):

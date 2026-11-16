@@ -13,11 +13,12 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, 
 
 from artwarp.gui import icons, theme
 from artwarp.io.config import Config
+from artwarp.utils.numba_check import numba_available
 from artwarp.gui.pages.graphs import GraphsPage
 from artwarp.gui.pages.settings import SettingsPage
 from artwarp.gui.pages.training import TrainingPage
 from artwarp.gui.trainer import Trainer
-from artwarp.gui.widgets.common import label
+from artwarp.gui.widgets.common import label, warn_popup
 
 TRAINING, GRAPHS, SETTINGS = range(3)
 
@@ -200,4 +201,11 @@ def main():
 
     window = MainWindow()
     window.show()
+    if not numba_available():
+        title = "Error: Missing numba dependency"
+        msg = ("Numba is not installed, so training uses pure python (much slower).\n\n"
+                "Training will still work, but with a large number of contours it may "
+                "stall or appear frozen, and Stop will not respond until an iteration ends.\n\n"
+                "Install it with:  pip install numba")
+        warn_popup(window, title, msg)
     sys.exit(app.exec())
