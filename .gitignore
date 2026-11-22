@@ -101,6 +101,7 @@ scripts/*.csv
 scripts/**/*.csv
 examples/artwarp_demo_report/*
 examples/artwarp_demo_output/*
+examples/viz_gallery/
 
 # Lab-only notes (not for GitHub / PyPI / Zenodo)
 PRIVATE_CORPUS_DISCLAIMER.md
