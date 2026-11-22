@@ -9,7 +9,7 @@ directory):
     <stem>_weights.csv       one column per category prototype (cat_1 … cat_N)
 
 The assignments CSV is format-compatible with artwarp-py's
---export-categories output (e.g. category_assignments_sarasota.csv).
+--export-categories output (e.g. category_assignments.csv).
 
 MATLAB match scores are stored as fractions in [0, 1]; this script converts
 them to percentages (×100) to match the artwarp-py convention.  If the values
@@ -27,7 +27,7 @@ Examples
     python scripts/extract_mat.py scripts/ARTwarp96FINAL.mat
 
     # outputs into a specific directory
-    python scripts/extract_mat.py scripts/ARTwarp96FINAL.mat --output-dir scripts/sarasota/
+    python scripts/extract_mat.py scripts/ARTwarp96FINAL.mat --output-dir scripts/mat_exports/
 """
 
 import argparse

@@ -108,3 +108,14 @@ manim/*
 
 # macOS-specific files
 .DS_Store
+
+# Local lab / private corpus (never publish)
+scripts/gt_runs/
+data/contours*/
+../artwarp-py-lab/
+
+# Lab-only local notes / experiment outputs (never publish)
+PRIVATE_CORPUS_DISCLAIMER.md
+scripts/gt_runs/
+scripts/parity_out/
+scripts/mat_exports/

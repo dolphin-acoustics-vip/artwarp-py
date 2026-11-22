@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Tune vigilance and DTW warp-factor against Sarasota-style ground truth (dolphin ID).
+Tune vigilance and DTW warp-factor against ground-truth labels (e.g. ID token from contour filenames).
 
-Sarasota naming convention (1800 contours = 60 dolphins × 30 whistles each):
+Optional filename convention (first hyphen-separated token = label ID), e.g.:
     F109-2001-SW-IND63104_ROCCA
 The **dolphin** label is the first hyphen-separated token (here ``F109``).  There are
 60 unique such tokens; each appears exactly 30 times.
 
 This script:
-  1. Optionally writes ``sarasota_ground_truth.csv`` (contour_name, dolphin_id,
+  1. Optionally writes ``ground_truth.csv`` (contour_name, dolphin_id,
      dolphin_index) for reuse / inspection.
   2. Loads contours, resamples to a fixed interval (default 0.01 s), matching
      typical ``artwarp-py train --resample`` behaviour.
@@ -20,7 +20,7 @@ This script:
      Neighbour candidates within each iteration are evaluated **in parallel**
      (``--n-jobs -1`` = all CPU cores, default).
 
-Per-run outputs are saved to ``--runs-dir`` (default: ``scripts/sarasota/runs/``):
+Per-run outputs are saved to ``--runs-dir`` (default: ``scripts/gt_runs/``):
   - ``run{N:03d}_v{v}_w{w}.pkl``             — ARTwarp TrainingResults (pickle)
   - ``run{N:03d}_v{v}_w{w}_categories.csv``  — per-contour category assignment
   - ``run{N:03d}_v{v}_w{w}.png``             — cluster-size + metrics figure
@@ -37,22 +37,22 @@ Requires **scikit-learn** (``pip install scikit-learn``).
 
 Usage (from ``artwarp-py/`` root, with conda/venv that has artwarp + sklearn):
 
-    # default contour dir: ../contours-sarasota (sibling of artwarp-py under repo root)
-    python scripts/tune_sarasota_ground_truth.py
+    # default contour dir: ../contours (sibling of artwarp-py under repo root)
+    python scripts/tune_ground_truth.py
 
-    python scripts/tune_sarasota_ground_truth.py \\
-        --contour-dir /path/to/contours-sarasota \\
-        --output-csv scripts/sarasota/tuning_runs.csv \\
-        --ground-truth-csv scripts/sarasota/sarasota_ground_truth.csv \\
+    python scripts/tune_ground_truth.py \\
+        --contour-dir /path/to/contours \\
+        --output-csv scripts/gt_runs/tuning_runs.csv \\
+        --ground-truth-csv scripts/gt_runs/ground_truth.csv \\
         --eval-budget 25 \\
         --n-jobs 4
 
     # serial execution (no multiprocessing)
-    python scripts/tune_sarasota_ground_truth.py --n-jobs 1
+    python scripts/tune_ground_truth.py --n-jobs 1
 
     # only emit ground-truth CSV (no training)
-    python scripts/tune_sarasota_ground_truth.py --ground-truth-only \\
-        --ground-truth-csv scripts/sarasota/sarasota_ground_truth.csv
+    python scripts/tune_ground_truth.py --ground-truth-only \\
+        --ground-truth-csv scripts/gt_runs/ground_truth.csv
 
 @author: Pedro Gronda Garrigues
 """
@@ -747,16 +747,16 @@ def coordinate_ascent_tune(
 
 def main() -> None:
     root = Path(__file__).resolve().parent.parent
-    default_contours = root.parent / "contours-sarasota"
+    default_contours = root.parent / "contours"
 
     p = argparse.ArgumentParser(
-        description="Tune vigilance & warp factor against Sarasota dolphin ground truth."
+        description="Tune vigilance & warp factor against dolphin / unit ground-truth labels."
     )
     p.add_argument(
         "--contour-dir",
         type=Path,
         default=default_contours,
-        help="Directory of contour files (default: ../contours-sarasota from artwarp-py)",
+        help="Directory of contour files (default: ../contours from artwarp-py)",
     )
     p.add_argument(
         "--format",
@@ -798,7 +798,7 @@ def main() -> None:
         "--output-csv",
         type=Path,
         default=None,
-        help="Write all evaluation rows (default: scripts/sarasota/tuning_runs.csv)",
+        help="Write all evaluation rows (default: scripts/gt_runs/tuning_runs.csv)",
     )
     p.add_argument(
         "--runs-dir",
@@ -806,14 +806,14 @@ def main() -> None:
         default=None,
         help=(
             "Directory for per-run pickle, categories CSV, and figure "
-            "(default: scripts/sarasota/runs)"
+            "(default: scripts/gt_runs/runs)"
         ),
     )
     p.add_argument(
         "--ground-truth-csv",
         type=Path,
         default=None,
-        help="Write ground-truth table (default: scripts/sarasota/sarasota_ground_truth.csv)",
+        help="Write ground-truth table (default: scripts/gt_runs/ground_truth.csv)",
     )
     p.add_argument(
         "--ground-truth-only",
@@ -861,12 +861,12 @@ def main() -> None:
     args = p.parse_args()
 
     contour_dir = args.contour_dir.resolve()
-    sarasota_dir = Path(__file__).resolve().parent / "sarasota"
-    sarasota_dir.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(__file__).resolve().parent / "gt_runs"
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    gt_path = args.ground_truth_csv or sarasota_dir / "sarasota_ground_truth.csv"
-    runs_path = args.output_csv or sarasota_dir / "tuning_runs.csv"
-    runs_dir = args.runs_dir or sarasota_dir / "runs"
+    gt_path = args.ground_truth_csv or out_dir / "ground_truth.csv"
+    runs_path = args.output_csv or out_dir / "tuning_runs.csv"
+    runs_dir = args.runs_dir or out_dir / "runs"
 
     if not contour_dir.is_dir():
         print(f"Error: contour directory not found: {contour_dir}", file=sys.stderr)
