@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Tune vigilance and DTW warp-factor against ground-truth ground truth (dolphin ID).
+Tune vigilance and DTW warp-factor against ground-truth labels (e.g. ID token from contour filenames).
 
-naming convention (1800 contours = 60 dolphins × 30 whistles each):
+Optional filename convention (first hyphen-separated token = label ID), e.g.:
     F109-2001-SW-IND63104_ROCCA
 The **dolphin** label is the first hyphen-separated token (here ``F109``).  There are
 60 unique such tokens; each appears exactly 30 times.
@@ -20,7 +20,7 @@ This script:
      Neighbour candidates within each iteration are evaluated **in parallel**
      (``--n-jobs -1`` = all CPU cores, default).
 
-Per-run outputs are saved to ``--runs-dir`` (default: ``scripts/gt_runs/runs/``):
+Per-run outputs are saved to ``--runs-dir`` (default: ``scripts/gt_runs/``):
   - ``run{N:03d}_v{v}_w{w}.pkl``             — ARTwarp TrainingResults (pickle)
   - ``run{N:03d}_v{v}_w{w}_categories.csv``  — per-contour category assignment
   - ``run{N:03d}_v{v}_w{w}.png``             — cluster-size + metrics figure
@@ -750,7 +750,7 @@ def main() -> None:
     default_contours = root.parent / "contours"
 
     p = argparse.ArgumentParser(
-        description="Tune vigilance & warp factor against dolphin ground truth."
+        description="Tune vigilance & warp factor against dolphin / unit ground-truth labels."
     )
     p.add_argument(
         "--contour-dir",
@@ -861,12 +861,12 @@ def main() -> None:
     args = p.parse_args()
 
     contour_dir = args.contour_dir.resolve()
-    _dir = Path(__file__).resolve().parent / ""
-    _dir.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(__file__).resolve().parent / "gt_runs"
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    gt_path = args.ground_truth_csv or _dir / "ground_truth.csv"
-    runs_path = args.output_csv or _dir / "tuning_runs.csv"
-    runs_dir = args.runs_dir or _dir / "runs"
+    gt_path = args.ground_truth_csv or out_dir / "ground_truth.csv"
+    runs_path = args.output_csv or out_dir / "tuning_runs.csv"
+    runs_dir = args.runs_dir or out_dir / "runs"
 
     if not contour_dir.is_dir():
         print(f"Error: contour directory not found: {contour_dir}", file=sys.stderr)

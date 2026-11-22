@@ -10,6 +10,12 @@ the CHANGELOG every time*
 
 ## [Unreleased]
 
+### Changed
+
+- Scrubbed private-corpus names/artefacts from the public tree; kept generic `scripts/` helpers.
+- Lab experiment harness moved to private sibling repo `artwarp-py-lab`.
+
+
 ### Added
 
 - CONTRIBUTING.md: branch model (`feature/*` → `dev` → `main`), PR flow, and commit format.

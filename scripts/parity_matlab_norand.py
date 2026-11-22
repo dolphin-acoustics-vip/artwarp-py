@@ -42,18 +42,18 @@ All comparisons are label-permutation-invariant:
   - match_corr — Pearson r between per-contour match scores (Python vs MATLAB)
   - cats  — number of categories
 
-Ground truth (dolphin ID labels from ``scripts/gt_runs/ground_truth.csv``):
+Ground truth (optional dolphin/unit ID labels from a CSV):
   - NMI, ARI, V-measure, purity for Python and MATLAB separately at each snapshot
-    (same metrics as ``tune_ground_truth.py``; ground truth = dolphin,
+    (same metrics as ``tune_ground_truth.py``; ground truth = unit ID,
     prediction = ARTwarp category)
 
 Usage (from artwarp-py/ root; use the ``sig-process`` conda env for Numba):
 
     conda activate sig-process
     python scripts/parity_matlab_norand.py \\
-        --matlab-dir /path/to/-1800-results-NO-RANDOMISATION \\
-        [--contour-dir data/contours] \\
-        [--output-dir scripts/gt_runs/parity] \\
+        --matlab-dir /path/to/matlab-norand-results \\
+        [--contour-dir /path/to/contours] \\
+        [--output-dir scripts/parity_out] \\
         [--sample-interval 0.01 --override-tempres 0.005] \\
         [--snapshot-iters 25,50,75,100] \\
         [--no-train]   # requires pickle trained with snapshots; re-run without this first time
@@ -172,7 +172,7 @@ def load_matlab_snapshot(csv_path: Path) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# Ground truth (dolphin ID) — aligned with tune_ground_truth.py
+# Ground truth (unit ID) — aligned with tune_ground_truth.py
 # ---------------------------------------------------------------------------
 
 
@@ -236,7 +236,7 @@ def load_and_verify_ground_truth(
     contour_names: List[str],
 ) -> Tuple[np.ndarray, pd.DataFrame]:
     """
-    Load ``ground_truth.csv`` and verify 1:1 stem match with ``contour_names``.
+    Load a ground-truth CSV and verify 1:1 stem match with ``contour_names``.
 
     Returns ``y_true`` aligned to ``contour_names`` order (dolphin_index per contour).
     """
@@ -516,7 +516,7 @@ def make_comparison_figures(
         )
         ax.set_xlabel("Iteration")
         ax.set_ylabel("NMI vs dolphin ID")
-        ax.set_title("Supervised clustering quality (ground truth = dolphin)")
+        ax.set_title("Supervised clustering quality (vs ground-truth labels)")
         ax.set_ylim(0, 1.05)
         ax.legend()
         ax.grid(True, alpha=0.3)
@@ -579,13 +579,13 @@ def main() -> None:
     p.add_argument(
         "--contour-dir",
         type=Path,
-        default=root / "data" / "contours",
-        help="Directory of contour CSV files (default: data/contours)",
+        required=True,
+        help="Directory of contour CSV files",
     )
     p.add_argument(
         "--output-dir",
         type=Path,
-        default=root / "scripts" / "" / "parity",
+        default=root / "scripts" / "parity_out",
         help="Output directory for results and figures",
     )
     p.add_argument("--vigilance", type=float, default=96.0, help="Vigilance (default: 96)")
@@ -649,7 +649,7 @@ def main() -> None:
         "--ground-truth-csv",
         type=Path,
         default=None,
-        help=("Dolphin ground-truth labels (default: scripts/gt_runs/ground_truth.csv)"),
+        help="Optional ground-truth labels CSV (contour_name, label columns)",
     )
 
     args = p.parse_args()
@@ -706,14 +706,16 @@ def main() -> None:
         lens = [len(c) for c in contours]
         print(f"  Resampled length: min={min(lens)}, max={max(lens)}, mean={np.mean(lens):.1f}")
 
-    # ── Ground truth ─────────────────────────────────────────────────────────
-    gt_path = args.ground_truth_csv or (
-        Path(__file__).resolve().parent / "" / "ground_truth.csv"
-    )
+    # ── Ground truth (optional) ──────────────────────────────────────────────
+    y_true = None
     print()
     print(_sep("═"))
-    print(f"  Ground truth: {gt_path}")
-    y_true, _gt_df = load_and_verify_ground_truth(gt_path.resolve(), names)
+    if args.ground_truth_csv is None:
+        print("  Ground truth: skipped (pass --ground-truth-csv to enable)")
+    else:
+        gt_path = args.ground_truth_csv.resolve()
+        print(f"  Ground truth: {gt_path}")
+        y_true, _gt_df = load_and_verify_ground_truth(gt_path, names)
 
     # ── Train / load artwarp-py ──────────────────────────────────────────────
     pkl_path = args.pickle or (output_dir / f"parity_v{args.vigilance:g}_w{args.warp}.pkl")
@@ -811,31 +813,37 @@ def main() -> None:
         row["py_reclassifications"] = int(snap.num_reclassifications) if snap is not None else None
 
         matlab_cats = matlab_categories_for_names(matlab_dfs[it], names)
-        py_gt = supervised_clustering_metrics(y_true, py_cats)
-        matlab_gt = supervised_clustering_metrics(y_true, matlab_cats)
-        row.update(prefix_metrics(py_gt, "py_gt_"))
-        row.update(prefix_metrics(matlab_gt, "matlab_gt_"))
-
-        gt_row = {
-            "iteration": it,
-            "py_gt_nmi": py_gt["nmi"],
-            "py_gt_ari": py_gt["ari"],
-            "py_gt_v_measure": py_gt["v_measure"],
-            "py_gt_purity": py_gt["purity"],
-            "py_num_categories": py_n_cats,
-            "matlab_gt_nmi": matlab_gt["nmi"],
-            "matlab_gt_ari": matlab_gt["ari"],
-            "matlab_gt_v_measure": matlab_gt["v_measure"],
-            "matlab_gt_purity": matlab_gt["purity"],
-            "matlab_num_categories": row["n_cats_matlab"],
-        }
-        gt_rows.append(gt_row)
+        if y_true is not None:
+            py_gt = supervised_clustering_metrics(y_true, py_cats)
+            matlab_gt = supervised_clustering_metrics(y_true, matlab_cats)
+            row.update(prefix_metrics(py_gt, "py_gt_"))
+            row.update(prefix_metrics(matlab_gt, "matlab_gt_"))
+            gt_rows.append(
+                {
+                    "iteration": it,
+                    "py_gt_nmi": py_gt["nmi"],
+                    "py_gt_ari": py_gt["ari"],
+                    "py_gt_v_measure": py_gt["v_measure"],
+                    "py_gt_purity": py_gt["purity"],
+                    "py_num_categories": py_n_cats,
+                    "matlab_gt_nmi": matlab_gt["nmi"],
+                    "matlab_gt_ari": matlab_gt["ari"],
+                    "matlab_gt_v_measure": matlab_gt["v_measure"],
+                    "matlab_gt_purity": matlab_gt["purity"],
+                    "matlab_num_categories": row["n_cats_matlab"],
+                }
+            )
+            gt_msg = (
+                f"GT NMI py/matlab={py_gt['nmi']:.4f}/{matlab_gt['nmi']:.4f}  "
+                f"purity py/matlab={py_gt['purity']:.4f}/{matlab_gt['purity']:.4f}  "
+            )
+        else:
+            gt_msg = ""
 
         comparison_rows.append(row)
         print(
             f"  iter {it:3d}  parity NMI={row['parity_nmi']:.4f}  "
-            f"GT NMI py/matlab={py_gt['nmi']:.4f}/{matlab_gt['nmi']:.4f}  "
-            f"purity py/matlab={py_gt['purity']:.4f}/{matlab_gt['purity']:.4f}  "
+            f"{gt_msg}"
             f"cats py/matlab={py_n_cats}/{row['n_cats_matlab']}"
         )
 
@@ -843,12 +851,12 @@ def main() -> None:
     summary_df = pd.DataFrame(comparison_rows)
     summary_csv = output_dir / "parity_summary.csv"
     summary_df.to_csv(summary_csv, index=False)
-    gt_df_out = pd.DataFrame(gt_rows)
-    gt_csv = output_dir / "parity_ground_truth_summary.csv"
-    gt_df_out.to_csv(gt_csv, index=False)
     print()
     print(f"  Saved comparison table      → {summary_csv}")
-    print(f"  Saved ground-truth table   → {gt_csv}")
+    if gt_rows:
+        gt_csv = output_dir / "parity_ground_truth_summary.csv"
+        pd.DataFrame(gt_rows).to_csv(gt_csv, index=False)
+        print(f"  Saved ground-truth table   → {gt_csv}")
 
     # ── Figures ──────────────────────────────────────────────────────────────
     make_comparison_figures(comparison_rows, matlab_snapshots, output_dir, gt_results=gt_rows)
@@ -863,14 +871,15 @@ def main() -> None:
         f"  Parity (py vs matlab):  NMI={final['parity_nmi']:.6f}  "
         f"exact={final['hungarian_exact']:.6f}"
     )
-    print(
-        f"  Ground truth (py):      NMI={final['py_gt_nmi']:.6f}  "
-        f"ARI={final['py_gt_ari']:.6f}  purity={final['py_gt_purity']:.6f}"
-    )
-    print(
-        f"  Ground truth (matlab):  NMI={final['matlab_gt_nmi']:.6f}  "
-        f"ARI={final['matlab_gt_ari']:.6f}  purity={final['matlab_gt_purity']:.6f}"
-    )
+    if "py_gt_nmi" in final:
+        print(
+            f"  Ground truth (py):      NMI={final['py_gt_nmi']:.6f}  "
+            f"ARI={final['py_gt_ari']:.6f}  purity={final['py_gt_purity']:.6f}"
+        )
+        print(
+            f"  Ground truth (matlab):  NMI={final['matlab_gt_nmi']:.6f}  "
+            f"ARI={final['matlab_gt_ari']:.6f}  purity={final['matlab_gt_purity']:.6f}"
+        )
     print(f"  Categories:             py={final['n_cats_py']}  matlab={final['n_cats_matlab']}")
     print(f"  Match corr (r):         {final['match_corr']:.6f}")
     print(_sep("═", 70))
