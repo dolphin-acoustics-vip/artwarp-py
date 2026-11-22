@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Diagnostic: compare max contour length BEFORE vs AFTER resampling (or any dir).
+Diagnostic: compare max contour length BEFORE vs AFTER resampling (any contour directory).
 
 BEFORE (old behaviour): CSV loader returned tempres=None for all; CLI used default 0.01.
   So step = sample_interval / 0.01 = 1 (with --sample-interval 0.01), and
@@ -9,7 +9,7 @@ BEFORE (old behaviour): CSV loader returned tempres=None for all; CLI used defau
 
 AFTER (current behaviour): Per-file tempres from Time column. step = sample_interval / tempres.
   tempres > sample_interval => upsampled (more points); tempres < sample_interval => downsampled (fewer).
-  E.g. : all tempres ~2.7–5.4 ms => all downsampled => max 569 → 304.
+  E.g. if all tempres are ~2.7–5.4 ms with sample_interval=0.01 s, lengths are downsampled.
 
 Usage (from artwarp-py root, with venv or PYTHONPATH=src):
   python scripts/contour_length_comparison.py ./contours

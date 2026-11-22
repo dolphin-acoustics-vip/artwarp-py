@@ -27,7 +27,7 @@ Examples
     python scripts/extract_mat.py scripts/ARTwarp96FINAL.mat
 
     # outputs into a specific directory
-    python scripts/extract_mat.py scripts/ARTwarp96FINAL.mat --output-dir scripts/gt_runs/
+    python scripts/extract_mat.py scripts/ARTwarp96FINAL.mat --output-dir scripts/mat_exports/
 """
 
 import argparse
