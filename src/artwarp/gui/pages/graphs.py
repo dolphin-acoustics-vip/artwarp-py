@@ -1,6 +1,6 @@
 """
-History of past runs. Displays list and shows charts stored in run.json for selected run.
-Refreshes when run is saved/renamed. Reads run.json. Same widget as training.py for Header and results.
+History of past runs. Displays list and loads charts (from charts.py) for selected run.
+Refreshes when run is saved/renamed. Same widget as training.py for Header and results.
 
 @author: Jaime Barquero Cebrian
 """
@@ -9,11 +9,12 @@ from datetime import datetime
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QHBoxLayout, QListWidget, QListWidgetItem, QStackedWidget, QVBoxLayout,
-                               QWidget)
+                               QWidget, QStyle, QLabel)
 
 from artwarp.io import runs
 from artwarp.gui.widgets.common import Card, PageHeader, RunHeader, label
 from artwarp.gui.widgets.results import ResultsView
+from artwarp.gui.charts import load_charts
 
 LIST_WIDTH = 270
 
@@ -89,8 +90,32 @@ class GraphsPage(QWidget):
         self.header = RunHeader()
         self.header.renamed.connect(self._rename)
         self.results = ResultsView()
+        
+        self.results_warning = QWidget()
+        self.results_warning.hide()
+        results_warn_layout = QVBoxLayout(self.results_warning)
+        results_warn_layout.addSpacing(12)
+
+        warning_icon = QStyle.SP_MessageBoxWarning
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(self.style().standardIcon(warning_icon).pixmap(96, 96))
+        icon_lbl.setAlignment(Qt.AlignCenter)
+
+        self.results_warn_title = label(f"{runs.RESULTS_FILE} is missing or corrupt", "TitleWarning",wrap=True)
+        self.results_warn_title.setAlignment(Qt.AlignCenter)
+        self.results_warn_path_lbl = label("", "Muted", wrap=True)
+        self.results_warn_path_lbl.setAlignment(Qt.AlignCenter)
+
+        results_warn_layout.addStretch(1)
+        results_warn_layout.addWidget(icon_lbl)
+        
+        results_warn_layout.addWidget(self.results_warn_title)
+        results_warn_layout.addWidget(self.results_warn_path_lbl)
+        results_warn_layout.addStretch(1)
+
         vl.addWidget(self.header)
         vl.addWidget(self.results, 1)
+        vl.addWidget(self.results_warning, 1)
         self.right.addWidget(view)
         body.addWidget(self.right, 1)
         root.addLayout(body, 1)
@@ -134,7 +159,16 @@ class GraphsPage(QWidget):
         # keeps the grid / expanded state when only the name changed
         if run["id"] != self._current_id:
             self._current_id = run["id"]
-            self.results.set_charts(run.get("charts", []))
+            charts = load_charts(run)
+            if charts is None:
+                self.results_warn_path_lbl.setText(f"{run['path']}")
+                self.results.hide()
+                self.results_warning.show()
+            else:
+                self.results.set_charts(charts)
+                self.results.show()
+                self.results_warning.hide()
+
         self.right.setCurrentIndex(1)
 
     def _rename(self, name):

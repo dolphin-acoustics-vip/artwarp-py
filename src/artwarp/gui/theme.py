@@ -63,6 +63,7 @@ QLabel#StatLabel { color: $MUTED; font-size: 11px; }
 QLabel#StatValue { font-size: 20px; font-weight: 600; }
 QLabel#Error { color: $DANGER; font-size: 12px; }
 QLabel#Empty { color: $MUTED; font-size: 13px; }
+QLabel#TitleWarning { font-size: 18px; font-weight: 600; }
 
 QLineEdit {
     background: $BG; border: 1px solid $BORDER; border-radius: 6px;

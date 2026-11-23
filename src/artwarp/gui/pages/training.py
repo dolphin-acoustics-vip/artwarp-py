@@ -10,10 +10,14 @@ from PySide6.QtWidgets import (QCheckBox, QDoubleSpinBox, QHBoxLayout, QProgress
                                QVBoxLayout, QWidget)
 
 from artwarp.gui import icons
+from artwarp.gui.charts import load_charts
 from artwarp.io import runs
 from artwarp.gui.widgets.chart import ChartWidget
-from artwarp.gui.widgets.common import Card, PageHeader, RunHeader, StatBlock, label, set_role
+from artwarp.gui.widgets.common import Card, PageHeader, RunHeader, StatBlock, label, set_role, warn_popup
 from artwarp.gui.widgets.results import ResultsView
+
+# Whether to show live charts or finished results grid
+LIVE, RESULTS = range(2)
 
 # Layout helpers
 def _path_label(title, parent):
@@ -352,6 +356,7 @@ class TrainingPage(QWidget):
     def _on_started(self, run):
         """Reset live metrics"""
         self._live_iteration = {"x": [], "num_reclassifications": [], "num_categories": []}
+        self.body.setCurrentIndex(LIVE)
         self._set_running(True)
         self.progress.setValue(0)
         self._timer.start()
@@ -392,15 +397,34 @@ class TrainingPage(QWidget):
         """Iteration count and elapsed time. Called every iteration and every second by ticker."""
         self.progress_lbl.setText(f"Training... · Iteration {len(self._live_iteration['x'])} · Elapsed time {self._timer.elapsed()/1000.0:.2f}s")
 
+    # TODO: User picks which charts are shown LIVE in the next run. After a run the RESULTS grid
+    #   gets a "Select" button or a tick circle at the top right of each chart card
+    #   (widgets/results.py ChartCard; ResultsView is shared, so Graphs page gets it too).
+    #   A "Save" button stores the selected chart titles in settings.json (io/config.py;
+    #   Config.save only writes its own fields, so add a field for it).
+    #   _build_live_iteration then builds those charts instead of the fixed two.
+    #   Only charts computable per iteration can be live: Trainer._on_iteration currently sends
+    #   only num_reclassifications/num_categories; the IterationSnapshot also has categories,
+    #   matches and weight_matrix (e.g. live Category Sizes), but post-training charts cannot be live.
     def _on_finished(self, run):
         """ When run is finished, shows header + charts below the chosen parameters."""
         self._set_running(False)
         self._run = run
         self.header.set_run(run)
-        self.results.set_charts(run["charts"])
+        charts = load_charts(run)
+        self.body.setCurrentIndex(RESULTS)
+        if charts is None:
+            title = f"Error: Missing {runs.RESULTS_FILE}"
+            msg = (f"{runs.RESULTS_FILE} is missing after run finished. Graphs will show empty"
+                   " (Notify current GUI maintainer, rare scenario).")
+            warn_popup(self, title, msg)
+            self.results.set_charts([])
+        else:
+            self.results.set_charts(charts)
 
     def _on_idle(self, message):
         """Back to idle with a muted status line (stop / nothing saved)."""
+        self.body.setCurrentIndex(LIVE)
         self._set_running(False)
         set_role(self.error, "Muted")
         self.error.setText(message)
@@ -408,6 +432,7 @@ class TrainingPage(QWidget):
 
     def _on_failed(self, message):
         """Back to idle after failure"""
+        self.body.setCurrentIndex(LIVE)
         self._set_running(False)
         set_role(self.error, "Error")
         self.error.setText(message)

@@ -11,7 +11,7 @@ Pipeline: step = sample_interval_sec / tempres (index step per output point).
 @author: Pedro Gronda Garrigues
 """
 
-from typing import List, Union
+from typing import List, Optional, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -106,3 +106,45 @@ def cap_contour_lengths(
         resampled = np.interp(new_x, old_x, c)
         result.append(resampled.astype(np.float64))
     return result
+
+def prepare_contours(data_parameters, contours, tempres_list):
+    """
+    Pre-process of contours if resampling and/or maximum contour length are specified.
+    Shared by CLI (command_train) and GUI (trainer._Worker.run) so both prepare data the same way.
+
+    Parameters:
+        data_parameters: Run's data parameters (dict in run.json):
+            resample (bool): resample each contour to sample_interval if True.
+            tempres (float): fallback seconds per point, used when a contour's
+                tempres is None or <= 0 (avoids division by zero in resample_contours).
+            sample_interval (float): target seconds per point when resampling.
+            max_contour_length (int or None): cap on points per contour, applied
+                whether or not resample is on. None means no cap.
+        contours: Frequency contours from load_contours.
+        tempres_list: Per-contour seconds per point from
+            load_contours(return_tempres=True); entries may be None.
+
+    Returns:
+        contours: Prepared contours, same order and count as the input.
+
+    Raises:
+        ValueError: from resample_contours (sample_interval <= 0) or
+            cap_contour_lengths (max_contour_length < 1).
+    """
+    # Contour data preparation
+    if data_parameters["resample"]:
+        default_tr = data_parameters["tempres"]
+        def _safe_tempres(t: Optional[float]) -> float:
+            if t is None:
+                return default_tr
+            v = float(t)
+            return default_tr if v <= 0 else v
+        tempres_floats = [_safe_tempres(t) for t in tempres_list]
+
+        contours = resample_contours(contours, tempres_floats, data_parameters["sample_interval"])
+    
+    max_contour_length = data_parameters["max_contour_length"]
+    if max_contour_length is not None:
+        contours = cap_contour_lengths(contours, max_contour_length)
+
+    return contours

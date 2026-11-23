@@ -13,7 +13,6 @@ Provides commands for:
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 import numpy as np
 
@@ -28,7 +27,7 @@ from artwarp.io.exporters import (
 from artwarp.io.runs import new_run, save_run
 from artwarp.io.config import Config
 from artwarp.utils.numba_check import check_numba, numba_available
-from artwarp.utils.resample import cap_contour_lengths, resample_contours
+from artwarp.utils.resample import prepare_contours
 from artwarp.visualization import create_results_report
 
 
@@ -41,49 +40,38 @@ def command_train(args: argparse.Namespace) -> None:
 
     print(f"Loading contours from: {input_dir}")
 
-    need_tempres = getattr(args, "resample", True)
-    tempres_floats: List[float] = []
+    data_params = {
+        "tempres": args.tempres,
+        "resample": args.resample,
+        "sample_interval": args.sample_interval,
+        "max_contour_length": args.max_contour_length
+    }
     
     try:
-        if need_tempres:
-            contours, names, tempres_list = load_contours(
-                input_dir,
-                file_format=args.format,
-                frequency_column=args.freq_column,
-                return_tempres=True,
-            )
-            default_tr = getattr(args, "tempres", 0.01)
-
-            # use default when tempres is missing or <= 0 (avoids division by zero in resample)
-            def _safe_tempres(t: Optional[float]) -> float:
-                if t is None:
-                    return default_tr
-                v = float(t)
-                return default_tr if v <= 0 else v
-
-            tempres_floats = [_safe_tempres(t) for t in tempres_list]
-        else:
-            contours, names = load_contours(
-                input_dir,
-                file_format=args.format,
-                frequency_column=args.freq_column,
-                return_tempres=False,
-            )
+        contours, names, tempres_list = load_contours(
+            input_dir,
+            file_format=args.format,
+            frequency_column=args.freq_column,
+            return_tempres=True,
+        )
+        print(f"Loaded {len(contours)} contours")
     except Exception as e:
         print(f"Error loading contours: {e}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Loaded {len(contours)} contours")
+    try:
+        contours = prepare_contours(data_params, contours, tempres_list)
 
-    if getattr(args, "resample", True):
-        sample_interval = getattr(args, "sample_interval", 0.01)
-        contours = resample_contours(contours, tempres_floats, sample_interval)
-        print(f"Resampled contours to {sample_interval}s interval")
+    except Exception as e:
+        print(f"Error pre-processing contours: {e}", file=sys.stderr)
+        sys.exit(1)
 
-    max_len = getattr(args, "max_contour_length", None)
-    if max_len is not None:
-        contours = cap_contour_lengths(contours, max_len)
-        print(f"Capped contour lengths to at most {max_len} points")
+    if data_params["resample"]:
+        print(f"Resampled contours to {data_params['sample_interval']}s interval")
+    
+    if data_params["max_contour_length"] is not None:
+        print(f"Capped contour lengths to at most {data_params['max_contour_length']} points")
+
 
     # create network
     network_params = {
@@ -100,12 +88,6 @@ def command_train(args: argparse.Namespace) -> None:
         "compare_warped": args.compare_warped,
         "deprioritize_lone_category_search": args.deprioritize_lone_category_search,
         "purge_empty_categories": args.purge_empty_categories
-    }
-    data_params = {
-        "tempres": args.tempres,
-        "resample": args.resample,
-        "sample_interval": args.sample_interval,
-        "max_contour_length": args.max_contour_length
     }
     
     network = ARTwarp(**network_params)

@@ -1,7 +1,7 @@
 """
 Saved runs on disk, shared by the CLI and the GUI.
 
-run.json      metadata, summary and chart specifications
+run.json      metadata
 results.pkl   full TrainingResults
 
 @author: Jaime Barquero Cebrian
@@ -11,7 +11,6 @@ import json
 from pathlib import Path
 
 from artwarp.io.exporters import export_results
-from artwarp.io.charts import build_charts
 
 RUN_FILE = "run.json"
 RESULTS_FILE = "results.pkl"
@@ -44,9 +43,10 @@ def new_run(network_params, data_params, input_path, output_path, name=None):
     """
     Run dict before training
 
-    network_params: arguments for ARTwarp network.
-    data_params: tempres, resample, sample_interval, max_contour_length.
-    name defaults to the timestamp; id is the same in compact form.
+    Parameters:
+        network_params: arguments for ARTwarp network.
+        data_params: tempres, resample, sample_interval, max_contour_length.
+        name defaults to the timestamp; id is the same in compact form.
     """
     now = datetime.now()
     run = {
@@ -68,7 +68,6 @@ def save_run(run, results, names):
                               "number_iterations": int(results.num_iterations),
                               "converged": bool(results.converged),
                               "training_time": float(results.training_time)}
-    run["charts"] = build_charts(results)
 
     root = Path(run["output_path"])
     root.mkdir(parents=True, exist_ok=True)

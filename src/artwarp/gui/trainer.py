@@ -8,12 +8,11 @@ Two classes:
 """
 
 from functools import partial
-from typing import Optional
 import threading
 
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from artwarp import ARTwarp, load_contours
-from artwarp.utils.resample import cap_contour_lengths, resample_contours
+from artwarp.utils.resample import cap_contour_lengths, prepare_contours
 
 from artwarp.io.runs import save_run, new_run
 
@@ -35,26 +34,10 @@ class _Worker(QObject):
 
     @Slot()
     def run(self):
-        """ Mirrors command_train CLI - TODO: create utils .py to have GUI and CLI call this"""
+        """ Mirrors command_train CLI"""
         try:
-            # Contour data preparation
-            if self.data_parameters["resample"]:
-                contours, names, tempres_list = load_contours(self.data, return_tempres=True)
-                default_tr = self.data_parameters["tempres"]
-                def _safe_tempres(t: Optional[float]) -> float:
-                    if t is None:
-                        return default_tr
-                    v = float(t)
-                    return default_tr if v <= 0 else v
-                tempres_floats = [_safe_tempres(t) for t in tempres_list]
-
-                contours = resample_contours(contours, tempres_floats, self.data_parameters["sample_interval"])
-                max_contour_length = self.data_parameters["max_contour_length"]
-    
-                if max_contour_length is not None:
-                    contours = cap_contour_lengths(contours, max_contour_length)
-            else:
-                contours, names = load_contours(self.data)
+            contours, names, tempres_list = load_contours(self.data, return_tempres=True)
+            contours = prepare_contours(self.data_parameters, contours, tempres_list)
 
             # ARTwarp call
             network = ARTwarp(**self.network_parameters)
